@@ -3,7 +3,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-if(!class_exists('WP_Super_Duper')) {
+if ( ! class_exists( 'WP_Super_Duper' ) ) {
 
 
 	/**
@@ -15,7 +15,6 @@ if(!class_exists('WP_Super_Duper')) {
 	 * @ver 0.0.1
 	 */
 	class WP_Super_Duper extends WP_Widget {
-
 
 		public $block_code;
 		public $options;
@@ -37,8 +36,6 @@ if(!class_exists('WP_Super_Duper')) {
 
 			$this->base_id   = $options['base_id'];
 			$this->arguments = $options['arguments'];
-
-			//$base_id, $name, $widget_ops, $class_name = ''
 
 
 			// init parent
@@ -74,6 +71,44 @@ if(!class_exists('WP_Super_Duper')) {
 		 */
 		public function register_shortcode() {
 			add_shortcode( $this->base_id, array( $this, 'shortcode_output' ) );
+			add_action( 'wp_ajax_super_duper_output_shortcode', array( __CLASS__, 'render_shortcode' ) );
+		}
+
+		/**
+		 * Render the shortcode via ajax so we can return it to Gutenberg.
+		 */
+		public static function render_shortcode() {
+
+			check_ajax_referer( 'super_duper_output_shortcode', '_ajax_nonce', true );
+			if ( ! current_user_can( 'manage_options' ) ) {
+				wp_die();
+			}
+
+			// we might need the $post value here so lets set it.
+			if ( isset( $_POST['post_id'] ) && $_POST['post_id'] ) {
+				$post_obj = get_post( absint( $_POST['post_id'] ) );
+				if ( ! empty( $post_obj ) && empty( $post ) ) {
+					global $post;
+					$post = $post_obj;
+				}
+			}
+
+			if ( isset( $_POST['shortcode'] ) && $_POST['shortcode'] ) {
+				$shortcode_name   = sanitize_title_with_dashes( $_POST['shortcode'] );
+				$attributes_array = isset( $_POST['attributes'] ) && $_POST['attributes'] ? $_POST['attributes'] : array();
+				$attributes       = '';
+				if ( ! empty( $attributes_array ) ) {
+					foreach ( $attributes_array as $key => $value ) {
+						$attributes .= " " . sanitize_title_with_dashes( $key ) . "='" . wp_slash( $value ) . "' ";
+					}
+				}
+
+				$shortcode = "[" . $shortcode_name . " " . $attributes . "]";
+
+				echo do_shortcode( $shortcode );
+
+			}
+			wp_die();
 		}
 
 		/**
@@ -154,6 +189,8 @@ if(!class_exists('WP_Super_Duper')) {
 					var editable = wp.blocks.Editable;
 					var blocks = wp.blocks;
 					var registerBlockType = wp.blocks.registerBlockType; // The registerBlockType() to register blocks.
+					var is_fetching = false;
+					var prev_attributes = [];
 
 					/**
 					 * Register Basic Block.
@@ -178,24 +215,35 @@ if(!class_exists('WP_Super_Duper')) {
 
 						<?php
 
+						$show_alignment = false;
+
 						if ( ! empty( $this->arguments ) ) {
 							echo "attributes : {";
 							foreach ( $this->arguments as $key => $args ) {
-								if ( $args['type'] == 'text' || $args['type'] == 'select' ) {
-									$type    = 'string';
-									$default = isset( $args['default'] ) ? "'" . $args['default'] . "'" : '';
-								} elseif ( $args['type'] == 'checkbox' ) {
+
+								// set if we should show alignment
+								if ( $key == 'alignment' ) {
+									$show_alignment = true;
+								}
+
+								if ( $args['type'] == 'checkbox' ) {
 									$type    = 'boolean';
-									$default = isset( $args['default'] ) ? $args['default'] : '';
+									$default = isset( $args['default'] ) && "'" . $args['default'] . "'" ? 'true' : 'false';
+								} elseif ( $args['type'] == 'number' ) {
+									$type    = 'number';
+									$default = isset( $args['default'] ) ? "'" . $args['default'] . "'" : "''";
 								} else {
 									$type    = 'string';
-									$default = isset( $args['default'] ) && "'" . $args['default'] . "'" ? 'true' : 'false';
+									$default = isset( $args['default'] ) ? "'" . $args['default'] . "'" : "''";
 								}
 								echo $key . " : {";
 								echo "type : '$type',";
 								echo "default : $default,";
 								echo "},";
 							}
+
+							echo "content : {type : 'string',default: 'Please select the attributes in the block settings'},";
+
 							echo "},";
 
 						}
@@ -205,12 +253,57 @@ if(!class_exists('WP_Super_Duper')) {
 						// The "edit" property must be a valid function.
 						edit: function (props) {
 
-							console.log(props);
+							var content = props.attributes.content;
+
+							function onChangeContent() {
+
+								if (!is_fetching && prev_attributes[props.id] != props.attributes) {
+
+									//console.log(props);
+
+									is_fetching = true;
+									var data = {
+										'action': 'super_duper_output_shortcode',
+										'shortcode': '<?php echo $this->options['base_id'];?>',
+										'attributes': props.attributes,
+										'post_id': <?php global $post; if ( isset( $post->ID ) ) {
+										echo $post->ID;
+									}?>,
+										'_ajax_nonce': '<?php echo wp_create_nonce( 'super_duper_output_shortcode' );?>'
+									};
+
+									jQuery.post(ajaxurl, data, function (response) {
+										return response;
+									}).then(function (env) {
+										props.setAttributes({content: env});
+										is_fetching = false;
+										prev_attributes[props.id] = props.attributes;
+									});
+
+
+								}
+
+								return props.attributes.content;
+
+							}
+
 
 							return [
 
 								!!props.focus && el(blocks.BlockControls, {key: 'controls'},
-									// @todo implement later if needed
+
+									<?php if($show_alignment){?>
+									el(
+										blocks.AlignmentToolbar,
+										{
+											value: props.attributes.alignment,
+											onChange: function (alignment) {
+												props.setAttributes({alignment: alignment})
+											}
+										}
+									)
+									<?php }?>
+
 								),
 
 								!!props.focus && el(blocks.InspectorControls, {key: 'inspector'},
@@ -220,7 +313,8 @@ if(!class_exists('WP_Super_Duper')) {
 									if(! empty( $this->arguments )){
 									foreach($this->arguments as $key => $args){
 									$options = '';
-									if ( $args['type'] == 'text' ) {
+									$text_type = array( 'text', 'password', 'number', 'email', 'tel', 'url', 'color' );
+									if ( in_array( $args['type'], $text_type ) ) {
 										$type = 'TextControl';
 									} elseif ( $args['type'] == 'checkbox' ) {
 										$type = 'CheckboxControl';
@@ -235,6 +329,8 @@ if(!class_exists('WP_Super_Duper')) {
 										}
 									} elseif ( $args['type'] == 'checkbox' ) {
 										$type = 'CheckboxControl';
+									} elseif ( $args['type'] == 'alignment' ) {
+										$type = 'AlignmentToolbar'; // @todo this does not seem to work but cant find a example
 									} else {
 										continue;// if we have not implemented the control then don't break the JS.
 									}
@@ -245,58 +341,54 @@ if(!class_exists('WP_Super_Duper')) {
 											label: '<?php echo esc_attr( $args['title'] );?>',
 											help: '<?php echo esc_attr( $args['desc'] );?>',
 											value: props.attributes.<?php echo $key;?>,
+											<?php if ( $type == 'TextControl' && $args['type'] != 'text' ) {
+											echo "type: '" . esc_attr( $args['type'] ) . "',";
+										}?>
+											<?php if ( ! empty( $args['placeholder'] ) ) {
+											echo "placeholder: '" . esc_attr( $args['placeholder'] ) . "',";
+										}?>
 											<?php echo $options;?>
+
 											onChange: function ( <?php echo $key;?> ) {
 												props.setAttributes({ <?php echo $key;?>: <?php echo $key;?> } )
 											}
 										}
 									),
 									<?php
-
 									}
-
 									}
-
-
-
-
-									//$xxx = do_shortcode( "[gd_main_map width='100%' height='425px' maptype='ROADMAP' zoom='0' ]" );
 									?>
 
 								),
 
-								//el( 'div', { dangerouslySetInnerHTML: { __html: <?php // echo json_encode($xxx);?>} } )
-
-								// @todo implement the output
-//							el( 'img', {
-//								//src: 'http://localhost/wp-content/uploads/2018/01/a15-11.jpg',
-//								src: 'http://localhost/wp-content/plugins/geodirectory-v2/assets/images/block-placeholder-map.png', // @todo we need to reference this locally
-//								alt: 'xxx',
-//								width: props.attributes.width,
-//								height: props.attributes.height,
-//							} )
-
 								<?php
+								// If the user sets block-output array then build it
 								if ( ! empty( $this->options['block-output'] ) ) {
-									$this->block_element( $this->options['block-output'] );
+								$this->block_element( $this->options['block-output'] );
+							}else{
+								// if no block-output is set then we try and get the shortcode html output via ajax.
+								?>
+								el('div', {
+									dangerouslySetInnerHTML: {__html: onChangeContent()},
+									className: props.className,
+									style: {'min-height': '30px'}
+								})
+								<?php
 								}
 								?>
-
 							]; // end return
-
-
-							// Creates a <p class='wp-block-gb-basic-01'></p>.
-//						return el(
-//							'p', // Tag type.
-//							{className: props.className}, // The class="wp-block-gb-basic-01" : The class name is generated using the block's name prefixed with wp-block-, replacing the / namespace separator with a single -.
-//							'Hello World! — from the editor (01 Basic Block).' // Content inside the tag.
-//						);
 						},
 
 						// The "save" property must be specified and must be a valid function.
 						save: function (props) {
 
+							console.log(props);
+
+
 							var attr = props.attributes;
+							var align = '';
+
+							// build the shortcode.
 							var content = "[<?php echo $this->options['base_id'];?>";
 							<?php
 
@@ -314,8 +406,21 @@ if(!class_exists('WP_Super_Duper')) {
 							content += "]";
 
 
+							// @todo should we add inline style here or just css classes?
+							if (attr.alignment) {
+								if (attr.alignment == 'left') {
+									align = 'alignleft';
+								}
+								if (attr.alignment == 'center') {
+									align = 'aligncenter';
+								}
+								if (attr.alignment == 'right') {
+									align = 'alignright';
+								}
+							}
+
 							console.log(content);
-							return el('div', {dangerouslySetInnerHTML: {__html: content}});
+							return el('div', {dangerouslySetInnerHTML: {__html: content}, className: align});
 
 						}
 					});
@@ -325,7 +430,7 @@ if(!class_exists('WP_Super_Duper')) {
 			$output = ob_get_clean();
 
 			/*
-			 * We only add the <script> tags for code higlighting, so we strip them from the output.
+			 * We only add the <script> tags for code highlighting, so we strip them from the output.
 			 */
 
 			return str_replace( array(
@@ -353,33 +458,41 @@ if(!class_exists('WP_Super_Duper')) {
 						echo "el( '" . str_replace( "element::", "", $element ) . "', {";
 						if ( isset( $new_args['content'] ) ) {
 							$content = $new_args['content'];
-							unset($new_args['content']);
+							unset( $new_args['content'] );
 						}
 						echo $this->block_element( $new_args );
 
 						// check for content
-						if ($content) {
+						if ( $content ) {
 							echo "},";
-							echo "'".$this->block_props_replace($content)."'";
+							echo "'" . $this->block_props_replace( $content ) . "'";
 							echo "),";
 
 							//echo esc_attr( $new_args['content'] );
-						}else{
+						} else {
 							echo "}),";
 						}
 
 					} // its not an element or property
 					else {
-						echo $element . ": '".$this->block_props_replace($new_args)."',";
+						echo $element . ": '" . $this->block_props_replace( $new_args ) . "',";
 					}
 
 				}
 			}
 		}
 
-		public function block_props_replace($string){
+		/**
+		 * Replace block attributes placeholders with the proper naming.
+		 *
+		 * @param $string
+		 *
+		 * @return mixed
+		 */
+		public function block_props_replace( $string ) {
 
-			$string = str_replace( array("[%","%]"), array("'+props.attributes.","+'"), $string );
+			$string = str_replace( array( "[%", "%]" ), array( "'+props.attributes.", "+'" ), $string );
+
 			return $string;
 		}
 
@@ -405,9 +518,9 @@ if(!class_exists('WP_Super_Duper')) {
 		}
 
 		/**
-		 * Outputs the options form on admin
+		 * Outputs the options form inputs for the widget.
 		 *
-		 * @param array $instance The widget options
+		 * @param array $instance The widget options.
 		 */
 		public function form( $instance ) {
 			if ( is_array( $this->arguments ) ) {
@@ -441,7 +554,14 @@ if(!class_exists('WP_Super_Duper')) {
 			}
 
 			switch ( $args['type'] ) {
+				//array('text','password','number','email','tel','url','color')
 				case "text":
+				case "password":
+				case "number":
+				case "email":
+				case "tel":
+				case "url":
+				case "color":
 					?>
 					<p>
 						<label
@@ -449,7 +569,8 @@ if(!class_exists('WP_Super_Duper')) {
 						<input <?php echo $placeholder; ?> class="widefat"
 						                                   id="<?php echo esc_attr( $this->get_field_id( $args['name'] ) ); ?>"
 						                                   name="<?php echo esc_attr( $this->get_field_name( $args['name'] ) ); ?>"
-						                                   type="text" value="<?php echo esc_attr( $value ); ?>">
+						                                   type="<?php esc_attr( $args['type'] ); ?>"
+						                                   value="<?php echo esc_attr( $value ); ?>">
 					</p>
 					<?php
 
@@ -487,12 +608,20 @@ if(!class_exists('WP_Super_Duper')) {
 					<?php
 					break;
 				default:
-					echo "No input type found!";
+					echo "No input type found!"; // @todo we need to add more input types.
 			}
 
 		}
 
-		//@todo, need to make its own tooltip script
+
+		/**
+		 * Get the widget input description html.
+		 *
+		 * @param $args
+		 *
+		 * @return string
+		 * @todo, need to make its own tooltip script
+		 */
 		public function widget_field_desc( $args ) {
 
 			$description = '';
@@ -508,14 +637,43 @@ if(!class_exists('WP_Super_Duper')) {
 		}
 
 
+		/**
+		 * Get the tool tip html.
+		 *
+		 * @param $tip
+		 * @param bool $allow_html
+		 *
+		 * @return string
+		 */
 		function desc_tip( $tip, $allow_html = false ) {
 			if ( $allow_html ) {
-				$tip = geodir_sanitize_tooltip( $tip );
+				$tip = $this->sanitize_tooltip( $tip );
 			} else {
 				$tip = esc_attr( $tip );
 			}
 
 			return '<span class="gd-help-tip dashicons dashicons-editor-help" title="' . $tip . '"></span>';
+		}
+
+		/**
+		 * Sanitize a string destined to be a tooltip.
+		 *
+		 * @param string $var
+		 *
+		 * @return string
+		 */
+		public function sanitize_tooltip( $var ) {
+			return htmlspecialchars( wp_kses( html_entity_decode( $var ), array(
+				'br'     => array(),
+				'em'     => array(),
+				'strong' => array(),
+				'small'  => array(),
+				'span'   => array(),
+				'ul'     => array(),
+				'li'     => array(),
+				'ol'     => array(),
+				'p'      => array(),
+			) ) );
 		}
 
 		/**
@@ -525,6 +683,7 @@ if(!class_exists('WP_Super_Duper')) {
 		 * @param array $old_instance The previous options
 		 *
 		 * @return array
+		 * @todo we should add some sanitation here.
 		 */
 		public function update( $new_instance, $old_instance ) {
 			//save the widget
