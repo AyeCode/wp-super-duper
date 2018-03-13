@@ -42,8 +42,16 @@ class Hello_World extends WP_Super_Duper {
 			// the category for the block, 'common', 'formatting', 'layout', 'widgets', 'embed'.
 			'block-keywords' => "['hello','world']",
 			// used in the block search, MAX 3
+//			'block-output'   => array( // the block visual output elements as an array
+//				'element::p' => array(
+//					'title'   => __( 'Placeholder', 'hello-world' ),
+//					'class'   => '[%className%]',
+//					'content' => 'Hello: [%after_text%]' // block properties can be added by wrapping them in [%name%]
+//				)
+//			),
 			'block-output'   => array( // the block visual output elements as an array
-				'element::p' => array(
+				array(
+					'element' => 'p',
 					'title'   => __( 'Placeholder', 'hello-world' ),
 					'class'   => '[%className%]',
 					'content' => 'Hello: [%after_text%]' // block properties can be added by wrapping them in [%name%]
@@ -62,9 +70,7 @@ class Hello_World extends WP_Super_Duper {
 				// widget description
 			),
 			'arguments'      => array( // these are the arguments that will be used in the widget, shortcode and block settings.
-				'after_text' => array(
-					'name'        => 'after_text',
-					// this is the input name=''
+				'after_text' => array( // this is the input name=''
 					'title'       => __( 'Text after hello:', 'hello-world' ),
 					// input title
 					'desc'        => __( 'This is the text that will appear after `Hello:`.', 'hello-world' ),
@@ -154,4 +160,4 @@ function _my_extra_arguments( $options ) {
 	return $options;
 }
 
-add_filter( 'wp_super_duper_options_hello_world', '_my_extra_arguments' );
+//add_filter( 'wp_super_duper_options_hello_world', '_my_extra_arguments' );
