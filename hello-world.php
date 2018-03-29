@@ -1,29 +1,6 @@
 <?php
-/**
- * This is a Hello World test plugin for WP Super Duper Class.
- *
- * @wordpress-plugin
- * Plugin Name: Super Duper - Hello World
- * Description: This is a Hello World test plugin for WP Super Duper Class.
- * Version: 0.0.1
- * Author: AyeCode
- * Author URI: https://ayecode.io
- * Text Domain: hello-world
- * Domain Path: /languages
- * Requires at least: 4.2
- * Tested up to: 5.0.0
- */
 
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
-
-if ( ! class_exists( 'WP_Super_Duper' ) ) {
-	// include the class if needed
-	include_once( dirname( __FILE__ ) . "/wp-super-duper.php" );
-}
-
-class Hello_World extends WP_Super_Duper {
+class SD_Hello_World extends WP_Super_Duper {
 
 
 	public $arguments;
@@ -34,11 +11,11 @@ class Hello_World extends WP_Super_Duper {
 	public function __construct() {
 
 		$options = array(
-			'textdomain'     => 'hello-world',
+			'textdomain'     => 'super-duper',
 			// textdomain of the plugin/theme (used to prefix the Gutenberg block)
 			'block-icon'     => 'admin-site',
 			// Dash icon name for the block: https://developer.wordpress.org/resource/dashicons/#arrow-right
-			'block-category' => 'common',
+			'block-category' => 'widgets',
 			// the category for the block, 'common', 'formatting', 'layout', 'widgets', 'embed'.
 			'block-keywords' => "['hello','world']",
 			// used in the block search, MAX 3
@@ -125,7 +102,7 @@ class Hello_World extends WP_Super_Duper {
 
 // register it.
 add_action( 'widgets_init', function () {
-	register_widget( 'Hello_World' );
+	register_widget( 'SD_Hello_World' );
 } );
 
 
