@@ -94,7 +94,7 @@ class SD_Map extends WP_Super_Duper {
 				'location'            => array(
 					'type'        => 'text',
 					'title'       => __( 'Location:', 'geodirectory' ),
-					'desc'        => __( 'Enter the location to show on the map', 'geodirectory' ),
+					'desc'        => __( 'Enter the location to show on the map, place, city, zip code or GPS.', 'geodirectory' ),
 					'placeholder' => 'Place, city, zip code or GPS',
 					'desc_tip'    => true,
 					'default'     => 'Ireland',
@@ -226,9 +226,9 @@ class SD_Map extends WP_Super_Duper {
 		$args['api_key'] = get_option( 'rgmk_google_map_api_key', false ) ? get_option( 'rgmk_google_map_api_key' ) : $args['api_key'];
 
 		if($args['type']=='image'){
-			$output = "<img src='https://maps.googleapis.com/maps/api/staticmap?center=".esc_attr($args['location'])."&maptype=".esc_attr($args['maptype'])."&zoom=".esc_attr($args['zoom'])."&size=".esc_attr($args['static_width'])."x".esc_attr($args['static_height'])."&key=".esc_attr($args['api_key'])."' />";
+			$output .= "<img src='https://maps.googleapis.com/maps/api/staticmap?center=".esc_attr($args['location'])."&maptype=".esc_attr($args['maptype'])."&zoom=".esc_attr($args['zoom'])."&size=".esc_attr($args['static_width'])."x".esc_attr($args['static_height'])."&key=".esc_attr($args['api_key'])."' />";
 		}else{
-//https://maps.googleapis.com/maps/api/staticmap?center=Ireland&maptype=roadmap&zoom=4&size=600x400
+			$output .= "<iframe width='".esc_attr($args['width'])."' height='".esc_attr($args['height'])."' frameborder='0' allowfullscreen style='border:0;' src='https://www.google.com/maps/embed/v1/".esc_attr($args['type'])."?q=".esc_attr($args['location'])."&maptype=".esc_attr($args['maptype'])."&zoom=".esc_attr($args['zoom'])."&key=".esc_attr($args['api_key'])."' ></iframe> ";
 		}
 
 		return $output;
