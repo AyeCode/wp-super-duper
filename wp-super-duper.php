@@ -16,12 +16,13 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 	 * @since 1.0.3 Placeholder text will be shown for widget that return no block content.
 	 * @since 1.0.4 is_elementor_widget_output() method added.
 	 * @since 1.0.4 is_elementor_preview() method added.
-	 * @ver 1.0.4
+	 * @since 1.0.5 Block checkbox options are set as true by default even when set as false - FIXED
+	 * @ver 1.0.5
 	 */
 	class WP_Super_Duper extends WP_Widget {
 
 
-		public $version = "1.0.4";
+		public $version = "1.0.5";
 		public $block_code;
 		public $options;
 		public $base_id;
@@ -898,7 +899,7 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 
 								if ( $args['type'] == 'checkbox' ) {
 									$type    = 'boolean';
-									$default = isset( $args['default'] ) && "'" . $args['default'] . "'" ? 'true' : 'false';
+									$default = isset( $args['default'] ) && $args['default']  ? 'true' : 'false';
 								} elseif ( $args['type'] == 'number' ) {
 									$type    = 'number';
 									$default = isset( $args['default'] ) ? "'" . $args['default'] . "'" : "''";
