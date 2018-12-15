@@ -1,6 +1,6 @@
 {
   "name": "ayecode/wp-super-duper",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "type": "library",
   "description": "Lets you create a widget, block and showrtcode all from the one file .",
   "keywords": ["WordPress","super duper","wp"],
