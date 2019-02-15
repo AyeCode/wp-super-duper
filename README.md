@@ -1,2 +1,2 @@
 # wp-super-duper
-A Class to build a widget,shortcode and block.
+A WordPress Class to build a widget, shortcode and Gutenberg block at once.
