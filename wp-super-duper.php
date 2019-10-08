@@ -26,11 +26,11 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 	 * @since 1.0.12 A checkbox default value can make a argument true even when unchecked - FIXED
 	 * @since 1.0.13 Block values can break JS if contains a comma - FIXED
 	 * @since 1.0.14 Use of additional css class in block editor breaks the block html - FIXED
-	 * @ver 1.0.13
+	 * @ver 1.0.14
 	 */
 	class WP_Super_Duper extends WP_Widget {
 
-		public $version = "1.0.13";
+		public $version = "1.0.14";
 		public $block_code;
 		public $options;
 		public $base_id;
