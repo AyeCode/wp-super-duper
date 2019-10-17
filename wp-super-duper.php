@@ -26,6 +26,7 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 	 * @since 1.0.12 A checkbox default value can make a argument true even when unchecked - FIXED
 	 * @since 1.0.13 Block values can break JS if contains a comma - FIXED
 	 * @since 1.0.14 Use of additional css class in block editor breaks the block html - FIXED
+	 * @since 1.0.15 Fix conflicts with GeneratePress sections - FIXED
 	 * @ver 1.0.14
 	 */
 	class WP_Super_Duper extends WP_Widget {
@@ -84,6 +85,10 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 
 				// add shortcode insert button once
 				add_action( 'media_buttons', array( $this, 'shortcode_insert_button' ) );
+				// generatepress theme sections compatibility
+				if ( function_exists( 'generate_sections_sections_metabox' ) ) {
+					add_action( 'generate_sections_metabox', array( $this, 'shortcode_insert_button_script' ) );
+				}
 				if ( $this->is_preview() ) {
 					add_action( 'wp_footer', array( $this, 'shortcode_insert_button_script' ) );
 					// this makes the insert button work for elementor
@@ -268,7 +273,12 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 				echo '</span>'; // end #insert-media-button
 			}
 
-			self::shortcode_insert_button_script( $editor_id, $insert_shortcode_function );
+			// Add separate script for generatepress theme sections
+			if ( function_exists( 'generate_sections_sections_metabox' ) && did_action( 'generate_sections_metabox' ) ) {
+			} else {
+				self::shortcode_insert_button_script( $editor_id, $insert_shortcode_function );
+			}
+
 			$shortcode_insert_button_once = true;
 		}
 
@@ -528,6 +538,11 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 					height: 250px;
 					width: 100%;
 				}
+				<?php if ( function_exists( 'generate_sections_sections_metabox' ) ) { ?>
+				.generate-sections-modal #custom-media-buttons > .sd-lable-shortcode-inserter {
+					display: inline;
+				}
+				<?php } ?>
 			</style>
 			<?php
 			if ( class_exists( 'SiteOrigin_Panels' ) ) {
@@ -549,9 +564,7 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 				function sd_insert_shortcode($editor_id) {
 					$shortcode = jQuery('#TB_ajaxContent #sd-shortcode-output').val();
 					if ($shortcode) {
-
 						if (!$editor_id) {
-
 							<?php
 							if ( isset( $_REQUEST['et_fb'] ) ) {
 								echo '$editor_id = "#main_content_content_vb_tiny_mce";';
@@ -564,8 +577,13 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 						} else {
 							$editor_id = '#' + $editor_id;
 						}
-
-						if (tinyMCE && tinyMCE.activeEditor && jQuery($editor_id).attr("aria-hidden") == "true") {
+						tmceActive = jQuery($editor_id).attr("aria-hidden") == "true" ? true : false;
+						/* GeneratePress */
+						if ( jQuery('#generate-sections-modal-dialog ' + $editor_id).length) {
+							$editor_id = '#generate-sections-modal-dialog ' + $editor_id;
+							tmceActive = jQuery($editor_id).closest('.wp-editor-wrap').hasClass('tmce-active') ? true : false;
+						}
+						if (tinyMCE && tinyMCE.activeEditor && tmceActive) {
 							tinyMCE.execCommand('mceInsertContent', false, $shortcode);
 						} else {
 							var $txt = jQuery($editor_id);
