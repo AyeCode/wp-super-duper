@@ -13,11 +13,11 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 	 *
 	 * Class WP_Super_Duper
 	 * @since 1.0.16 change log moved to file change-log.txt - CHANGED
-	 * @ver 1.0.16
+	 * @ver 1.0.17
 	 */
 	class WP_Super_Duper extends WP_Widget {
 
-		public $version = "1.0.16";
+		public $version = "1.0.17";
 		public $font_awesome_icon_version = "5.11.2";
 		public $block_code;
 		public $options;
@@ -1109,7 +1109,7 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 						jQuery($this).data('sd-widget-enabled', true);
 					}
 
-					var $button = '<button title="<?php _e( 'Advanced Settings' );?>" class="button button-primary right sd-advanced-button" onclick="sd_toggle_advanced(this);return false;"><span class="dashicons dashicons-admin-settings" style="width: 28px;font-size: 28px;"></span></button>';
+					var $button = '<button title="<?php _e( 'Advanced Settings' );?>" style="line-height: 28px;" class="button button-primary right sd-advanced-button" onclick="sd_toggle_advanced(this);return false;"><span class="dashicons dashicons-admin-settings" style="width: 28px;font-size: 28px;"></span></button>';
 					var form = jQuery($this).parents('' + $selector + '');
 
 					if (jQuery($this).val() == '1' && jQuery(form).find('.sd-advanced-button').length == 0) {
