@@ -1,3 +1,6 @@
+= 1.0.18 =
+Conflicts with fusion builder elements - FIXED
+
 = 1.0.17 =
 * Title & description in block editor shows escaped special characters - FIXED
 * Widget advanced settings button line-height too tall - FIXED
