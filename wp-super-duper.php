@@ -64,7 +64,9 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 				$this->register_shortcode();
 
 				// Fusion Builder (avada) support
-				if( function_exists('fusion_builder_map') ){ $this->register_fusion_element(); }
+				if ( function_exists( 'fusion_builder_map' ) ) {
+					add_action( 'init', array( $this, 'register_fusion_element' ) );
+				}
 
 				// register block
 				add_action( 'admin_enqueue_scripts', array( $this, 'register_block' ) );
@@ -157,6 +159,12 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 						),
 						$val['type']);
 
+					// multiselect
+					if ( $val['type'] == 'multiselect' || ( ( $param['type'] == 'select' || $val['type'] == 'select' ) && ! empty( $val['multiple'] ) ) ) {
+						$param['type'] = 'multiple_select';
+						$param['multiple'] = true;
+					}
+
 					// heading
 					$param['heading'] = $val['title'];
 
@@ -180,7 +188,7 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 							unset($param['default']);
 						}
 						$param['value'] = array(''=>__("No"),'1'=>__("Yes"));
-					}elseif($param['type'] == 'select'){
+					}elseif($param['type'] == 'select' || $param['type'] == 'multiple_select'){
 						$param['value'] = isset($val['options']) ? $val['options'] : array();
 					}else{
 						$param['value'] = isset($val['default']) ? $val['default'] : '';
