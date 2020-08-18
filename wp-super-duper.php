@@ -1322,7 +1322,7 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 		 * @return string
 		 */
 		public function shortcode_output( $args = array(), $content = '' ) {
-			$args = self::argument_values( $args );
+			$args = $this->argument_values( $args );
 
 			// add extra argument so we know its a output to gutenberg
 			//$args
