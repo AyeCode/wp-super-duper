@@ -1737,8 +1737,8 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 									$default = isset( $args['default'] ) ? "'" . $args['default'] . "'" : "''";
 								} elseif ( $args['type'] == 'select' && ! empty( $args['multiple'] ) ) {
 									$type = 'array';
-									if ( is_array( $args['default'] ) ) {
-										$default = isset( $args['default'] ) ? "['" . implode( "','", $args['default'] ) . "']" : "[]";
+									if ( isset( $args['default'] ) && is_array( $args['default'] ) ) {
+										$default = ! empty( $args['default'] ) ? "['" . implode( "','", $args['default'] ) . "']" : "[]";
 									} else {
 										$default = isset( $args['default'] ) ? "'" . $args['default'] . "'" : "''";
 									}
