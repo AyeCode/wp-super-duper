@@ -66,7 +66,7 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 				New WP_Super_Duper_Shortcode( $this );
 
 				// register block
-				New WP_Super_Duper_Block( $this );
+				$this->block = New WP_Super_Duper_Block( $this );
 			}
 
 			// add the CSS and JS we need ONCE
