@@ -110,8 +110,8 @@ class WP_Super_Duper_Block {
 
 				var term_query_type = '';
 				var post_type_rest_slugs = <?php if(! empty( $this->arguments ) && isset($this->arguments['post_type']['onchange_rest']['values'])){echo "[".json_encode($this->arguments['post_type']['onchange_rest']['values'])."]";}else{echo "[]";} ?>;
-				const taxonomies_<?php echo str_replace("-","_", $this->SD->id);?> = [{label: "Please wait", value: 0}];
-				const sort_by_<?php echo str_replace("-","_", $this->SD->id);?> = [{label: "Please wait", value: 0}];
+				const taxonomies_<?php echo str_replace("-","_", $this->SD->base_id);?> = [{label: "Please wait", value: 0}];
+				const sort_by_<?php echo str_replace("-","_", $this->SD->base_id);?> = [{label: "Please wait", value: 0}];
 
 				/**
 				 * Register Basic Block.

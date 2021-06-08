@@ -73,6 +73,7 @@ class SD_Map extends WP_Super_Duper {
 				// widget class
 				'description' => esc_html__( 'This is an example that will take a text parameter and output it after `Hello:`.', 'hello-world' ),
 				// widget description
+				'output' => array( $this, 'output' )
 			),
 			'arguments'      => array( // these are the arguments that will be used in the widget, shortcode and block settings.
 				'type'  => array(
@@ -237,7 +238,4 @@ class SD_Map extends WP_Super_Duper {
 
 }
 
-// register it.
-add_action( 'widgets_init', function () {
-	register_widget( 'SD_Map' );
-} );
+new SD_Map();
