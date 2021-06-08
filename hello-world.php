@@ -40,6 +40,7 @@ class SD_Hello_World extends WP_Super_Duper {
 				// widget class
 				'description' => esc_html__( 'This is an example that will take a text parameter and output it after `Hello:`.', 'hello-world' ),
 				// widget description
+				'output' => array( $this, 'output' )
 			),
 			'no_wrap'       => true, // This will prevent the widget being wrapped in the containing widget class div.
 			'arguments'      => array( // these are the arguments that will be used in the widget, shortcode and block settings.
@@ -76,7 +77,6 @@ class SD_Hello_World extends WP_Super_Duper {
 	 * @return string
 	 */
 	public function output( $args = array(), $widget_args = array(), $content = '' ) {
-
 		/**
 		 * @var string $after_text
 		 * @var string $another_input This is added by filter below.
@@ -91,16 +91,11 @@ class SD_Hello_World extends WP_Super_Duper {
 		}
 
 		return "Hello: " . $after_text . "" . $another_input;
-
 	}
 
 }
 
-// register it.
-add_action( 'widgets_init', function () {
-	register_widget( 'SD_Hello_World' );
-} );
-
+new SD_Hello_World();
 
 /**
  * Extend the options via filter hook, this can be done via plugin/theme.
