@@ -1,6 +1,6 @@
 {
   "name": "ayecode/wp-super-duper",
-  "version": "1.0.26",
+  "version": "1.0.27",
   "type": "library",
   "description": "Lets you create a widget, block and shortcode all from the one file .",
   "keywords": ["WordPress","super duper","wp"],
@@ -24,6 +24,11 @@
     "wp-coding-standards/wpcs": "*"
   },
   "autoload": {
-    "classmap": ["wp-super-duper.php"]
+    "classmap": [
+      "wp-super-duper.php"
+    ],
+    "files": [
+      "sd-functions.php"
+    ]
   }
 }
