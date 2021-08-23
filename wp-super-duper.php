@@ -483,7 +483,7 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 					}
 
 					// show hide on form change
-					jQuery(form).change(function () {
+					jQuery(form).on("change", function () {
 						sd_so_show_hide(form);
 					});
 
@@ -1153,7 +1153,7 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 					}
 
 					// show hide on form change
-					jQuery(form).change(function () {
+					jQuery(form).on("change", function () {
 						sd_show_hide(form);
 					});
 
