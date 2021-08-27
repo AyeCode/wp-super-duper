@@ -187,7 +187,7 @@ class WP_Super_Duper_Shortcode {
 			echo $html;
 			$should_die = true;
 
-			// some builder get the editor via ajax so we should not die on those ocasions
+			// some builder get the editor via ajax so we should not die on those occasions
 			$dont_die = array(
 				'parent_tag',// WP Bakery
 				'avia_request' // enfold
@@ -215,7 +215,7 @@ class WP_Super_Duper_Shortcode {
 	 * @since 1.0.0
 	 *
 	 * @param string $editor_id Optional. Shortcode editor id. Default null.
-	 * @param string $insert_shortcode_function Optional. Insert shotcode function. Default null.
+	 * @param string $insert_shortcode_function Optional. Insert shortcode function. Default null.
 	 */
 	public static function shortcode_insert_button( $editor_id = '', $insert_shortcode_function = '' ) {
 		global $shortcode_insert_button_once;
@@ -643,7 +643,7 @@ class WP_Super_Duper_Shortcode {
 					}
 				});
 
-				// The below tries to add the shorcode builder button to the builders own raw/shortcode sections.
+				// The below tries to add the shortcode builder button to the builders own raw/shortcode sections.
 
 				// DIVI
 				jQuery(document).on('focusin', '.et-fb-codemirror', function () {
@@ -816,7 +816,7 @@ class WP_Super_Duper_Shortcode {
 		$class = apply_filters( 'wp_super_duper_div_classname_' . $this->SD->base_id, $class, $args, $this );
 
 		$attrs = apply_filters( 'wp_super_duper_div_attrs', '', $args, $this );
-		$attrs = apply_filters( 'wp_super_duper_div_attrs_' . $this->SD->base_id, '', $args, $this ); //@todo this does not seem right @kiran?
+		$attrs = apply_filters( 'wp_super_duper_div_attrs_' . $this->SD->base_id, '', $args, $this );
 
 		$shortcode_args = array();
 		$output         = '';

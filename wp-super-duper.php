@@ -19,7 +19,7 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 	 * @ver 1.0.19
 	 */
 	class WP_Super_Duper {
-		public $version = "1.0.24";
+		public $version = "1.0.27";
 		public $font_awesome_icon_version = "5.11.2";
 		public $block_code;
 		public $options;
@@ -94,7 +94,7 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 			?>
 			<script>
 				/**
-				 * Check a form to see what items shoudl be shown or hidden.
+				 * Check a form to see what items should be shown or hidden.
 				 */
 				function sd_so_show_hide(form) {
 					jQuery(form).find(".sd-argument").each(function () {
@@ -146,7 +146,7 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 					}
 
 					// show hide on form change
-					jQuery(form).change(function () {
+					jQuery(form).on("change", function () {
 						sd_so_show_hide(form);
 					});
 
