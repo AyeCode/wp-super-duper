@@ -1304,8 +1304,7 @@ class WP_Super_Duper_Widget extends WP_Widget {
                         $output = ob_get_clean();
 
                         return str_replace( array( '<script>', '</script>' ), '', trim( $output ) );
-                    }
-                }
+            }
 
 		/**
 		 * Get the widget input title html.
