@@ -59,6 +59,11 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 			$this->arguments = isset( $options['arguments'] ) ? $options['arguments'] : array();
 
 			if ( isset( $options['class_name'] ) ) {
+                if ( isset( $options['enable_block'] ) && $options['enable_block'] || !isset( $options['enable_block'] ) ) {
+                    // register block
+                    $this->block = New WP_Super_Duper_Block( $this );
+                }
+
                 if ( isset( $options['enable_widget'] ) && $options['enable_widget'] || !isset( $options['enable_widget'] ) ) {
                     // register widget
                     $this->class_name = $options['class_name'];
@@ -69,11 +74,6 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
                 if ( isset( $options['enable_shortcode'] ) && $options['enable_shortcode'] || !isset( $options['enable_shortcode'] ) ) {
                     // register shortcode
                     New WP_Super_Duper_Shortcode( $this );
-                }
-
-                if ( isset( $options['enable_block'] ) && $options['enable_block'] || !isset( $options['enable_block'] ) ) {
-                    // register block
-                    $this->block = New WP_Super_Duper_Block( $this );
                 }
 			}
 
@@ -86,6 +86,17 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 		 */
 		public function generator() {
 			echo '<meta name="generator" content="WP Super Duper v' . $this->version . '" />';
+		}
+
+		/**
+		 * This is the main output class for all 3 items, widget, shortcode and block, it is extended in the calling class.
+		 *
+		 * @param array $args
+		 * @param array $widget_args
+		 * @param string $content
+		 */
+		public function output( $args = array(), $widget_args = array(), $content = '' ) {
+			echo call_user_func( $this->options['widget_ops']['output'], $args, $widget_args, $content );
 		}
 
 

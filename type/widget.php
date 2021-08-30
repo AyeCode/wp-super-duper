@@ -310,17 +310,6 @@ class WP_Super_Duper_Widget extends WP_Widget {
 		}
 
 		/**
-		 * This is the main output class for all 3 items, widget, shortcode and block, it is extended in the calling class.
-		 *
-		 * @param array $args
-		 * @param array $widget_args
-		 * @param string $content
-		 */
-		public function output( $args = array(), $widget_args = array(), $content = '' ) {
-			echo call_user_func( $this->options['widget_ops']['output'], $args, $widget_args, $content );
-		}
-
-		/**
 		 * Outputs the content of the widget
 		 *
 		 * @param array $args
