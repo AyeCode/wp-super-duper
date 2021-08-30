@@ -138,7 +138,7 @@ class WP_Super_Duper_Block {
 					},
 					category: '<?php echo isset( $this->options['block-category'] ) ? esc_attr( $this->options['block-category'] ) : 'common';?>', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
 					<?php if ( isset( $this->options['block-keywords'] ) ) {
-						echo "keywords : " . $this->options['block-keywords'] . ",";
+						echo "keywords: " . $this->options['block-keywords'] . ",\n";
 					}
 					// maybe set no_wrap
 					$no_wrap = isset( $this->options['no_wrap'] ) && $this->options['no_wrap'] ? true : false;
@@ -157,20 +157,20 @@ class WP_Super_Duper_Block {
 					echo "},";*/
 
 					if ( ! empty( $this->arguments ) ) {
-						echo "attributes : {";
+						echo "attributes: {\n";
 						if ( $show_advanced ) {
 							echo "show_advanced: {";
-							echo "	type: 'boolean',";
-							echo "  default: false,";
-							echo "},";
+							echo "type: 'boolean',";
+							echo " default: false";
+							echo "},\n";
 						}
 
 						// block wrap element
 						if ( ! empty( $this->options['block-wrap'] ) ) { //@todo we should validate this?
 							echo "block_wrap: {";
-							echo "	type: 'string',";
-							echo "  default: '" . esc_attr( $this->options['block-wrap'] ) . "',";
-							echo "},";
+							echo "type: 'string',";
+							echo " default: '" . esc_attr( $this->options['block-wrap'] ) . "'";
+							echo "},\n";
 						}
 
 						foreach ( $this->arguments as $key => $args ) {
@@ -199,14 +199,14 @@ class WP_Super_Duper_Block {
 								$type    = 'string';
 								$default = isset( $args['default'] ) ? "'" . $args['default'] . "'" : "''";
 							}
-							echo $key . " : {";
-							echo "type : '$type',";
-							echo "default : $default,";
-							echo "},";
+							echo str_replace( '-','__', $key ) . ": {";
+							echo "type: '$type',";
+							echo "default: $default";
+							echo "},\n";
 						}
 
-						echo "content : {type : 'string',default: 'Please select the attributes in the block settings'},";
-						echo "className: { type: 'string', default: '' },";
+						echo "content : {type : 'string',default: 'Please select the attributes in the block settings'},\n";
+						echo "className: { type: 'string', default: '' },\n";
 
 						echo "},";
 
@@ -385,6 +385,7 @@ class WP_Super_Duper_Block {
 										},
 										<?php
 										foreach ( $args as $k => $a ) {
+                                            $k = str_replace('-','__', $k);
 											$this->block_row_start( $k, $a );
 											$this->build_block_arguments( $k, $a );
 											$this->block_row_end( $k, $a );
@@ -402,6 +403,7 @@ class WP_Super_Duper_Block {
 									},
 									<?php
 										foreach ( $this->arguments as $key => $args ) {
+                                            $key = str_replace('-','__', $key);
 											$this->block_row_start( $key, $args );
 											$this->build_block_arguments( $key, $args );
 											$this->block_row_end( $key, $args );
@@ -446,12 +448,13 @@ class WP_Super_Duper_Block {
 							if(! empty( $this->arguments )){
 
 							foreach($this->arguments as $key => $args){
+                                $key = str_replace('-','__', $key);
 								?>
 								if (attr.hasOwnProperty("<?php echo esc_attr( $key );?>")) {
 									if ('<?php echo esc_attr( $key );?>' == 'html') {
 										$html = attr.<?php echo esc_attr( $key );?>;
 									} else {
-										content += " <?php echo esc_attr( $key );?>='" + attr.<?php echo esc_attr( $key );?>+ "' ";
+										content += " <?php echo str_replace( '__','-', esc_attr( $key ) );?>='" + attr.<?php echo esc_attr( $key );?>+ "' ";
 									}
 								}
 								<?php
