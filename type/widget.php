@@ -8,6 +8,7 @@ class WP_Super_Duper_Widget extends WP_Widget {
 	public function set_arguments( $class ) {
 		$this->SD = $class;
 		$this->options = $class->options;
+        do_action( 'wp_super_duper_widget_init', $this->options, $this );
 		// add the CSS and JS we need ONCE
 		global $sd_widget_scripts;
 		if ( ! $sd_widget_scripts ) {
@@ -1358,5 +1359,44 @@ class WP_Super_Duper_Widget extends WP_Widget {
 			}
 
 			return $instance;
+		}
+
+		/**
+		 * Convert require element.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param string $input Input element.
+		 *
+		 * @return string $output
+		 */
+		public function convert_element_require( $input ) {
+
+			$input = str_replace( "'", '"', $input );// we only want double quotes
+
+			$output = esc_attr( str_replace( array( "[%", "%]" ), array(
+				"jQuery(form).find('[data-argument=\"",
+				"\"]').find('input,select,textarea').val()"
+			), $input ) );
+
+			return $output;
+		}
+
+		/**
+		 * Get the hidden input that when added makes the advanced button show on widget settings.
+		 *
+		 * @return string
+		 */
+		public function widget_advanced_toggle() {
+			$output = '';
+			if ( $this->block->block_show_advanced() ) {
+				$val = 1;
+			} else {
+				$val = 0;
+			}
+
+			$output .= "<input type='hidden'  class='sd-show-advanced' value='$val' />";
+
+			return $output;
 		}
 }

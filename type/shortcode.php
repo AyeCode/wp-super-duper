@@ -789,6 +789,104 @@ class WP_Super_Duper_Shortcode {
 		wp_die();
 	}
 
+		/**
+		 * Makes SD work with the siteOrigin page builder.
+		 *
+		 * @since 1.0.6
+		 * @return mixed
+		 */
+		public static function siteorigin_js() {
+			ob_start();
+			?>
+			<script>
+				/**
+				 * Check a form to see what items should be shown or hidden.
+				 */
+				function sd_so_show_hide(form) {
+					jQuery(form).find(".sd-argument").each(function () {
+
+						var $element_require = jQuery(this).data('element_require');
+
+						if ($element_require) {
+
+							$element_require = $element_require.replace("&#039;", "'"); // replace single quotes
+							$element_require = $element_require.replace("&quot;", '"'); // replace double quotes
+
+							if (eval($element_require)) {
+								jQuery(this).removeClass('sd-require-hide');
+							} else {
+								jQuery(this).addClass('sd-require-hide');
+							}
+						}
+					});
+				}
+
+				/**
+				 * Toggle advanced settings visibility.
+				 */
+				function sd_so_toggle_advanced($this) {
+					var form = jQuery($this).parents('form,.form,.so-content');
+					form.find('.sd-advanced-setting').toggleClass('sd-adv-show');
+					return false;// prevent form submit
+				}
+
+				/**
+				 * Initialise a individual widget.
+				 */
+				function sd_so_init_widget($this, $selector) {
+					if (!$selector) {
+						$selector = 'form';
+					}
+					// only run once.
+					if (jQuery($this).data('sd-widget-enabled')) {
+						return;
+					} else {
+						jQuery($this).data('sd-widget-enabled', true);
+					}
+
+					var $button = '<button title="<?php _e( 'Advanced Settings' );?>" class="button button-primary right sd-advanced-button" onclick="sd_so_toggle_advanced(this);return false;"><i class="fas fa-sliders-h" aria-hidden="true"></i></button>';
+					var form = jQuery($this).parents('' + $selector + '');
+
+					if (jQuery($this).val() == '1' && jQuery(form).find('.sd-advanced-button').length == 0) {
+						jQuery(form).append($button);
+					}
+
+					// show hide on form change
+					jQuery(form).on("change", function () {
+						sd_so_show_hide(form);
+					});
+
+					// show hide on load
+					sd_so_show_hide(form);
+				}
+
+				jQuery(function () {
+					jQuery(document).on('open_dialog', function (w, e) {
+						setTimeout(function () {
+							if (jQuery('.so-panels-dialog-wrapper:visible .so-content.panel-dialog .sd-show-advanced').length) {
+								console.log('exists');
+								if (jQuery('.so-panels-dialog-wrapper:visible .so-content.panel-dialog .sd-show-advanced').val() == '1') {
+									console.log('true');
+									sd_so_init_widget('.so-panels-dialog-wrapper:visible .so-content.panel-dialog .sd-show-advanced', 'div');
+								}
+							}
+						}, 200);
+					});
+				});
+			</script>
+			<?php
+			$output = ob_get_clean();
+
+			/*
+			 * We only add the <script> tags for code highlighting, so we strip them from the output.
+			 */
+
+			return str_replace( array(
+				'<script>',
+				'</script>'
+			), '', $output );
+		}
+
 	/**
 	 * Output the shortcode.
 	 *

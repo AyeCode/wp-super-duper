@@ -46,7 +46,7 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 				'name'       => $options['name'],
 				'class_name' => $options['class_name']
 			);
-			$this->base_id                     = $options['base_id'];
+			$this->base_id   = $options['base_id'];
 			// lets filter the options before we do anything
 			$options       = apply_filters( "wp_super_duper_options", $options );
 			$options       = apply_filters( "wp_super_duper_options_{$this->base_id}", $options );
@@ -57,22 +57,26 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 			$this->arguments = isset( $options['arguments'] ) ? $options['arguments'] : array();
 
 			if ( isset( $options['class_name'] ) ) {
-				// register widget
-				$this->class_name = $options['class_name'];
-				$widget = New WP_Super_Duper_Widget();
-				$widget->set_arguments( $this );
+                if ( isset( $options['enable_widget'] ) && $options['enable_widget'] || !isset( $options['enable_widget'] ) ) {
+                    // register widget
+                    $this->class_name = $options['class_name'];
+                    $widget = New WP_Super_Duper_Widget();
+                    $widget->set_arguments( $this );
+                }
 
-				// register shortcode
-				New WP_Super_Duper_Shortcode( $this );
+                if ( isset( $options['enable_shortcode'] ) && $options['enable_shortcode'] || !isset( $options['enable_shortcode'] ) ) {
+                    // register shortcode
+                    New WP_Super_Duper_Shortcode( $this );
+                }
 
-				// register block
-				$this->block = New WP_Super_Duper_Block( $this );
+                if ( isset( $options['enable_block'] ) && $options['enable_block'] || !isset( $options['enable_block'] ) ) {
+                    // register block
+                    $this->block = New WP_Super_Duper_Block( $this );
+                }
 			}
 
-				// add generator text to admin head
-				add_action( 'admin_head', array( $this, 'generator' ) );
-
-			do_action( 'wp_super_duper_widget_init', $options, $this );
+            // add generator text to admin head
+            add_action( 'admin_head', array( $this, 'generator' ) );
 		}
 
 		/**
@@ -80,105 +84,6 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 		 */
 		public function generator() {
 			echo '<meta name="generator" content="WP Super Duper v' . $this->version . '" />';
-		}
-
-
-		/**
-		 * Makes SD work with the siteOrigin page builder.
-		 *
-		 * @since 1.0.6
-		 * @return mixed
-		 */
-		public static function siteorigin_js() {
-			ob_start();
-			?>
-			<script>
-				/**
-				 * Check a form to see what items should be shown or hidden.
-				 */
-				function sd_so_show_hide(form) {
-					jQuery(form).find(".sd-argument").each(function () {
-
-						var $element_require = jQuery(this).data('element_require');
-
-						if ($element_require) {
-
-							$element_require = $element_require.replace("&#039;", "'"); // replace single quotes
-							$element_require = $element_require.replace("&quot;", '"'); // replace double quotes
-
-							if (eval($element_require)) {
-								jQuery(this).removeClass('sd-require-hide');
-							} else {
-								jQuery(this).addClass('sd-require-hide');
-							}
-						}
-					});
-				}
-
-				/**
-				 * Toggle advanced settings visibility.
-				 */
-				function sd_so_toggle_advanced($this) {
-					var form = jQuery($this).parents('form,.form,.so-content');
-					form.find('.sd-advanced-setting').toggleClass('sd-adv-show');
-					return false;// prevent form submit
-				}
-
-				/**
-				 * Initialise a individual widget.
-				 */
-				function sd_so_init_widget($this, $selector) {
-					if (!$selector) {
-						$selector = 'form';
-					}
-					// only run once.
-					if (jQuery($this).data('sd-widget-enabled')) {
-						return;
-					} else {
-						jQuery($this).data('sd-widget-enabled', true);
-					}
-
-					var $button = '<button title="<?php _e( 'Advanced Settings' );?>" class="button button-primary right sd-advanced-button" onclick="sd_so_toggle_advanced(this);return false;"><i class="fas fa-sliders-h" aria-hidden="true"></i></button>';
-					var form = jQuery($this).parents('' + $selector + '');
-
-					if (jQuery($this).val() == '1' && jQuery(form).find('.sd-advanced-button').length == 0) {
-						jQuery(form).append($button);
-					}
-
-					// show hide on form change
-					jQuery(form).on("change", function () {
-						sd_so_show_hide(form);
-					});
-
-					// show hide on load
-					sd_so_show_hide(form);
-				}
-
-				jQuery(function () {
-					jQuery(document).on('open_dialog', function (w, e) {
-						setTimeout(function () {
-							if (jQuery('.so-panels-dialog-wrapper:visible .so-content.panel-dialog .sd-show-advanced').length) {
-								console.log('exists');
-								if (jQuery('.so-panels-dialog-wrapper:visible .so-content.panel-dialog .sd-show-advanced').val() == '1') {
-									console.log('true');
-									sd_so_init_widget('.so-panels-dialog-wrapper:visible .so-content.panel-dialog .sd-show-advanced', 'div');
-								}
-							}
-						}, 200);
-					});
-				});
-			</script>
-			<?php
-			$output = ob_get_clean();
-
-			/*
-			 * We only add the <script> tags for code highlighting, so we strip them from the output.
-			 */
-
-			return str_replace( array(
-				'<script>',
-				'</script>'
-			), '', $output );
 		}
 
 
@@ -525,45 +430,6 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 			}
 
 			return $result;
-		}
-
-		/**
-		 * Get the hidden input that when added makes the advanced button show on widget settings.
-		 *
-		 * @return string
-		 */
-		public function widget_advanced_toggle() {
-			$output = '';
-			if ( $this->block->block_show_advanced() ) {
-				$val = 1;
-			} else {
-				$val = 0;
-			}
-
-			$output .= "<input type='hidden'  class='sd-show-advanced' value='$val' />";
-
-			return $output;
-		}
-
-		/**
-		 * Convert require element.
-		 *
-		 * @since 1.0.0
-		 *
-		 * @param string $input Input element.
-		 *
-		 * @return string $output
-		 */
-		public function convert_element_require( $input ) {
-
-			$input = str_replace( "'", '"', $input );// we only want double quotes
-
-			$output = esc_attr( str_replace( array( "[%", "%]" ), array(
-				"jQuery(form).find('[data-argument=\"",
-				"\"]').find('input,select,textarea').val()"
-			), $input ) );
-
-			return $output;
 		}
 
 		/**
