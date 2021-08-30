@@ -18,7 +18,9 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 	 * @since 1.0.16 change log moved to file change-log.txt - CHANGED
 	 * @ver 1.0.19
 	 */
+
 	class WP_Super_Duper {
+
 		public $version = "1.0.27";
 		public $font_awesome_icon_version = "5.11.2";
 		public $block_code;
@@ -109,6 +111,7 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 		}
 
 		/**
+
 		 * Placeholder text to show if output is empty and we are on a preview/builder page.
 		 *
 		 * @param string $name
@@ -251,7 +254,7 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 
 //			echo '###';print_r($arguments);
 			return $arguments;
-		}
+    }
 
 		/**
 		 * Convert an array of attributes to block string.
@@ -279,7 +282,6 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 
 			return $attributes;
 		}
-
 
 		/**
 		 * Tests if the current output is inside a elementor preview.
@@ -442,6 +444,6 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 			$instance_string = $this->base_id.serialize($this->instance);
 			return hash('crc32b',$instance_string);
 		}
-	}
 
+	}
 }
