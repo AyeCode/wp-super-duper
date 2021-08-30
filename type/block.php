@@ -339,7 +339,8 @@ class WP_Super_Duper_Block {
 										value: props.attributes.alignment,
 										onChange: function (alignment) {
 											props.setAttributes({alignment: alignment})
-										}
+										},
+										key: props.attributes.alignment
 									}
 								)
 								<?php }?>
@@ -360,7 +361,8 @@ class WP_Super_Duper_Block {
 											checked: props.attributes.show_advanced,
 											onChange: function (show_advanced) {
 												props.setAttributes({show_advanced: !props.attributes.show_advanced})
-											}
+											},
+											key: props.attributes.show_advanced
 										}
 									)
 								),
@@ -428,6 +430,7 @@ class WP_Super_Duper_Block {
 									dangerouslySetInnerHTML: {__html: onChangeContent()},
 									className: props.className,
 									style: {'minHeight': '30px'}
+                                    key: props.className + '-output'
 								})
 								<?php
 								}
@@ -529,6 +532,7 @@ class WP_Super_Duper_Block {
 						<?php if(!empty($args['row']['title'])){ ?>
 						el('label', {
 								className: 'components-base-control__label',
+								key: '<?php esc_attr($key)?>-title'
 							},
 							'<?php echo addslashes( $args['row']['title'] ); ?>'
 						),
@@ -536,6 +540,7 @@ class WP_Super_Duper_Block {
 						<?php if(!empty($args['row']['desc'])){ ?>
 						el('p', {
 								className: 'components-base-control__help mb-0',
+								key: '<?php esc_attr($key)?>-desc'
 							},
 							'<?php echo addslashes( $args['row']['desc'] ); ?>'
 						),
@@ -587,7 +592,7 @@ class WP_Super_Duper_Block {
 	public function build_block_arguments( $key, $args ) {
 		$custom_attributes = ! empty( $args['custom_attributes'] ) ? $this->SD->array_to_attributes( $args['custom_attributes'] ) : '';
 		$options           = '';
-		$extra             = '';
+		$extra             = 'key: \'' . $key . '\',' . "\n";
 
 		// `content` is a protected and special argument
 		if ( $key == 'content' ) {
@@ -625,7 +630,7 @@ class WP_Super_Duper_Block {
 		elseif ( $args['type'] == 'color' ) {
 			$type = 'ColorPicker';
 			$onchange = "";
-			$extra = "color: $value,";
+			$extra .= "color: $value,";
 			if(!empty($args['disable_alpha'])){
 				$extra .= "disableAlpha: true,";
 			}
@@ -694,14 +699,12 @@ class WP_Super_Duper_Block {
 		} ?>
 		<?php if ( ! empty( $args['placeholder'] ) ) {
 			echo "placeholder: '" . addslashes( $args['placeholder'] ) . "',";
-		} ?>
-		<?php echo $options; ?>
-		<?php echo $extra; ?>
-		<?php echo $custom_attributes; ?>
-		<?php echo $onchangecomplete;?>
-		onChange: function ( <?php echo $key; ?> ) {
-		<?php echo $onchange; ?>
 		}
+		echo $options;
+        echo $extra;
+        echo $custom_attributes;
+        echo $onchangecomplete . "\n";?>
+		onChange: function ( <?php echo $key; ?> ) {<?php echo $onchange; ?>}
 		} ),
 		<?php
 	}
@@ -737,7 +740,7 @@ class WP_Super_Duper_Block {
 								echo $this->block_element( array( $new_key => $new_value ) );
 							}
 						}
-						echo "},";// end attributes
+						echo "key:" . $element ."},";// end attributes
 
 						// get the content
 						$first_item = 0;
