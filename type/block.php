@@ -352,7 +352,7 @@ class WP_Super_Duper_Block {
 									if ( $show_advanced ) {
 								?>
 								el('div', {
-										style: {'padding-left': '16px','padding-right': '16px'}
+										style: {'paddingLeft': '16px','paddingRight': '16px'}
 									},
 									el(
 										wp.components.ToggleControl,
