@@ -93,7 +93,8 @@ class WP_Super_Duper_Block {
 			 * BLOCK: Basic
 			 *
 			 * Registering a basic block with Gutenberg.
-			 * Simple block, renders and saves the same content without any interactivity.
+			 * Simple block, renders and saves the same 
+			 /without any interactivity.
 			 *
 			 * Styles:
 			 *        editor.css — Editor styles for the block.
@@ -205,7 +206,7 @@ class WP_Super_Duper_Block {
 							echo "},\n";
 						}
 
-						echo "content : {type : 'string',default: 'Please select the attributes in the block settings'},\n";
+						echo "temp_content : {type : 'string',default: 'Please select the attributes in the block settings'},\n";
 						echo "className: { type: 'string', default: '' },\n";
 
 						echo "},";
@@ -280,14 +281,14 @@ class WP_Super_Duper_Block {
 							}
 						<?php }?>
 
-						var content = props.attributes.content;
+						var content = props.attributes.temp_content;
 
 						function onChangeContent() {
 							$refresh = false;
 
 							// Set the old content the same as the new one so we only compare all other attributes
 							if(typeof(prev_attributes[props.id]) != 'undefined'){
-								prev_attributes[props.id].content = props.attributes.content;
+								prev_attributes[props.id].content = props.attributes.temp_content;
 							}else if(props.attributes.content === ""){
 								// if first load and content empty then refresh
 								$refresh = true;
@@ -313,7 +314,7 @@ class WP_Super_Duper_Block {
 										env = "<div style='background:#0185ba33;padding: 10px;border: 4px #ccc dashed;'>" + "<?php _e( 'Placeholder for: ' );?>" + props.name + "</div>";
 									}
 
-									props.setAttributes({content: env});
+									props.setAttributes({temp_content: env});
 									is_fetching = false;
 									prev_attributes[props.id] = props.attributes;
 
@@ -325,7 +326,7 @@ class WP_Super_Duper_Block {
 
 							}
 
-							return props.attributes.content;
+							return props.attributes.temp_content;
 
 						}
 
@@ -593,11 +594,6 @@ class WP_Super_Duper_Block {
 		$custom_attributes = ! empty( $args['custom_attributes'] ) ? $this->SD->array_to_attributes( $args['custom_attributes'] ) : '';
 		$options           = '';
 		$extra             = 'key: \'' . $key . '\',' . "\n";
-
-		// `content` is a protected and special argument
-		if ( $key == 'content' ) {
-			return;
-		}
 
 		// icon
 		$icon = '';
