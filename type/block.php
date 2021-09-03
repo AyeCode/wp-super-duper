@@ -7,6 +7,8 @@ class WP_Super_Duper_Block {
 		$this->options = $class->options;
 
 		add_action( 'admin_enqueue_scripts', array( $this, 'register_block' ) );
+		add_action( 'admin_footer-post.php', array( $this,'enqueue_editor_assets' ) );
+		add_action( 'admin_footer-post-new.php', array( $this,'enqueue_editor_assets' ) );
 	}
 
 	/**
@@ -16,6 +18,15 @@ class WP_Super_Duper_Block {
 		wp_add_inline_script( 'wp-blocks', $this->block() );
 		if ( class_exists( 'SiteOrigin_Panels' ) ) {
 			wp_add_inline_script( 'wp-blocks', $this->siteorigin_js() );
+		}
+	}
+
+	/**
+	 * Enqueue CSS assets in the editor if defined
+	 */
+	public function enqueue_editor_assets() {
+		if ( isset( $this->options['block-editor-style'] ) ) {
+			echo "<link rel='stylesheet' id='glossary-shortcode' href='" . $this->options['block-editor-style'] . "'/>";
 		}
 	}
 
