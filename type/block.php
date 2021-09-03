@@ -430,8 +430,8 @@ class WP_Super_Duper_Block {
 								el('div', {
 									dangerouslySetInnerHTML: {__html: onChangeContent()},
 									className: props.className,
-									style: {'minHeight': '30px'}
-                                    key: props.className + '-output'
+									style: {'minHeight': '30px'},
+									key: props.className + '-output'
 								})
 								<?php
 								}
@@ -452,7 +452,7 @@ class WP_Super_Duper_Block {
 							if(! empty( $this->arguments )){
 
 							foreach($this->arguments as $key => $args){
-                                $key = str_replace('-','__', $key);
+								$key = str_replace('-','__', $key);
 								?>
 								if (attr.hasOwnProperty("<?php echo esc_attr( $key );?>")) {
 									if ('<?php echo esc_attr( $key );?>' == 'html') {
