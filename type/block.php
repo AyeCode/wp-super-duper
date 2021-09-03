@@ -93,7 +93,7 @@ class WP_Super_Duper_Block {
 			 * BLOCK: Basic
 			 *
 			 * Registering a basic block with Gutenberg.
-			 * Simple block, renders and saves the same 
+			 * Simple block, renders and saves the same
 			 /without any interactivity.
 			 *
 			 * Styles:

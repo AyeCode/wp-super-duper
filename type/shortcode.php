@@ -6,7 +6,6 @@ class WP_Super_Duper_Shortcode {
 		$this->SD = $class;
 		$this->options = $class->options;
 		add_shortcode( $this->SD->base_id, array( $this, 'shortcode_output' ) );
-		add_action( 'wp_ajax_super_duper_output_shortcode', array( __CLASS__, 'render_shortcode' ) );
 		// this makes the insert button work for cornerstone
 		add_action( 'wp_print_footer_scripts', array( __CLASS__, 'maybe_cornerstone_builder' ) );
 
@@ -750,43 +749,6 @@ class WP_Super_Duper_Shortcode {
 			}
 			</script>
 		<?php
-	}
-
-	/**
-	 * Render the shortcode via ajax so we can return it to Gutenberg.
-	 *
-	 * @since 1.0.0
-	 */
-	public static function render_shortcode() {
-		check_ajax_referer( 'super_duper_output_shortcode', '_ajax_nonce', true );
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die();
-		}
-
-		// we might need the $post value here so lets set it.
-		if ( isset( $_POST['post_id'] ) && $_POST['post_id'] ) {
-			$post_obj = get_post( absint( $_POST['post_id'] ) );
-			if ( ! empty( $post_obj ) && empty( $post ) ) {
-				global $post;
-				$post = $post_obj;
-			}
-		}
-
-		if ( isset( $_POST['shortcode'] ) && $_POST['shortcode'] ) {
-			$shortcode_name   = sanitize_title_with_dashes( $_POST['shortcode'] );
-			$attributes_array = isset( $_POST['attributes'] ) && $_POST['attributes'] ? $_POST['attributes'] : array();
-			$attributes       = '';
-			if ( ! empty( $attributes_array ) ) {
-				foreach ( $attributes_array as $key => $value ) {
-					$attributes .= " " . sanitize_title_with_dashes( $key ) . "='" . wp_slash( $value ) . "' ";
-				}
-			}
-
-			$shortcode = "[" . $shortcode_name . " " . $attributes . "]";
-
-			echo do_shortcode( $shortcode );
-		}
-		wp_die();
 	}
 
 		/**
