@@ -614,7 +614,7 @@ class WP_Super_Duper_Block {
 		$icon = '';
 		if( !empty( $args['icon'] ) ){
 			$icon .= "el('div', {";
-								$icon .= "dangerouslySetInnerHTML: {__html: '".self::get_widget_icon( esc_attr($args['icon']))."'},";
+								$icon .= "dangerouslySetInnerHTML: {__html: '".$this->SD->get_widget_icon( esc_attr($args['icon']))."'},";
 								$icon .= "className: 'text-center',";
 								$icon .= "title: '".addslashes( $args['title'] )."',";
 							$icon .= "}),";
