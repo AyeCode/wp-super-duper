@@ -24,11 +24,11 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 }
 
 /*
- * Hello world example.
- */
-include_once( dirname( __FILE__ ) . "/hello-world.php" );
+	* Hello world example.
+	*/
+	include_once( dirname( __FILE__ ) . "/hello-world.php" );
 
-/*
- * Map example.
- */
-include_once( dirname( __FILE__ ) . "/map.php" );
+	/*
+	* Map example.
+	*/
+	include_once( dirname( __FILE__ ) . "/map.php" );

@@ -2,7 +2,6 @@
 
 class SD_Hello_World extends WP_Super_Duper {
 
-
 	public $arguments;
 
 	/**

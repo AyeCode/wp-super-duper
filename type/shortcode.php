@@ -1,26 +1,57 @@
 <?php
+/**
+ * Contains the shortcode class.
+ *
+ * @since 2.0.0
+ */
 
+defined( 'ABSPATH') || exit;
+
+/**
+ *
+ * The shortcode super duper class.
+ *
+ *
+ * @since 2.0.0
+ * @version 2.0.0
+ */
 class WP_Super_Duper_Shortcode {
 
-	public function __construct( $class ) {
-		$this->SD = $class;
-		$this->options = $class->options;
-		add_shortcode( $this->SD->base_id, array( $this, 'shortcode_output' ) );
-		// this makes the insert button work for cornerstone
-		add_action( 'wp_print_footer_scripts', array( __CLASS__, 'maybe_cornerstone_builder' ) );
+	/**
+	 * @var WP_Super_Duper
+	 */
+	protected $sd;
+
+	/**
+	 * Class constructor.
+	 *
+	 * @param WP_Super_Duper $super_duper
+	 */
+	public function __construct( $super_duper ) {
+
+		$this->sd = $super_duper;
+
+		// Registers the shortcode.
+		add_shortcode( $this->sd->base_id, array( $this, 'shortcode_output' ) );
+
+		// This makes the insert button work for cornerstone.
+		add_action( 'wp_print_footer_scripts', array( $this, 'maybe_cornerstone_builder' ) );
 
 		// Fusion Builder (avada) support
 		if ( function_exists( 'fusion_builder_map' ) ) {
 			add_action( 'init', array( $this, 'register_fusion_element' ) );
 		}
 
-		// add shortcode insert button once
+		// Add shortcode insert button once
 		add_action( 'media_buttons', array( $this, 'shortcode_insert_button' ) );
+		add_action( 'wp_ajax_super_duper_get_widget_settings', array( $this, 'get_widget_settings' ) );
+
 		// generatepress theme sections compatibility
 		if ( function_exists( 'generate_sections_sections_metabox' ) ) {
 			add_action( 'generate_sections_metabox', array( $this, 'shortcode_insert_button_script' ) );
 		}
-		if ( $this->SD->is_preview() ) {
+
+		if ( $this->sd->is_preview() ) {
 			add_action( 'wp_footer', array( $this, 'shortcode_insert_button_script' ) );
 			// this makes the insert button work for elementor
 			add_action( 'elementor/editor/after_enqueue_scripts', array(
@@ -29,19 +60,85 @@ class WP_Super_Duper_Shortcode {
 			) ); // for elementor
 		}
 
-		add_action( 'wp_ajax_super_duper_get_picker', array( __CLASS__, 'get_picker' ) );
+	}
+
+	/**
+	 * Output the shortcode.
+	 *
+	 * @param array $args
+	 * @param string $content
+	 *
+	 * @return string
+	 */
+	public function shortcode_output( $args = array(), $content = '' ) {
+		$args = $this->sd->argument_values( $args );
+
+		// Clean booleans.
+		$args = $this->sd->string_to_bool( $args );
+
+		// if we have a enclosed shortcode we add it to the special `html` argument
+		if ( ! empty( $content ) ) {
+			$args['html'] = $content;
+		}
+
+		$class = isset( $this->sd->options['widget_ops']['classname'] ) ? esc_attr( $this->sd->options['widget_ops']['classname'] ) : '';
+		$class.= " sdel-".$this->sd->get_instance_hash();
+
+		$class = apply_filters( 'wp_super_duper_div_classname', $class, $args, $this->sd, $this );
+		$class = apply_filters( 'wp_super_duper_div_classname_' . $this->sd->base_id, $class, $args, $this->sd, $this );
+
+		$attrs = apply_filters( 'wp_super_duper_div_attrs', '', $args, $this->sd, $this );
+		$attrs = apply_filters( 'wp_super_duper_div_attrs_' . $this->sd->base_id, $attrs, $args, $this->sd, $this );
+
+		$shortcode_args = array();
+		$output         = '';
+		$no_wrap        = ! empty( $this->sd->options['no_wrap'] ) || ! empty( $args['no_wrap'] );
+
+		$main_content = $this->sd->output( $args, $shortcode_args, $content );
+
+		if ( $main_content && ! $no_wrap ) {
+			// wrap the shortcode in a div with the same class as the widget
+			$output .= '<div class="' . esc_attr( $class ) . '" ' . $attrs . '>';
+			if ( ! empty( $args['title'] ) ) {
+				// if its a shortcode and there is a title try to grab the title wrappers
+				$shortcode_args = array( 'before_title' => '', 'after_title' => '' );
+				if ( empty( $instance ) ) {
+					global $wp_registered_sidebars;
+					if ( ! empty( $wp_registered_sidebars ) ) {
+						foreach ( $wp_registered_sidebars as $sidebar ) {
+							if ( ! empty( $sidebar['before_title'] ) ) {
+								$shortcode_args['before_title'] = $sidebar['before_title'];
+								$shortcode_args['after_title']  = $sidebar['after_title'];
+								break;
+							}
+						}
+					}
+				}
+				$output .= $this->sd->output_title( $shortcode_args, $args );
+			}
+			$output .= $main_content;
+			$output .= '</div>';
+		} elseif ( $main_content && $no_wrap ) {
+			$output .= $main_content;
+		}
+
+		// if preview, show a placeholder if empty
+		if ( $this->sd->is_preview() && $output == '' ) {
+			$output = $this->sd->preview_placeholder_text( "{{" . $this->sd->base_id . "}}" );
+		}
+		return apply_filters( 'wp_super_duper_widget_output', $output, $args, $shortcode_args, $this );
 	}
 
 	public function register_fusion_element() {
-		$options = $this->options;
+		$options = $this->sd->options;
 
-		if ( $this->base_id ) {
+		if ( $this->sd->base_id ) {
 
 			$params = $this->get_fusion_params();
 
 			$args = array(
 				'name'            => $options['name'],
-				'shortcode'       => $this->base_id,
+				'shortcode'       => $this->sd->base_id,
 				'icon'            => $options['block-icon'] ? $options['block-icon'] : 'far fa-square',
 				'allow_generator' => true,
 			);
@@ -54,9 +151,9 @@ class WP_Super_Duper_Shortcode {
 		}
 	}
 
-	public function get_fusion_params() {
+	protected function get_fusion_params() {
 		$params    = array();
-		$arguments = $this->get_arguments();
+		$arguments = $this->sd->get_arguments();
 
 		if ( ! empty( $arguments ) ) {
 			foreach ( $arguments as $key => $val ) {
@@ -126,86 +223,10 @@ class WP_Super_Duper_Shortcode {
 	/**
 	 * Maybe insert the shortcode inserter button in the footer if we are in the cornerstone builder
 	 */
-	public static function maybe_cornerstone_builder() {
+	public function maybe_cornerstone_builder() {
 		if ( did_action( 'cornerstone_before_boot_app' ) ) {
 			self::shortcode_insert_button_script();
 		}
-	}
-
-	/**
-	 * A function to ge the shortcode builder picker html.
-	 *
-	 * @param string $editor_id
-	 *
-	 * @return string
-	 */
-	public static function get_picker( $editor_id = '' ) {
-		ob_start();
-		if ( isset( $_POST['editor_id'] ) ) {
-			$editor_id = esc_attr( $_POST['editor_id'] );
-		} elseif ( isset( $_REQUEST['et_fb'] ) ) {
-			$editor_id = 'main_content_content_vb_tiny_mce';
-		}
-
-		global $sd_widgets;
-		?>
-
-		<div class="sd-shortcode-left-wrap">
-			<?php
-			ksort( $sd_widgets );
-			//				print_r($sd_widgets);exit;
-			if ( ! empty( $sd_widgets ) ) {
-				echo '<select class="widefat" onchange="sd_get_shortcode_options(this);">';
-				echo "<option>" . __( 'Select shortcode' ) . "</option>";
-				foreach ( $sd_widgets as $shortcode => $class ) {
-					echo "<option value='" . esc_attr( $shortcode ) . "'>" . esc_attr( $shortcode ) . " (" . esc_attr( $class['name'] ) . ")</option>";
-				}
-				echo "</select>";
-				}
-			?>
-			<div class="sd-shortcode-settings"></div>
-		</div>
-
-		<div class="sd-shortcode-right-wrap">
-			<textarea id='sd-shortcode-output' disabled></textarea>
-			<div id='sd-shortcode-output-actions'>
-				<?php if ( $editor_id != '' ) { ?>
-					<button class="button sd-insert-shortcode-button"
-					        onclick="sd_insert_shortcode(<?php if ( ! empty( $editor_id ) ) {
-						        echo "'" . $editor_id . "'";
-					        } ?>)"><?php _e( 'Insert shortcode' ); ?></button>
-				<?php } ?>
-				<button class="button"
-				        onclick="sd_copy_to_clipboard()"><?php _e( 'Copy shortcode' ); ?></button>
-			</div>
-		</div>
-		<?php
-		$html = ob_get_clean();
-
-		if ( wp_doing_ajax() ) {
-			echo $html;
-			$should_die = true;
-
-			// some builder get the editor via ajax so we should not die on those occasions
-			$dont_die = array(
-				'parent_tag',// WP Bakery
-				'avia_request' // enfold
-			);
-
-			foreach ( $dont_die as $request ) {
-				if ( isset( $_REQUEST[ $request ] ) ) {
-					$should_die = false;
-				}
-			}
-
-			if ( $should_die ) {
-				wp_die();
-			}
-		} else {
-			return $html;
-		}
-
-		return '';
 	}
 
 	/**
@@ -415,7 +436,7 @@ class WP_Super_Duper_Shortcode {
 		</style>
 		<?php
 			if ( class_exists( 'SiteOrigin_Panels' ) ) {
-				echo "<script>" . self::siteorigin_js() . "</script>";
+				echo "<script>" . WP_Super_Duper::siteorigin_js() . "</script>";
 			}
 			?>
 		<script>
@@ -692,14 +713,6 @@ class WP_Super_Duper_Shortcode {
 					}
 				}, 2000);
 
-					// WP Bakery, code editor does not render shortcodes.
-//					jQuery(document).on('focusin', '.wpb-textarea_raw_html', function () {
-//						// insert the shortcode button to the textarea lable if not there already
-//						if(!jQuery(this).parent().parent().find('.wpb_element_label').find('.sd-lable-shortcode-inserter').length){
-//							jQuery(this).parent().parent().find('.wpb_element_label').append(sd_shortcode_button());
-//						}
-//					});
-
 			}
 
 			/**
@@ -751,171 +764,28 @@ class WP_Super_Duper_Shortcode {
 		<?php
 	}
 
-		/**
-		 * Makes SD work with the siteOrigin page builder.
-		 *
-		 * @since 1.0.6
-		 * @return mixed
-		 */
-		public static function siteorigin_js() {
-			ob_start();
-			?>
-			<script>
-				/**
-				 * Check a form to see what items should be shown or hidden.
-				 */
-				function sd_so_show_hide(form) {
-					jQuery(form).find(".sd-argument").each(function () {
-
-						var $element_require = jQuery(this).data('element_require');
-
-						if ($element_require) {
-
-							$element_require = $element_require.replace("&#039;", "'"); // replace single quotes
-							$element_require = $element_require.replace("&quot;", '"'); // replace double quotes
-
-							if (eval($element_require)) {
-								jQuery(this).removeClass('sd-require-hide');
-							} else {
-								jQuery(this).addClass('sd-require-hide');
-							}
-						}
-					});
-				}
-
-				/**
-				 * Toggle advanced settings visibility.
-				 */
-				function sd_so_toggle_advanced($this) {
-					var form = jQuery($this).parents('form,.form,.so-content');
-					form.find('.sd-advanced-setting').toggleClass('sd-adv-show');
-					return false;// prevent form submit
-				}
-
-				/**
-				 * Initialise a individual widget.
-				 */
-				function sd_so_init_widget($this, $selector) {
-					if (!$selector) {
-						$selector = 'form';
-					}
-					// only run once.
-					if (jQuery($this).data('sd-widget-enabled')) {
-						return;
-					} else {
-						jQuery($this).data('sd-widget-enabled', true);
-					}
-
-					var $button = '<button title="<?php _e( 'Advanced Settings' );?>" class="button button-primary right sd-advanced-button" onclick="sd_so_toggle_advanced(this);return false;"><i class="fas fa-sliders-h" aria-hidden="true"></i></button>';
-					var form = jQuery($this).parents('' + $selector + '');
-
-					if (jQuery($this).val() == '1' && jQuery(form).find('.sd-advanced-button').length == 0) {
-						jQuery(form).append($button);
-					}
-
-					// show hide on form change
-					jQuery(form).on("change", function () {
-						sd_so_show_hide(form);
-					});
-
-					// show hide on load
-					sd_so_show_hide(form);
-				}
-
-				jQuery(function () {
-					jQuery(document).on('open_dialog', function (w, e) {
-						setTimeout(function () {
-							if (jQuery('.so-panels-dialog-wrapper:visible .so-content.panel-dialog .sd-show-advanced').length) {
-								console.log('exists');
-								if (jQuery('.so-panels-dialog-wrapper:visible .so-content.panel-dialog .sd-show-advanced').val() == '1') {
-									console.log('true');
-									sd_so_init_widget('.so-panels-dialog-wrapper:visible .so-content.panel-dialog .sd-show-advanced', 'div');
-								}
-							}
-						}, 200);
-					});
-				});
-			</script>
-			<?php
-			$output = ob_get_clean();
-
-			/*
-			 * We only add the <script> tags for code highlighting, so we strip them from the output.
-			 */
-
-			return str_replace( array(
-				'<script>',
-				'</script>'
-			), '', $output );
-		}
-
 	/**
-	 * Output the shortcode.
+	 * Get widget settings.
 	 *
-	 * @param array $args
-	 * @param string $content
-	 *
-	 * @return string
+	 * @since 1.0.0
 	 */
-	public function shortcode_output( $args = array(), $content = '' ) {
-		$args = $this->SD->argument_values( $args );
-		// add extra argument so we know its a output to gutenberg
-		if ( !is_null( $args ) ) {
-			$args = $this->SD->string_to_bool( $args );
+	public function get_widget_settings() {
+
+		if ( isset( $_REQUEST['shortcode'] ) && $this->sd->base_id == sanitize_title_with_dashes( $_REQUEST['shortcode'] ) ) {
+
+			$shortcode = sanitize_title_with_dashes( $_REQUEST['shortcode'] );
+
+			ob_start();
+			$this->sd->form( array() );
+			$form = ob_get_clean();
+
+			echo "<form id='$shortcode'>" . $form . "<div class='widget-control-save'></div></form>";
+			echo "<style>" . WP_Super_Duper::widget_css() . "</style>";
+			echo "<script>" . WP_Super_Duper::widget_js() . "</script>";
+			exit;
+
 		}
 
-		// if we have a enclosed shortcode we add it to the special `html` argument
-		if ( ! empty( $content ) ) {
-			$args['html'] = $content;
-		}
-
-		$class = isset( $this->options['widget_ops']['classname'] ) ? esc_attr( $this->options['widget_ops']['classname'] ) : '';
-		$class .= " sdel-".$this->SD->get_instance_hash();
-
-		$class = apply_filters( 'wp_super_duper_div_classname', $class, $args, $this );
-		$class = apply_filters( 'wp_super_duper_div_classname_' . $this->SD->base_id, $class, $args, $this );
-
-		$attrs = apply_filters( 'wp_super_duper_div_attrs', '', $args, $this );
-		$attrs = apply_filters( 'wp_super_duper_div_attrs_' . $this->SD->base_id, '', $args, $this );
-
-		$shortcode_args = array();
-		$output         = '';
-		$no_wrap        = isset( $this->options['no_wrap'] ) && $this->options['no_wrap'] ? true : false;
-		if ( isset( $args['no_wrap'] ) && $args['no_wrap'] ) {
-			$no_wrap = true;
-		}
-
-		$main_content = $this->SD->output( $args, $shortcode_args, $content );
-		if ( $main_content && ! $no_wrap ) {
-			// wrap the shortcode in a div with the same class as the widget
-			$output .= '<div class="' . $class . '" ' . $attrs . '>';
-			if ( ! empty( $args['title'] ) ) {
-				// if its a shortcode and there is a title try to grab the title wrappers
-				$shortcode_args = array( 'before_title' => '', 'after_title' => '' );
-				if ( empty( $instance ) ) {
-					global $wp_registered_sidebars;
-					if ( ! empty( $wp_registered_sidebars ) ) {
-						foreach ( $wp_registered_sidebars as $sidebar ) {
-							if ( ! empty( $sidebar['before_title'] ) ) {
-								$shortcode_args['before_title'] = $sidebar['before_title'];
-								$shortcode_args['after_title']  = $sidebar['after_title'];
-								break;
-							}
-						}
-					}
-				}
-				$output .= $this->output_title( $shortcode_args, $args );
-			}
-			$output .= $main_content;
-			$output .= '</div>';
-		} elseif ( $main_content && $no_wrap ) {
-			$output .= $main_content;
-		}
-
-		// if preview show a placeholder if empty
-		if ( $this->SD->is_preview() && $output == '' ) {
-			$output = $this->SD->preview_placeholder_text( "{{" . $this->base_id . "}}" );
-		}
-		return apply_filters( 'wp_super_duper_widget_output', $output, $args, $shortcode_args, $this );
 	}
+
 }
