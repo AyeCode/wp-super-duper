@@ -73,6 +73,8 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
             // add generator text to admin head
             add_action( 'admin_head', array( $this, 'generator' ) );
 
+			add_action( 'admin_init', array( __CLASS__, 'load_widgets_setting' ) );
+
 			add_action( 'wp_ajax_super_duper_get_picker', array( __CLASS__, 'get_picker' ) );
 
 			do_action( 'wp_super_duper_widget_init', $options, $this );
@@ -147,6 +149,21 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 				'shortcode' => 'WP_Super_Duper_Shortcode',
 				'widget'    => 'WP_Super_Duper_Widget',
 			);
+
+			// Maybe disable widgets.
+			$disable_widget   = get_option( 'sd_load_widgets', 'yes' );
+
+			if ( 'auto' === $disable_widget ) {
+				$has_pagebuilder = defined( 'WPB_VC_VERSION' ) || defined( 'ELEMENTOR_VERSION' ) || defined( 'ET_BUILDER_VERSION' ) || defined( 'FL_BUILDER_VERSION' ) || class_exists( 'Fusion_Element' );
+
+				if ( $has_pagebuilder ) {
+					unset( $types['widget'] );
+				}
+			}
+
+			if ( 'no' === $disable_widget ) {
+				unset( $types['widget'] );
+			}
 
 			return apply_filters( 'super_duper_types', $types, $this );
 		}
@@ -1981,6 +1998,42 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 					'<style>',
 					'</style>'
 				), '', $output );
+		}
+
+		/**
+		 * Registers the widgets loading settings.
+		 */
+		public static function load_widgets_setting() {
+			register_setting( 'general', 'sd_load_widgets', 'esc_attr' );
+
+			add_settings_field(
+				'sd_load_widgets',
+				'<label for="sd_load_widgets">' . __( 'Load Super Duper Widgets' ) . '</label>',
+				'WP_Super_Duper::load_widgets_setting_html',
+				'general'
+			);
+
+		}
+
+		/**
+		 * Displays the widgets settings HTML.
+		 */
+		public static function load_widgets_setting_html() {
+			$available_options = array(
+				'yes'  => __( 'Yes' ),
+				'no'   => __( 'No' ),
+				'auto' => __( 'Auto' ),
+			);
+			$selected_option   = get_option( 'sd_load_widgets', 'yes' );
+
+			?>
+				<select name="sd_load_widgets" id="sd_load_widgets">
+					<?php foreach ( $available_options as $key => $label ) : ?>
+						<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $key, $selected_option ); ?>><?php echo esc_html( $label ); ?></option>
+					<?php endforeach; ?>
+				</select>
+				<p class="description"><?php _e( 'This option allows you to disable Super Duper widgets and instead only load the blocks and shortcodes.' ); ?></p>
+			<?php
 		}
 
 	}
