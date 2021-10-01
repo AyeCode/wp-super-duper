@@ -110,6 +110,7 @@ class WP_Super_Duper_Block {
 	public function block() {
 		ob_start();
 
+		$block_name    = str_replace( '_', '-', sanitize_title_with_dashes( $this->sd->options['textdomain'] ) . '/' . sanitize_title_with_dashes( $this->sd->options['class_name'] ) );
 		$show_advanced = $this->sd->block_show_advanced();
 		$id            = $this->sd->base_id . '-' . $this->sd->get_number();
 		?>
@@ -150,7 +151,7 @@ class WP_Super_Duper_Block {
 				 * @return {?WPBlock}          The block, if it has been successfully
 				 *                             registered; otherwise `undefined`.
 				 */
-				registerBlockType('<?php echo str_replace( "_", "-", sanitize_title_with_dashes( $this->sd->options['textdomain'] ) . '/' . sanitize_title_with_dashes( $this->sd->options['class_name'] ) );  ?>', { // Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
+				registerBlockType('<?php echo $block_name;  ?>', { // Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
 					title: '<?php echo addslashes( $this->sd->options['name'] ); ?>', // Block title.
 					description: '<?php echo addslashes( $this->sd->options['widget_ops']['description'] )?>', // Block title.
 					icon: <?php echo $this->get_block_icon( $this->sd->options['block-icon'] );?>,//'<?php echo isset( $this->sd->options['block-icon'] ) ? esc_attr( $this->sd->options['block-icon'] ) : 'shield-alt';?>', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
@@ -479,6 +480,32 @@ class WP_Super_Duper_Block {
 								}
 								?>
 							]; // end return
+						},
+
+						// Enable transforming from Legacy widgets.
+						transforms: {
+							from: [
+								{
+									type: "block",
+									blocks: ["core/legacy-widget"],
+									isMatch: function isMatch(attributes) {
+										var idBase = attributes.idBase,
+										instance = attributes.instance;
+
+										if (!(instance !== null && instance !== void 0 && instance.raw)) {
+											// Can't transform if raw instance is not shown in REST API.
+											return false;
+										}
+
+										return idBase === "<?php echo $this->sd->options['base_id'];?>";
+									},
+									transform: function transform(attributes) {
+										var instance = attributes.instance;
+
+										return wp.blocks.createBlock("<?php echo $block_name;?>", instance.raw );
+									}
+								}
+							]
 						},
 
 						// The "save" property must be specified and must be a valid function.

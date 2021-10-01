@@ -31,7 +31,14 @@ class WP_Super_Duper_Widget extends WP_Widget {
 		$this->sd = $super_duper;
 
 		// Register widget.
-		parent::__construct( $super_duper->options['base_id'], $super_duper->options['name'], $super_duper->options['widget_ops'] );
+		$widget_ops = $super_duper->options['widget_ops'];
+
+		// Only overwrite if not set already.
+		if ( ! isset( $widget_ops['show_instance_in_rest'] ) ) {
+			$widget_ops['show_instance_in_rest'] = true;
+		}
+
+		parent::__construct( $super_duper->options['base_id'], $super_duper->options['name'], $widget_ops );
 
 		if ( did_action( 'widgets_init' ) || doing_action( 'widgets_init' ) ) {
 			$this->register_widget();
