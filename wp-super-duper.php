@@ -145,7 +145,7 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 			$types = array(
 				'block'     => 'WP_Super_Duper_Block',
 				'shortcode' => 'WP_Super_Duper_Shortcode',
-				//'widget'    => 'WP_Super_Duper_Widget',
+				'widget'    => 'WP_Super_Duper_Widget',
 			);
 
 			return apply_filters( 'super_duper_types', $types, $this );

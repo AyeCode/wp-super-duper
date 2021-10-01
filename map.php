@@ -177,7 +177,7 @@ class SD_Map extends WP_Super_Duper {
 				'api_key'           => array(
 					'type'        => 'text',
 					'title'       => __( 'Api Key:', 'geodirectory' ),
-					'desc'        => __( 'This is the height of the map, you can use %, px or vh here.', 'geodirectory' ),
+					'desc'        => __( 'Enter your Google maps API key here.', 'geodirectory' ),
 					'placeholder' => '',
 					'desc_tip'    => true,
 					'default'     => '',
