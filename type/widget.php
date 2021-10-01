@@ -48,6 +48,7 @@ class WP_Super_Duper_Widget extends WP_Widget {
 
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_scripts' ) );
 		add_action( 'elementor/editor/after_enqueue_styles', array( __CLASS__, 'elementor_editor_styles' ) );
+		add_filter( 'widget_types_to_hide_from_legacy_widget_block', array( $this, 'hide_widget' ) );
 
 	}
 
@@ -191,6 +192,17 @@ class WP_Super_Duper_Widget extends WP_Widget {
 		}
 
 		return $instance;
+	}
+
+	/**
+	 * Hides this widget from the block widgets inserter function.
+	 *
+	 * @param array $widget_types List of hidden widgets.
+	 * @return array
+	 */
+	public function hide_widget( $widget_types ) {
+		$widget_types[] = $this->id_base;
+		return $widget_types;
 	}
 
 }
