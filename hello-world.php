@@ -27,6 +27,7 @@ class SD_Hello_World extends WP_Super_Duper {
 					'content' => 'Hello: [%after_text%]' // block properties can be added by wrapping them in [%name%]
 				)
 			),
+			'output_types'  => array( 'block', 'shortcode' ), // Sample showing how to disable widgets for a given SD instance.
 			'block-wrap'    => '', // You can specify the type of element to wrap the block `div` or `span` etc.. Or blank for no wrap at all.
 			'class_name'     => __CLASS__,
 			// The calling class name
