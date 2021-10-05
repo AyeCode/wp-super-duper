@@ -231,7 +231,7 @@ class WP_Super_Duper_Block {
 								$type    = 'string';
 								$default = isset( $args['default'] ) ? "'" . $args['default'] . "'" : "''";
 							}
-							echo $key . " : {";
+							echo str_replace( '-','__', $key ) . " : {";
 							echo "type : '$type',";
 							echo "default : $default,";
 							echo "},";
@@ -239,7 +239,6 @@ class WP_Super_Duper_Block {
 
 						echo "content : {type : 'string',default: 'Please select the attributes in the block settings'},";
 						echo "className: { type: 'string', default: '' },";
-
 						echo "},";
 
 					}
@@ -275,7 +274,7 @@ class WP_Super_Duper_Block {
 									} else {
 										'/wp/v2/"+$value+"/categories/?per_page=100';
 									} ?>"
-								}).then(terms = > {
+								}).then(terms => {
 									while (taxonomies_<?php echo str_replace( "-", "_", $id );?>.length
 							)
 								{
@@ -448,7 +447,7 @@ class WP_Super_Duper_Block {
 									<?php
 
 									foreach ( $args as $k => $a ) {
-
+										$k = str_replace('-','__', $k);
 										$this->block_row_start( $k, $a );
 										$this->build_block_arguments( $k, $a );
 										$this->block_row_end( $k, $a );
@@ -467,6 +466,7 @@ class WP_Super_Duper_Block {
 									},
 									<?php
 									foreach ( $this->sd->arguments as $key => $args ) {
+										$key = str_replace('-','__', $key);
 										$this->block_row_start( $key, $args );
 										$this->build_block_arguments( $key, $args );
 										$this->block_row_end( $key, $args );
@@ -542,12 +542,13 @@ class WP_Super_Duper_Block {
 						if(! empty( $this->sd->arguments )){
 
 						foreach($this->sd->arguments as $key => $args){
+						$key = str_replace('-','__', $key);
 						?>
 						if (attr.hasOwnProperty("<?php echo esc_attr( $key );?>")) {
 							if ('<?php echo esc_attr( $key );?>' == 'html') {
 								$html = attr.<?php echo esc_attr( $key );?>;
 							} else {
-								content += " <?php echo esc_attr( $key );?>='" + attr.<?php echo esc_attr( $key );?>+ "' ";
+								content += " <?php echo str_replace( '__','-', esc_attr( $key ) );?>='" + attr.<?php echo esc_attr( $key );?>+ "' ";
 							}
 						}
 						<?php
@@ -685,7 +686,7 @@ class WP_Super_Duper_Block {
 								'div',
 								{
 									className: 'col pr-2',
-								},;
+								},
 					<?php
 					if ( false ){
 					?></script><?php }
@@ -697,7 +698,7 @@ class WP_Super_Duper_Block {
 						'div',
 						{
 							className: 'col pl-0',
-						},;
+						},
 					<?php
 					if ( false ){
 					?></script><?php }
@@ -709,7 +710,7 @@ class WP_Super_Duper_Block {
 						'div',
 						{
 							className: 'col pl-0 pr-2',
-						},;
+						},
 					<?php
 					if ( false ){
 					?></script><?php }
