@@ -5,7 +5,7 @@
  * @since 2.0.0
  */
 
-defined( 'ABSPATH') || exit;
+defined( 'ABSPATH' ) || exit;
 
 /**
  *
@@ -63,6 +63,45 @@ class WP_Super_Duper_Shortcode {
 	}
 
 	/**
+	 * Insert shortcode builder button to classic editor (not inside Gutenberg, not needed).
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $editor_id Optional. Shortcode editor id. Default null.
+	 * @param string $insert_shortcode_function Optional. Insert shortcode function. Default null.
+	 */
+	public static function shortcode_insert_button( $editor_id = '', $insert_shortcode_function = '' ) {
+		global $shortcode_insert_button_once;
+		if ( $shortcode_insert_button_once ) {
+			return;
+		}
+		add_thickbox();
+
+		/**
+		 * Cornerstone makes us play dirty tricks :/
+		 * All media_buttons are removed via JS unless they are two specific id's so we wrap our content in this ID so it is not removed.
+		 */
+		if ( function_exists( 'cornerstone_plugin_init' ) && ! is_admin() ) {
+			echo '<span id="insert-media-button">';
+		}
+
+		echo self::shortcode_button( 'this', 'true' );
+
+		// see opening note
+		if ( function_exists( 'cornerstone_plugin_init' ) && ! is_admin() ) {
+			echo '</span>'; // end #insert-media-button
+		}
+
+		// Add separate script for generatepress theme sections
+		if ( function_exists( 'generate_sections_sections_metabox' ) && did_action( 'generate_sections_metabox' ) ) {
+		} else {
+			self::shortcode_insert_button_script( $editor_id, $insert_shortcode_function );
+		}
+
+		$shortcode_insert_button_once = true;
+	}
+
+	/**
 	 * Output the shortcode.
 	 *
 	 * @param array $args
@@ -82,7 +121,7 @@ class WP_Super_Duper_Shortcode {
 		}
 
 		$class = isset( $this->sd->options['widget_ops']['classname'] ) ? esc_attr( $this->sd->options['widget_ops']['classname'] ) : '';
-		$class.= " sdel-".$this->sd->get_instance_hash();
+		$class .= " sdel-" . $this->sd->get_instance_hash();
 
 		$class = apply_filters( 'wp_super_duper_div_classname', $class, $args, $this->sd, $this );
 		$class = apply_filters( 'wp_super_duper_div_classname_' . $this->sd->base_id, $class, $args, $this->sd, $this );
@@ -126,6 +165,7 @@ class WP_Super_Duper_Shortcode {
 		if ( $this->sd->is_preview() && $output == '' ) {
 			$output = $this->sd->preview_placeholder_text( "{{" . $this->sd->base_id . "}}" );
 		}
+
 		return apply_filters( 'wp_super_duper_widget_output', $output, $args, $shortcode_args, $this );
 	}
 
@@ -173,7 +213,7 @@ class WP_Super_Duper_Shortcode {
 						"textfield",
 						"colorpicker",
 						"select",
-						),
+					),
 					$val['type'] );
 
 				// multiselect
@@ -227,77 +267,6 @@ class WP_Super_Duper_Shortcode {
 		if ( did_action( 'cornerstone_before_boot_app' ) ) {
 			self::shortcode_insert_button_script();
 		}
-	}
-
-	/**
-	 * Insert shortcode builder button to classic editor (not inside Gutenberg, not needed).
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param string $editor_id Optional. Shortcode editor id. Default null.
-	 * @param string $insert_shortcode_function Optional. Insert shortcode function. Default null.
-	 */
-	public static function shortcode_insert_button( $editor_id = '', $insert_shortcode_function = '' ) {
-		global $shortcode_insert_button_once;
-		if ( $shortcode_insert_button_once ) {
-			return;
-		}
-		add_thickbox();
-
-		/**
-		 * Cornerstone makes us play dirty tricks :/
-		 * All media_buttons are removed via JS unless they are two specific id's so we wrap our content in this ID so it is not removed.
-		 */
-		if ( function_exists( 'cornerstone_plugin_init' ) && ! is_admin() ) {
-			echo '<span id="insert-media-button">';
-		}
-
-		echo self::shortcode_button( 'this', 'true' );
-
-		// see opening note
-		if ( function_exists( 'cornerstone_plugin_init' ) && ! is_admin() ) {
-			echo '</span>'; // end #insert-media-button
-		}
-
-		// Add separate script for generatepress theme sections
-		if ( function_exists( 'generate_sections_sections_metabox' ) && did_action( 'generate_sections_metabox' ) ) {
-		} else {
-			self::shortcode_insert_button_script( $editor_id, $insert_shortcode_function );
-		}
-
-		$shortcode_insert_button_once = true;
-	}
-
-	/**
-	 * Gets the shortcode insert button html.
-	 *
-	 * @param string $id
-	 * @param string $search_for_id
-	 *
-	 * @return mixed
-	 */
-	public static function shortcode_button( $id = '', $search_for_id = '' ) {
-		ob_start();
-		?>
-		<span class="sd-lable-shortcode-inserter">
-			<a onclick="sd_ajax_get_picker(<?php echo $id;
-			if ( $search_for_id ) {
-				echo "," . $search_for_id;
-			} ?>);" href="#TB_inline?width=100%&height=550&inlineId=super-duper-content-ajaxed"
-			   class="thickbox button super-duper-content-open" title="Add Shortcode">
-				<span style="vertical-align: middle;line-height: 18px;font-size: 20px;"
-				      class="dashicons dashicons-screenoptions"></span>
-			</a>
-			<div id="super-duper-content-ajaxed" style="display:none;">
-				<span>Loading</span>
-			</div>
-		</span>
-
-		<?php
-		$html = ob_get_clean();
-
-		// remove line breaks so we can use it in js
-		return preg_replace( "/\r|\n/", "", trim( $html ) );
 	}
 
 	/**
@@ -427,18 +396,18 @@ class WP_Super_Duper_Shortcode {
 				width: 100%;
 			}
 
-		<?php if ( function_exists( 'generate_sections_sections_metabox' ) ) { ?>
+			<?php if ( function_exists( 'generate_sections_sections_metabox' ) ) { ?>
 			.generate-sections-modal #custom-media-buttons > .sd-lable-shortcode-inserter {
 				display: inline;
 			}
 
-		<?php } ?>
+			<?php } ?>
 		</style>
 		<?php
-			if ( class_exists( 'SiteOrigin_Panels' ) ) {
-				echo "<script>" . WP_Super_Duper::siteorigin_js() . "</script>";
-			}
-			?>
+		if ( class_exists( 'SiteOrigin_Panels' ) ) {
+			echo "<script>" . WP_Super_Duper::siteorigin_js() . "</script>";
+		}
+		?>
 		<script>
 			<?php
 			if(! empty( $insert_shortcode_function )){
@@ -482,12 +451,12 @@ class WP_Super_Duper_Shortcode {
 						var txtToAdd = $shortcode;
 						var textareaValue = textAreaTxt.substring(0, caretPos) + txtToAdd + textAreaTxt.substring(caretPos);
 						$txt.focus().val(textareaValue).change().keydown().blur().keyup().keypress().trigger('input').trigger('change');
-							// set Divi react input value
+						// set Divi react input value
 						var input = document.getElementById("main_content_content_vb_tiny_mce");
 						if (input) {
 							sd_setNativeValue(input, textareaValue);
 						}
-						}
+					}
 					tb_remove();
 				}
 			}
@@ -549,7 +518,7 @@ class WP_Super_Duper_Shortcode {
 
 					jQuery.post(ajaxurl, data, function (response) {
 						jQuery('#TB_ajaxContent .sd-shortcode-settings').html(response);
-							jQuery('#' + $short_code).on('change', 'select', function () {
+						jQuery('#' + $short_code).on('change', 'select', function () {
 							sd_build_shortcode($short_code);
 						}); // take care of select tags
 
@@ -760,8 +729,40 @@ class WP_Super_Duper_Shortcode {
 					return '<?php echo self::shortcode_button();?>';
 				}
 			}
-			</script>
+		</script>
 		<?php
+	}
+
+	/**
+	 * Gets the shortcode insert button html.
+	 *
+	 * @param string $id
+	 * @param string $search_for_id
+	 *
+	 * @return mixed
+	 */
+	public static function shortcode_button( $id = '', $search_for_id = '' ) {
+		ob_start();
+		?>
+		<span class="sd-lable-shortcode-inserter">
+			<a onclick="sd_ajax_get_picker(<?php echo $id;
+			if ( $search_for_id ) {
+				echo "," . $search_for_id;
+			} ?>);" href="#TB_inline?width=100%&height=550&inlineId=super-duper-content-ajaxed"
+			   class="thickbox button super-duper-content-open" title="Add Shortcode">
+				<span style="vertical-align: middle;line-height: 18px;font-size: 20px;"
+				      class="dashicons dashicons-screenoptions"></span>
+			</a>
+			<div id="super-duper-content-ajaxed" style="display:none;">
+				<span>Loading</span>
+			</div>
+		</span>
+
+		<?php
+		$html = ob_get_clean();
+
+		// remove line breaks so we can use it in js
+		return preg_replace( "/\r|\n/", "", trim( $html ) );
 	}
 
 	/**

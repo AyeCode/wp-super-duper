@@ -5,7 +5,7 @@
  * @since 2.0.0
  */
 
-defined( 'ABSPATH') || exit;
+defined( 'ABSPATH' ) || exit;
 
 /**
  *
@@ -53,6 +53,13 @@ class WP_Super_Duper_Widget extends WP_Widget {
 	}
 
 	/**
+	 * Registers the widget.
+	 */
+	public function register_widget() {
+		register_widget( $this );
+	}
+
+	/**
 	 * Enqeues scripts.
 	 *
 	 * @param WP_Super_Duper $super_duper
@@ -68,13 +75,6 @@ class WP_Super_Duper_Widget extends WP_Widget {
 	 */
 	public static function elementor_editor_styles() {
 		wp_add_inline_style( 'elementor-editor', WP_Super_Duper::widget_css( false ) );
-	}
-
-	/**
-	 * Registers the widget.
-	 */
-	public function register_widget() {
-		register_widget( $this );
 	}
 
 	/**
@@ -119,7 +119,7 @@ class WP_Super_Duper_Widget extends WP_Widget {
 				$attrs = apply_filters( 'wp_super_duper_div_attrs', '', $args, $this->sd, $this );
 				$attrs = apply_filters( 'wp_super_duper_div_attrs_' . $this->sd->base_id, $attrs, $args, $this->sd, $this );
 
-				echo "<span class='" . esc_attr( $class  ) . "' " . $attrs . ">";
+				echo "<span class='" . esc_attr( $class ) . "' " . $attrs . ">";
 			}
 
 			echo $this->sd->output_title( $args, $instance );
@@ -198,10 +198,12 @@ class WP_Super_Duper_Widget extends WP_Widget {
 	 * Hides this widget from the block widgets inserter function.
 	 *
 	 * @param array $widget_types List of hidden widgets.
+	 *
 	 * @return array
 	 */
 	public function hide_widget( $widget_types ) {
 		$widget_types[] = $this->id_base;
+
 		return $widget_types;
 	}
 

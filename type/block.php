@@ -5,7 +5,7 @@
  * @since 2.0.0
  */
 
-defined( 'ABSPATH') || exit;
+defined( 'ABSPATH' ) || exit;
 
 /**
  *
@@ -34,8 +34,8 @@ class WP_Super_Duper_Block {
 		// Process the SD shortcode preview.
 		add_action( 'wp_ajax_super_duper_output_shortcode', array( __CLASS__, 'render_shortcode' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'register_block' ) );
-		add_action( 'admin_footer-post.php', array( $this,'enqueue_editor_assets' ) );
-		add_action( 'admin_footer-post-new.php', array( $this,'enqueue_editor_assets' ) );
+		add_action( 'admin_footer-post.php', array( $this, 'enqueue_editor_assets' ) );
+		add_action( 'admin_footer-post-new.php', array( $this, 'enqueue_editor_assets' ) );
 	}
 
 	/**
@@ -78,8 +78,8 @@ class WP_Super_Duper_Block {
 				if ( is_array( $value ) ) {
 					$value = implode( ',', $value );
 				}
-				$key         = sanitize_title_with_dashes( $key );
-				$value       = wp_slash( $value );
+				$key   = sanitize_title_with_dashes( $key );
+				$value = wp_slash( $value );
 				$attributes .= " $key='$value' ";
 			}
 		}
@@ -135,9 +135,13 @@ class WP_Super_Duper_Block {
 				var prev_attributes = [];
 
 				var term_query_type = '';
-				var post_type_rest_slugs = <?php if(! empty( $this->sd->arguments ) && isset($this->sd->arguments['post_type']['onchange_rest']['values'])){echo "[".json_encode($this->sd->arguments['post_type']['onchange_rest']['values'])."]";}else{echo "[]";} ?>;
-				const taxonomies_<?php echo str_replace("-","_", $id);?> = [{label: "Please wait", value: 0}];
-				const sort_by_<?php echo str_replace("-","_", $id);?> = [{label: "Please wait", value: 0}];
+				var post_type_rest_slugs = <?php if ( ! empty( $this->sd->arguments ) && isset( $this->sd->arguments['post_type']['onchange_rest']['values'] ) ) {
+					echo "[" . json_encode( $this->sd->arguments['post_type']['onchange_rest']['values'] ) . "]";
+				} else {
+					echo "[]";
+				} ?>;
+				const taxonomies_<?php echo str_replace( "-", "_", $id );?> = [{label: "Please wait", value: 0}];
+				const sort_by_<?php echo str_replace( "-", "_", $id );?> = [{label: "Please wait", value: 0}];
 
 				/**
 				 * Register Basic Block.
@@ -157,88 +161,88 @@ class WP_Super_Duper_Block {
 					icon: <?php echo $this->get_block_icon( $this->sd->options['block-icon'] );?>,//'<?php echo isset( $this->sd->options['block-icon'] ) ? esc_attr( $this->sd->options['block-icon'] ) : 'shield-alt';?>', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
 					supports: {
 						<?php
-							if ( isset( $this->sd->options['block-supports'] ) ) {
-								echo $this->sd->array_to_attributes( $this->sd->options['block-supports'] );
-							}
+						if ( isset( $this->sd->options['block-supports'] ) ) {
+							echo $this->sd->array_to_attributes( $this->sd->options['block-supports'] );
+						}
 						?>
 					},
 					category: '<?php echo isset( $this->sd->options['block-category'] ) ? esc_attr( $this->sd->options['block-category'] ) : 'common';?>', // Block category — Group blocks together based on common traits E.g. common, formatting, layout widgets, embed.
 					<?php if ( isset( $this->sd->options['block-keywords'] ) ) {
-						echo "keywords : " . $this->sd->options['block-keywords'] . ",";
-					}?>
+					echo "keywords : " . $this->sd->options['block-keywords'] . ",";
+				}?>
 
 					<?php
 
-						// maybe set no_wrap
-						$no_wrap = isset( $this->sd->options['no_wrap'] ) && $this->sd->options['no_wrap'] ? true : false;
-						if ( isset( $this->sd->arguments['no_wrap'] ) && $this->sd->arguments['no_wrap'] ) {
-							$no_wrap = true;
-						}
-						if ( $no_wrap ) {
-							$this->sd->options['block-wrap'] = '';
-						}
+					// maybe set no_wrap
+					$no_wrap = isset( $this->sd->options['no_wrap'] ) && $this->sd->options['no_wrap'] ? true : false;
+					if ( isset( $this->sd->arguments['no_wrap'] ) && $this->sd->arguments['no_wrap'] ) {
+						$no_wrap = true;
+					}
+					if ( $no_wrap ) {
+						$this->sd->options['block-wrap'] = '';
+					}
 
-						$show_alignment = false;
+					$show_alignment = false;
 
-						if ( ! empty( $this->sd->arguments ) ) {
-							echo "attributes : {";
+					if ( ! empty( $this->sd->arguments ) ) {
+						echo "attributes : {";
 
-							if ( $show_advanced ) {
-								echo "show_advanced: {";
-								echo "	type: 'boolean',";
-								echo "  default: false,";
-								echo "},";
-							}
-
-							// block wrap element
-							if ( ! empty( $this->sd->options['block-wrap'] ) ) { //@todo we should validate this?
-								echo "block_wrap: {";
-								echo "	type: 'string',";
-								echo "  default: '" . esc_attr( $this->sd->options['block-wrap'] ) . "',";
-								echo "},";
-							}
-
-							foreach ( $this->sd->arguments as $key => $args ) {
-
-								// set if we should show alignment
-								if ( $key == 'alignment' ) {
-									$show_alignment = true;
-								}
-
-								$extra = '';
-
-								if ( $args['type'] == 'checkbox' ) {
-									$type    = 'boolean';
-									$default = isset( $args['default'] ) && $args['default'] ? 'true' : 'false';
-								} elseif ( $args['type'] == 'number' ) {
-									$type    = 'number';
-									$default = isset( $args['default'] ) ? "'" . $args['default'] . "'" : "''";
-								} elseif ( $args['type'] == 'select' && ! empty( $args['multiple'] ) ) {
-									$type = 'array';
-									if ( isset( $args['default'] ) && is_array( $args['default'] ) ) {
-										$default = ! empty( $args['default'] ) ? "['" . implode( "','", $args['default'] ) . "']" : "[]";
-									} else {
-										$default = isset( $args['default'] ) ? "'" . $args['default'] . "'" : "''";
-									}
-								} elseif ( $args['type'] == 'multiselect' ) {
-									$type    = 'array';
-									$default = isset( $args['default'] ) ? "'" . $args['default'] . "'" : "''";
-								} else {
-									$type    = 'string';
-									$default = isset( $args['default'] ) ? "'" . $args['default'] . "'" : "''";
-								}
-								echo $key . " : {";
-								echo "type : '$type',";
-								echo "default : $default,";
-								echo "},";
-							}
-
-							echo "content : {type : 'string',default: 'Please select the attributes in the block settings'},";
-							echo "className: { type: 'string', default: '' },";
-
+						if ( $show_advanced ) {
+							echo "show_advanced: {";
+							echo "	type: 'boolean',";
+							echo "  default: false,";
 							echo "},";
-
 						}
+
+						// block wrap element
+						if ( ! empty( $this->sd->options['block-wrap'] ) ) { //@todo we should validate this?
+							echo "block_wrap: {";
+							echo "	type: 'string',";
+							echo "  default: '" . esc_attr( $this->sd->options['block-wrap'] ) . "',";
+							echo "},";
+						}
+
+						foreach ( $this->sd->arguments as $key => $args ) {
+
+							// set if we should show alignment
+							if ( $key == 'alignment' ) {
+								$show_alignment = true;
+							}
+
+							$extra = '';
+
+							if ( $args['type'] == 'checkbox' ) {
+								$type    = 'boolean';
+								$default = isset( $args['default'] ) && $args['default'] ? 'true' : 'false';
+							} elseif ( $args['type'] == 'number' ) {
+								$type    = 'number';
+								$default = isset( $args['default'] ) ? "'" . $args['default'] . "'" : "''";
+							} elseif ( $args['type'] == 'select' && ! empty( $args['multiple'] ) ) {
+								$type = 'array';
+								if ( isset( $args['default'] ) && is_array( $args['default'] ) ) {
+									$default = ! empty( $args['default'] ) ? "['" . implode( "','", $args['default'] ) . "']" : "[]";
+								} else {
+									$default = isset( $args['default'] ) ? "'" . $args['default'] . "'" : "''";
+								}
+							} elseif ( $args['type'] == 'multiselect' ) {
+								$type    = 'array';
+								$default = isset( $args['default'] ) ? "'" . $args['default'] . "'" : "''";
+							} else {
+								$type    = 'string';
+								$default = isset( $args['default'] ) ? "'" . $args['default'] . "'" : "''";
+							}
+							echo $key . " : {";
+							echo "type : '$type',";
+							echo "default : $default,";
+							echo "},";
+						}
+
+						echo "content : {type : 'string',default: 'Please select the attributes in the block settings'},";
+						echo "className: { type: 'string', default: '' },";
+
+						echo "},";
+
+					}
 
 					?>
 
@@ -248,67 +252,78 @@ class WP_Super_Duper_Block {
 
 						var $value = '';
 						<?php
-							// if we have a post_type and a category then link them
-							if( isset($this->sd->arguments['post_type']) && isset($this->sd->arguments['category']) && !empty($this->sd->arguments['category']['post_type_linked']) ){
+						// if we have a post_type and a category then link them
+						if( isset( $this->sd->arguments['post_type'] ) && isset( $this->sd->arguments['category'] ) && ! empty( $this->sd->arguments['category']['post_type_linked'] ) ){
 						?>
-							if(typeof(prev_attributes[props.id]) != 'undefined' ){
-								$pt = props.attributes.post_type;
-								if(post_type_rest_slugs.length){
-									$value = post_type_rest_slugs[0][$pt];
+						if (typeof(prev_attributes[props.id]) != 'undefined') {
+							$pt = props.attributes.post_type;
+							if (post_type_rest_slugs.length) {
+								$value = post_type_rest_slugs[0][$pt];
+							}
+							var run = false;
+
+							if ($pt != term_query_type) {
+								run = true;
+								term_query_type = $pt;
+							}
+
+							// taxonomies
+							if ($value && 'post_type' in prev_attributes[props.id] && 'category' in prev_attributes[props.id] && run) {
+								wp.apiFetch({
+									path: "<?php if ( isset( $this->sd->arguments['post_type']['onchange_rest']['path'] ) ) {
+										echo $this->sd->arguments['post_type']['onchange_rest']['path'];
+									} else {
+										'/wp/v2/"+$value+"/categories/?per_page=100';
+									} ?>"
+								}).then(terms = > {
+									while (taxonomies_<?php echo str_replace( "-", "_", $id );?>.length
+							)
+								{
+									taxonomies_<?php echo str_replace("-","_", $id);?>.pop();
 								}
-								var run = false;
+								taxonomies_<?php echo str_replace("-","_", $id);?>.push({label: "All", value: 0});
+								jQuery.each(terms, function (key, val) {
+									taxonomies_<?php echo str_replace("-","_", $id);?>.push({
+										label: val.name,
+										value: val.id
+									});
+								});
 
-								if($pt != term_query_type){
-									run = true;
-									term_query_type = $pt;
-								}
+								// setting the value back and fourth fixes the no update issue that sometimes happens where it won't update the options.
+								var $old_cat_value = props.attributes.category;
+								props.setAttributes({category: [0]});
+								props.setAttributes({category: $old_cat_value});
 
-								// taxonomies
-								if( $value && 'post_type' in prev_attributes[props.id] && 'category' in prev_attributes[props.id] && run ){
-									wp.apiFetch({path: "<?php if(isset($this->sd->arguments['post_type']['onchange_rest']['path'])){echo $this->sd->arguments['post_type']['onchange_rest']['path'];}else{'/wp/v2/"+$value+"/categories/?per_page=100';} ?>"}).then(terms => {
-										while (taxonomies_<?php echo str_replace("-","_", $id);?>.length) {
-										taxonomies_<?php echo str_replace("-","_", $id);?>.pop();
-										}
-										taxonomies_<?php echo str_replace("-","_", $id);?>.push({label: "All", value: 0});
-										jQuery.each( terms, function( key, val ) {
-											taxonomies_<?php echo str_replace("-","_", $id);?>.push({label: val.name, value: val.id});
-										});
+								return taxonomies_<?php echo str_replace( "-", "_", $id );?>;
+							})
+							};
 
-										// setting the value back and fourth fixes the no update issue that sometimes happens where it won't update the options.
-										var $old_cat_value = props.attributes.category;
-										props.setAttributes({category: [0] });
-										props.setAttributes({category: $old_cat_value });
-
-										return taxonomies_<?php echo str_replace("-","_", $id);?>;
-								})
+							// sort_by
+							if ($value && 'post_type' in prev_attributes[props.id] && 'sort_by' in prev_attributes[props.id] && run) {
+								var data = {
+									'action': 'geodir_get_sort_options',
+									'post_type': $pt
 								};
+								jQuery.post(ajaxurl, data, function (response) {
+									response = JSON.parse(response);
+									while (sort_by_<?php echo str_replace( "-", "_", $id );?>.length) {
+										sort_by_<?php echo str_replace("-","_", $id);?>.pop();
+									}
 
-								// sort_by
-								if( $value && 'post_type' in prev_attributes[props.id] && 'sort_by' in prev_attributes[props.id] && run ){
-									var data = {
-										'action': 'geodir_get_sort_options',
-										'post_type': $pt
-									};
-									jQuery.post(ajaxurl, data, function(response) {
-										response = JSON.parse(response);
-										while (sort_by_<?php echo str_replace("-","_", $id);?>.length) {
-											sort_by_<?php echo str_replace("-","_", $id);?>.pop();
-										}
-
-										jQuery.each( response, function( key, val ) {
-											sort_by_<?php echo str_replace("-","_", $id);?>.push({label: val, value: key});
-										});
-
-										// setting the value back and fourth fixes the no update issue that sometimes happens where it won't update the options.
-										var $old_sort_by_value = props.attributes.sort_by;
-										props.setAttributes({sort_by: [0] });
-										props.setAttributes({sort_by: $old_sort_by_value });
-
-										return sort_by_<?php echo str_replace("-","_", $id);?>;
+									jQuery.each(response, function (key, val) {
+										sort_by_<?php echo str_replace("-","_", $id);?>.push({label: val, value: key});
 									});
 
-								}
+									// setting the value back and fourth fixes the no update issue that sometimes happens where it won't update the options.
+									var $old_sort_by_value = props.attributes.sort_by;
+									props.setAttributes({sort_by: [0]});
+									props.setAttributes({sort_by: $old_sort_by_value});
+
+									return sort_by_<?php echo str_replace( "-", "_", $id );?>;
+								});
+
 							}
+						}
 						<?php }?>
 
 
@@ -319,14 +334,14 @@ class WP_Super_Duper_Block {
 							$refresh = false;
 
 							// Set the old content the same as the new one so we only compare all other attributes
-							if(typeof(prev_attributes[props.id]) != 'undefined'){
+							if (typeof(prev_attributes[props.id]) != 'undefined') {
 								prev_attributes[props.id].content = props.attributes.content;
-							}else if(props.attributes.content === ""){
+							} else if (props.attributes.content === "") {
 								// if first load and content empty then refresh
 								$refresh = true;
 							}
 
-							if ( ( !is_fetching &&  JSON.stringify(prev_attributes[props.id]) != JSON.stringify(props.attributes) ) || $refresh  ) {
+							if (( !is_fetching && JSON.stringify(prev_attributes[props.id]) != JSON.stringify(props.attributes) ) || $refresh) {
 
 								is_fetching = true;
 								var data = {
@@ -335,7 +350,9 @@ class WP_Super_Duper_Block {
 									'attributes': props.attributes,
 									'post_id': <?php global $post; if ( isset( $post->ID ) ) {
 									echo $post->ID;
-								}else{echo '0';}?>,
+								} else {
+									echo '0';
+								}?>,
 									'_ajax_nonce': '<?php echo wp_create_nonce( 'super_duper_output_shortcode' );?>'
 								};
 
@@ -370,15 +387,15 @@ class WP_Super_Duper_Block {
 							el(wp.blockEditor.BlockControls, {key: 'controls'},
 
 								<?php if($show_alignment){?>
-									el(
-										wp.blockEditor.AlignmentToolbar,
-										{
-											value: props.attributes.alignment,
-											onChange: function (alignment) {
-												props.setAttributes({alignment: alignment})
-											}
+								el(
+									wp.blockEditor.AlignmentToolbar,
+									{
+										value: props.attributes.alignment,
+										onChange: function (alignment) {
+											props.setAttributes({alignment: alignment})
 										}
-									)
+									}
+								)
 								<?php }?>
 
 							),
@@ -387,28 +404,28 @@ class WP_Super_Duper_Block {
 
 								<?php
 
-									if(! empty( $this->sd->arguments )){
+								if(! empty( $this->sd->arguments )){
 
-										if ( $show_advanced ) {
+								if ( $show_advanced ) {
 								?>
-									el('div', {
-											style: {'padding-left': '16px','padding-right': '16px'}
-										},
-										el(
-											wp.components.ToggleControl,
-											{
-												label: 'Show Advanced Settings?',
-												checked: props.attributes.show_advanced,
-												onChange: function (show_advanced) {
-													props.setAttributes({show_advanced: !props.attributes.show_advanced})
-												}
+								el('div', {
+										style: {'padding-left': '16px', 'padding-right': '16px'}
+									},
+									el(
+										wp.components.ToggleControl,
+										{
+											label: 'Show Advanced Settings?',
+											checked: props.attributes.show_advanced,
+											onChange: function (show_advanced) {
+												props.setAttributes({show_advanced: !props.attributes.show_advanced})
 											}
-										)
+										}
 									)
-									,
+								)
+								,
 								<?php
 
-									}
+								}
 
 								$arguments = $this->sd->group_arguments( $this->sd->arguments );
 
@@ -417,18 +434,18 @@ class WP_Super_Duper_Block {
 
 
 								if($has_sections){
-									$panel_count = 0;
-									foreach($arguments as $key => $args){
-									?>
-									el(wp.components.PanelBody, {
+								$panel_count = 0;
+								foreach($arguments as $key => $args){
+								?>
+								el(wp.components.PanelBody, {
 										title: '<?php esc_attr_e( $key ); ?>',
 										initialOpen: <?php if ( $panel_count ) {
 										echo "false";
 									} else {
 										echo "true";
 									}?>
-								},
-								<?php
+									},
+									<?php
 
 									foreach ( $args as $k => $a ) {
 
@@ -436,162 +453,162 @@ class WP_Super_Duper_Block {
 										$this->build_block_arguments( $k, $a );
 										$this->block_row_end( $k, $a );
 									}
-								?>
-							),
-							<?php
+									?>
+								),
+								<?php
 								$panel_count ++;
 
-									}
+								}
 								}else {
-							?>
+								?>
 								el(wp.components.PanelBody, {
 										title: '<?php esc_attr_e( "Settings" ); ?>',
 										initialOpen: true
 									},
-								<?php
+									<?php
 									foreach ( $this->sd->arguments as $key => $args ) {
 										$this->block_row_start( $key, $args );
 										$this->build_block_arguments( $key, $args );
 										$this->block_row_end( $key, $args );
 									}
-								?>
+									?>
 								),
-								<?php
-										}
-
-									}
-								?>
-
-								),
-
-							<?php
-								// If the user sets block-output array then build it
-								if ( ! empty( $this->sd->options['block-output'] ) ) {
-									$this->block_element( $this->sd->options['block-output'] );
-								}else{
-									// if no block-output is set then we try and get the shortcode html output via ajax.
-								?>
-								el('div', {
-									dangerouslySetInnerHTML: {__html: onChangeContent()},
-									className: props.className,
-									style: {'minHeight': '30px'}
-								})
 								<?php
 								}
-								?>
-							]; // end return
-						},
 
-						// Enable transforming from Legacy widgets.
-						transforms: {
-							from: [
-								{
-									type: "block",
-									blocks: ["core/legacy-widget"],
-									isMatch: function isMatch(attributes) {
-										var idBase = attributes.idBase,
+								}
+								?>
+
+							),
+
+							<?php
+							// If the user sets block-output array then build it
+							if ( ! empty( $this->sd->options['block-output'] ) ) {
+							$this->block_element( $this->sd->options['block-output'] );
+						}else{
+							// if no block-output is set then we try and get the shortcode html output via ajax.
+							?>
+							el('div', {
+								dangerouslySetInnerHTML: {__html: onChangeContent()},
+								className: props.className,
+								style: {'minHeight': '30px'}
+							})
+							<?php
+							}
+							?>
+						]; // end return
+					},
+
+					// Enable transforming from Legacy widgets.
+					transforms: {
+						from: [
+							{
+								type: "block",
+								blocks: ["core/legacy-widget"],
+								isMatch: function isMatch(attributes) {
+									var idBase = attributes.idBase,
 										instance = attributes.instance;
 
-										if (!(instance !== null && instance !== void 0 && instance.raw)) {
-											// Can't transform if raw instance is not shown in REST API.
-											return false;
-										}
-
-										return idBase === "<?php echo $this->sd->options['base_id'];?>";
-									},
-									transform: function transform(attributes) {
-										var instance = attributes.instance;
-
-										return wp.blocks.createBlock("<?php echo $block_name;?>", instance.raw );
+									if (!(instance !== null && instance !== void 0 && instance.raw)) {
+										// Can't transform if raw instance is not shown in REST API.
+										return false;
 									}
-								}
-							]
-						},
 
-						// The "save" property must be specified and must be a valid function.
-						save: function (props) {
+									return idBase === "<?php echo $this->sd->options['base_id'];?>";
+								},
+								transform: function transform(attributes) {
+									var instance = attributes.instance;
 
-							//console.log(props);
-
-
-							var attr = props.attributes;
-							var align = '';
-
-							// build the shortcode.
-							var content = "[<?php echo $this->sd->options['base_id'];?>";
-							$html = '';
-							<?php
-
-							if(! empty( $this->sd->arguments )){
-
-							foreach($this->sd->arguments as $key => $args){
-							?>
-							if (attr.hasOwnProperty("<?php echo esc_attr( $key );?>")) {
-								if ('<?php echo esc_attr( $key );?>' == 'html') {
-									$html = attr.<?php echo esc_attr( $key );?>;
-								} else {
-									content += " <?php echo esc_attr( $key );?>='" + attr.<?php echo esc_attr( $key );?>+ "' ";
+									return wp.blocks.createBlock("<?php echo $block_name;?>", instance.raw);
 								}
 							}
-							<?php
+						]
+					},
+
+					// The "save" property must be specified and must be a valid function.
+					save: function (props) {
+
+						//console.log(props);
+
+
+						var attr = props.attributes;
+						var align = '';
+
+						// build the shortcode.
+						var content = "[<?php echo $this->sd->options['base_id'];?>";
+						$html = '';
+						<?php
+
+						if(! empty( $this->sd->arguments )){
+
+						foreach($this->sd->arguments as $key => $args){
+						?>
+						if (attr.hasOwnProperty("<?php echo esc_attr( $key );?>")) {
+							if ('<?php echo esc_attr( $key );?>' == 'html') {
+								$html = attr.<?php echo esc_attr( $key );?>;
+							} else {
+								content += " <?php echo esc_attr( $key );?>='" + attr.<?php echo esc_attr( $key );?>+ "' ";
 							}
-							}
-
-							?>
-							content += "]";
-
-							// if has html element
-							if ($html) {
-								content += $html + "[/<?php echo $this->sd->options['base_id'];?>]";
-							}
-
-
-							// @todo should we add inline style here or just css classes?
-							if (attr.alignment) {
-								if (attr.alignment == 'left') {
-									align = 'alignleft';
-								}
-								if (attr.alignment == 'center') {
-									align = 'aligncenter';
-								}
-								if (attr.alignment == 'right') {
-									align = 'alignright';
-								}
-							}
-
-							<?php
-							if(isset( $this->sd->options['block-wrap'] ) && $this->sd->options['block-wrap'] == ''){
-							?>
-							return content;
-							<?php
-							}else{
-							?>
-							var block_wrap = 'div';
-							if (attr.hasOwnProperty("block_wrap")) {
-								block_wrap = attr.block_wrap;
-							}
-							return el(block_wrap, {dangerouslySetInnerHTML: {__html: content}, className: align});
-							<?php
-							}
-							?>
-
-
 						}
-					});
-				})();
-			</script>
-			<?php
-			$output = ob_get_clean();
+						<?php
+						}
+						}
 
-			/*
-			 * We only add the <script> tags for code highlighting, so we strip them from the output.
-			 */
+						?>
+						content += "]";
 
-			return str_replace( array(
-				'<script>',
-				'</script>'
-			), '', $output );
-		}
+						// if has html element
+						if ($html) {
+							content += $html + "[/<?php echo $this->sd->options['base_id'];?>]";
+						}
+
+
+						// @todo should we add inline style here or just css classes?
+						if (attr.alignment) {
+							if (attr.alignment == 'left') {
+								align = 'alignleft';
+							}
+							if (attr.alignment == 'center') {
+								align = 'aligncenter';
+							}
+							if (attr.alignment == 'right') {
+								align = 'alignright';
+							}
+						}
+
+						<?php
+						if(isset( $this->sd->options['block-wrap'] ) && $this->sd->options['block-wrap'] == ''){
+						?>
+						return content;
+						<?php
+						}else{
+						?>
+						var block_wrap = 'div';
+						if (attr.hasOwnProperty("block_wrap")) {
+							block_wrap = attr.block_wrap;
+						}
+						return el(block_wrap, {dangerouslySetInnerHTML: {__html: content}, className: align});
+						<?php
+						}
+						?>
+
+
+					}
+				});
+			})();
+		</script>
+		<?php
+		$output = ob_get_clean();
+
+		/*
+		 * We only add the <script> tags for code highlighting, so we strip them from the output.
+		 */
+
+		return str_replace( array(
+			'<script>',
+			'</script>'
+		), '', $output );
+	}
 
 	/**
 	 * Generate the block icon.
@@ -621,45 +638,38 @@ class WP_Super_Duper_Block {
 
 		// set the icon if we found one
 		if ( $fa_type ) {
-			$fa_icon =  substr( $icon, 7 );
+			$fa_icon = substr( $icon, 7 );
 			$icon    = "el('svg',{width: 20, height: 20, viewBox: '0 0 20 20'},el('use', {'xlink:href': '" . $this->sd->get_url() . "icons/" . $fa_type . ".svg#" . $fa_icon . "','href': '" . $this->sd->get_url() . "icons/" . $fa_type . ".svg#" . $fa_icon . "'}))";
 		}
 
 		return $icon;
 	}
 
-	/**
-	 * Enqueue CSS assets in the editor if defined
-	 */
-	public function enqueue_editor_assets() {
-		if ( isset( $this->sd->options['block-editor-style'] ) ) {
-			echo "<link rel='stylesheet' id='glossary-shortcode' href='" . $this->sd->options['block-editor-style'] . "'/>";
-		}
-	}
-
-	public function block_row_start($key, $args){
+	public function block_row_start( $key, $args ) {
 		// check for row
-		if(!empty($args['row'])){
-			if(!empty($args['row']['open'])){
+		if ( ! empty( $args['row'] ) ) {
+			if ( ! empty( $args['row']['open'] ) ) {
 				// element require
 				$element_require = ! empty( $args['element_require'] ) ? $this->block_props_replace( $args['element_require'], true ) . " && " : "";
 				echo $element_require;
-					if(false){?><script><?php }?>
-						el('div', {
+			if ( false ){
+				?>
+				<script><?php }?>
+					el('div', {
 							className: 'bsui components-base-control',
 						},
-						<?php if(!empty($args['row']['title'])){ ?>
+						<?php if(! empty( $args['row']['title'] )){ ?>
 						el('label', {
 								className: 'components-base-control__label',
-								key: '<?php esc_attr($key)?>-title'
+								key: '<?php esc_attr( $key )?>-title'
 							},
 							'<?php echo addslashes( $args['row']['title'] ); ?>'
 						),
 						<?php }?>
-						<?php if(!empty($args['row']['desc'])){ ?>
+						<?php if(! empty( $args['row']['desc'] )){ ?>
 						el('p', {
 								className: 'components-base-control__help mb-0',
-								key: '<?php esc_attr($key)?>-desc'
+								key: '<?php esc_attr( $key )?>-desc'
 							},
 							'<?php echo addslashes( $args['row']['desc'] ); ?>'
 						),
@@ -667,7 +677,9 @@ class WP_Super_Duper_Block {
 						el(
 							'div',
 							{
-								className: 'row mb-n2 <?php if(!empty($args['row']['class'])){ echo esc_attr($args['row']['class']);} ?>',
+								className: 'row mb-n2 <?php if ( ! empty( $args['row']['class'] ) ) {
+									echo esc_attr( $args['row']['class'] );
+								} ?>',
 							},
 							el(
 								'div',
@@ -675,37 +687,52 @@ class WP_Super_Duper_Block {
 									className: 'col pr-2',
 								},;
 					<?php
-					if(false){?></script><?php }
-					} elseif(!empty($args['row']['close'])) {
-						if(false){?><script><?php }?>
-						el(
-							'div',
-							{
-								className: 'col pl-0',
-							},;
+					if ( false ){
+					?></script><?php }
+			} elseif ( ! empty( $args['row']['close'] ) ) {
+			if ( false ){
+				?>
+				<script><?php }?>
+					el(
+						'div',
+						{
+							className: 'col pl-0',
+						},;
 					<?php
-					if(false){?></script><?php }
-				}else{
-					if(false){?><script><?php }?>
-						el(
-							'div',
-							{
-								className: 'col pl-0 pr-2',
-							},;
+					if ( false ){
+					?></script><?php }
+			} else {
+			if ( false ){
+				?>
+				<script><?php }?>
+					el(
+						'div',
+						{
+							className: 'col pl-0 pr-2',
+						},;
 					<?php
-					if(false){?></script><?php }
-				}
+					if ( false ){
+					?></script><?php }
+			}
 		}
 	}
 
-	public function block_row_end($key, $args){
-		if(!empty($args['row'])){
-			// maybe close
-			if(!empty($args['row']['close'])){
-				echo "))";
-			}
-			echo "),";
+	/**
+	 * Replace block attributes placeholders with the proper naming.
+	 *
+	 * @param $string
+	 *
+	 * @return mixed
+	 */
+	public function block_props_replace( $string, $no_wrap = false ) {
+
+		if ( $no_wrap ) {
+			$string = str_replace( array( "[%", "%]" ), array( "props.attributes.", "" ), $string );
+		} else {
+			$string = str_replace( array( "[%", "%]" ), array( "'+props.attributes.", "+'" ), $string );
 		}
+
+		return $string;
 	}
 
 	public function build_block_arguments( $key, $args ) {
@@ -721,12 +748,12 @@ class WP_Super_Duper_Block {
 
 		// icon
 		$icon = '';
-		if( !empty( $args['icon'] ) ){
+		if ( ! empty( $args['icon'] ) ) {
 			$icon .= "el('div', {";
-								$icon .= "dangerouslySetInnerHTML: {__html: '".$this->sd->get_widget_icon( esc_attr($args['icon']))."'},";
-								$icon .= "className: 'text-center',";
-								$icon .= "title: '".addslashes( $args['title'] )."',";
-							$icon .= "}),";
+			$icon .= "dangerouslySetInnerHTML: {__html: '" . $this->sd->get_widget_icon( esc_attr( $args['icon'] ) ) . "'},";
+			$icon .= "className: 'text-center',";
+			$icon .= "title: '" . addslashes( $args['title'] ) . "',";
+			$icon .= "}),";
 			// blank title as its added to the icon.
 			$args['title'] = '';
 		}
@@ -735,23 +762,22 @@ class WP_Super_Duper_Block {
 		$require_advanced = ! empty( $args['advanced'] ) ? "props.attributes.show_advanced && " : "";
 
 		// element require
-		$element_require = ! empty( $args['element_require'] ) ? $this->block_props_replace( $args['element_require'], true ) . " && " : "";
-		$onchange  = "props.setAttributes({ $key: $key } )";
-		$onchangecomplete  = "";
-		$value     = "props.attributes.$key";
-		$text_type = array( 'text', 'password', 'number', 'email', 'tel', 'url', 'colorx' );
+		$element_require  = ! empty( $args['element_require'] ) ? $this->block_props_replace( $args['element_require'], true ) . " && " : "";
+		$onchange         = "props.setAttributes({ $key: $key } )";
+		$onchangecomplete = "";
+		$value            = "props.attributes.$key";
+		$text_type        = array( 'text', 'password', 'number', 'email', 'tel', 'url', 'colorx' );
 		if ( in_array( $args['type'], $text_type ) ) {
 			$type = 'TextControl';
 			// Save numbers as numbers and not strings
 			if ( $args['type'] == 'number' ) {
 				$onchange = "props.setAttributes({ $key: Number($key) } )";
 			}
-		}
-		elseif ( $args['type'] == 'color' ) {
-			$type = 'ColorPicker';
+		} elseif ( $args['type'] == 'color' ) {
+			$type     = 'ColorPicker';
 			$onchange = "";
 			$extra .= "color: $value,";
-			if(!empty($args['disable_alpha'])){
+			if ( ! empty( $args['disable_alpha'] ) ) {
 				$extra .= "disableAlpha: true,";
 			}
 			$onchangecomplete = "onChangeComplete: function($key) {
@@ -768,12 +794,12 @@ class WP_Super_Duper_Block {
 			$type = 'TextareaControl';
 		} elseif ( $args['type'] == 'select' || $args['type'] == 'multiselect' ) {
 			$type = 'SelectControl';
-				if($args['name'] == 'category' && !empty($args['post_type_linked'])){
-				$options .= "options: taxonomies_".str_replace("-","_", $this->sd->base_id . '_' . $this->sd->get_number() ).",";
-			}elseif($args['name'] == 'sort_by' && !empty($args['post_type_linked'])){
-				$options .= "options: sort_by_".str_replace("-","_", $this->sd->base_id . '_' . $this->sd->get_number() ).",";
-			}else {
-					if ( ! empty( $args['options'] ) ) {
+			if ( $args['name'] == 'category' && ! empty( $args['post_type_linked'] ) ) {
+				$options .= "options: taxonomies_" . str_replace( "-", "_", $this->sd->base_id . '_' . $this->sd->get_number() ) . ",";
+			} elseif ( $args['name'] == 'sort_by' && ! empty( $args['post_type_linked'] ) ) {
+				$options .= "options: sort_by_" . str_replace( "-", "_", $this->sd->base_id . '_' . $this->sd->get_number() ) . ",";
+			} else {
+				if ( ! empty( $args['options'] ) ) {
 					$options .= "options: [";
 					foreach ( $args['options'] as $option_val => $option_label ) {
 						$options .= "{ value: '" . esc_attr( $option_val ) . "', label: '" . addslashes( $option_label ) . "' },";
@@ -786,18 +812,18 @@ class WP_Super_Duper_Block {
 			}
 		} elseif ( $args['type'] == 'alignment' ) {
 			$type = 'AlignmentToolbar'; // @todo this does not seem to work but cant find a example
-		}elseif ( $args['type'] == 'margins' ) {
+		} elseif ( $args['type'] == 'margins' ) {
 		} else {
 			return;// if we have not implemented the control then don't break the JS.
 		}
 
 		// color input does not show the labels so we add them
-		if($args['type']=='color'){
+		if ( $args['type'] == 'color' ) {
 			// add show only if advanced
 			echo $require_advanced;
 			// add setting require if defined
 			echo $element_require;
-			echo "el('div', {style: {'marginBottom': '8px'}}, '".addslashes( $args['title'] )."'),";
+			echo "el('div', {style: {'marginBottom': '8px'}}, '" . addslashes( $args['title'] ) . "'),";
 		}
 
 		// add show only if advanced
@@ -821,12 +847,22 @@ class WP_Super_Duper_Block {
 			echo "placeholder: '" . addslashes( $args['placeholder'] ) . "',";
 		}
 		echo $options;
-        echo $extra;
-        echo $custom_attributes;
-        echo $onchangecomplete . "\n";?>
+		echo $extra;
+		echo $custom_attributes;
+		echo $onchangecomplete . "\n"; ?>
 		onChange: function ( <?php echo $key; ?> ) {<?php echo $onchange; ?>}
 		} ),
 		<?php
+	}
+
+	public function block_row_end( $key, $args ) {
+		if ( ! empty( $args['row'] ) ) {
+			// maybe close
+			if ( ! empty( $args['row']['close'] ) ) {
+				echo "))";
+			}
+			echo "),";
+		}
 	}
 
 	/**
@@ -902,7 +938,7 @@ class WP_Super_Duper_Block {
 						echo ", \n";
 					}
 
-				// Or an attribute.
+					// Or an attribute.
 				} else {
 					if ( substr( $element, 0, 3 ) === 'if_' ) {
 						echo str_replace( 'if_', '', $element ) . ": " . $this->block_props_replace( $new_args, true ) . ",";
@@ -918,21 +954,12 @@ class WP_Super_Duper_Block {
 	}
 
 	/**
-	 * Replace block attributes placeholders with the proper naming.
-	 *
-	 * @param $string
-	 *
-	 * @return mixed
+	 * Enqueue CSS assets in the editor if defined
 	 */
-	public function block_props_replace( $string, $no_wrap = false ) {
-
-		if ( $no_wrap ) {
-			$string = str_replace( array( "[%", "%]" ), array( "props.attributes.", "" ), $string );
-		} else {
-			$string = str_replace( array( "[%", "%]" ), array( "'+props.attributes.", "+'" ), $string );
+	public function enqueue_editor_assets() {
+		if ( isset( $this->sd->options['block-editor-style'] ) ) {
+			echo "<link rel='stylesheet' id='glossary-shortcode' href='" . $this->sd->options['block-editor-style'] . "'/>";
 		}
-
-		return $string;
 	}
 
 }
