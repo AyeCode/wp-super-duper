@@ -275,13 +275,13 @@ class WP_Super_Duper_Block {
 										});
 
 										// setting the value back and fourth fixes the no update issue that sometimes happens where it won't update the options.
-										var $old_cat_value = props.attributes.category
+										var $old_cat_value = props.attributes.category;
 										props.setAttributes({category: [0] });
 										props.setAttributes({category: $old_cat_value });
 
 										return taxonomies_<?php echo str_replace("-","_", $id);?>;
-									});
-								}
+								})
+								};
 
 								// sort_by
 								if( $value && 'post_type' in prev_attributes[props.id] && 'sort_by' in prev_attributes[props.id] && run ){
@@ -300,7 +300,7 @@ class WP_Super_Duper_Block {
 										});
 
 										// setting the value back and fourth fixes the no update issue that sometimes happens where it won't update the options.
-										var $old_sort_by_value = props.attributes.sort_by
+										var $old_sort_by_value = props.attributes.sort_by;
 										props.setAttributes({sort_by: [0] });
 										props.setAttributes({sort_by: $old_sort_by_value });
 
@@ -673,7 +673,7 @@ class WP_Super_Duper_Block {
 								'div',
 								{
 									className: 'col pr-2',
-								},
+								},;
 					<?php
 					if(false){?></script><?php }
 					} elseif(!empty($args['row']['close'])) {
@@ -682,7 +682,7 @@ class WP_Super_Duper_Block {
 							'div',
 							{
 								className: 'col pl-0',
-							},
+							},;
 					<?php
 					if(false){?></script><?php }
 				}else{
@@ -691,7 +691,7 @@ class WP_Super_Duper_Block {
 							'div',
 							{
 								className: 'col pl-0 pr-2',
-							},
+							},;
 					<?php
 					if(false){?></script><?php }
 				}

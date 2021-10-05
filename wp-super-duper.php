@@ -5,7 +5,7 @@
  * @since 1.0.0
  */
 
-defined( 'ABSPATH') || exit;
+defined( 'ABSPATH' ) || exit;
 
 // Ensure the class is only loaded once.
 if ( ! class_exists( 'WP_Super_Duper' ) ) {
@@ -23,7 +23,7 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 	 */
 	abstract class WP_Super_Duper {
 
-		public $version = "1.0.27";
+		public $version = "2.0.0";
 		public $font_awesome_icon_version = "5.11.2";
 		public $block_code;
 		public $options;
@@ -32,6 +32,9 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 		public $settings_hash;
 		public $arguments = array();
 		public $instance = array();
+
+		// prevent SDv1 errors if register_widget() function used
+		public $id_base;
 
 		/**
 		 * @var array Contains an array of output types instances.
@@ -78,6 +81,14 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 			add_action( 'wp_ajax_super_duper_get_picker', array( __CLASS__, 'get_picker' ) );
 
 			do_action( 'wp_super_duper_widget_init', $options, $this );
+
+		}
+
+		/**
+		 * prevent SDv1 errors if register_widget() function used
+		 */
+		public function _register(){
+			// backwards compatibility
 		}
 
 		/**
@@ -151,12 +162,10 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 			);
 
 			// Maybe disable widgets.
-			$disable_widget   = get_option( 'sd_load_widgets', 'yes' );
+			$disable_widget   = get_option( 'sd_load_widgets', 'auto' );
 
 			if ( 'auto' === $disable_widget ) {
-				$has_pagebuilder = defined( 'WPB_VC_VERSION' ) || defined( 'ELEMENTOR_VERSION' ) || defined( 'ET_BUILDER_VERSION' ) || defined( 'FL_BUILDER_VERSION' ) || class_exists( 'Fusion_Element' );
-
-				if ( $has_pagebuilder ) {
+				if ( !$this->widgets_required() ) {
 					unset( $types['widget'] );
 				}
 			}
@@ -166,6 +175,87 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 			}
 
 			return apply_filters( 'super_duper_types', $types, $this );
+		}
+
+		/**
+		 * Check if we are required to load widgets.
+		 *
+		 * @return mixed|void
+		 */
+		protected function widgets_required(){
+			global $wp_version;
+
+			$required = false;
+
+
+			// check wp version
+			if( version_compare( $wp_version, '5.8', '<' ) ){
+				$required = true;
+			}
+
+			// Page builders that require widgets
+			if(
+			!$required && (
+			defined( 'ELEMENTOR_VERSION' ) // elementor
+			|| class_exists( 'Fusion_Element' ) // Fusion Builder (avada)
+			|| class_exists( 'SiteOrigin_Panels' ) // SiteOrigin Page builder
+			|| defined( 'WPB_VC_VERSION' ) // WPBakery page builder
+			|| defined( 'CT_VERSION' ) // Oxygen Builder
+			|| defined( 'FL_BUILDER_VERSION' ) // Beaver Builder
+			|| defined( 'FL_THEME_BUILDER_VERSION' ) // Beaver Themer
+			)
+			){
+				$required = true;
+			}
+
+			// Theme has active widgets
+			if( !$required && !empty( $this->has_active_widgets() )  ){
+				$required = true;
+			}
+
+
+			return apply_filters( 'sd_widgets_required' , $required );
+		}
+
+		/**
+		 * Check if the current site has any active old style widgets.
+		 *
+		 * @return bool
+		 */
+		protected function has_active_widgets(){
+			global $sd_has_active_widgets;
+
+			// have we already done this?
+			if(!is_null($sd_has_active_widgets)){
+				return $sd_has_active_widgets;
+			}
+
+		    $result = false;
+		    $sidebars_widgets = get_option('sidebars_widgets');
+
+		    if(is_array($sidebars_widgets)){
+
+		        foreach ($sidebars_widgets as $key => $value) {
+
+
+
+		            if( $key != 'wp_inactive_widgets' ) {
+
+		                if(!empty($value) && is_array($value)){
+			                foreach($value as $widget){
+			                    if($widget && substr( $widget, 0, 6 ) !== "block-"){
+			                        $result = true;
+			                    }
+			                }
+						}
+
+		            }
+		        }
+		    }
+
+		    $sd_has_active_widgets = $result;
+
+		    return $result;
 		}
 
 		/**
@@ -184,6 +274,7 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 		 *
 		 * @param array $options
 		 * @param bool $arguments
+		 *
 		 * @return mixed
 		 */
 		protected function add_name_from_key( $options, $arguments = false ) {
@@ -201,8 +292,7 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 		}
 
 		/**
-
-		 * Placeholder text to show if output is empty and we are on a preview/builder page.
+         * Placeholder text to show if output is empty and we are on a preview/builder page.
 		 *
 		 * @param string $name
 		 *
@@ -325,6 +415,7 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 		 * Groups widget arguments.
 		 *
 		 * @param array $arguments
+		 *
 		 * @return array
 		 */
 		public function group_arguments( $arguments ) {
@@ -1660,6 +1751,7 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 		 * @since 4.4.0 Array format field IDs are now accepted.
 		 *
 		 * @param string $field_name Field name.
+		 *
 		 * @return string ID attribute for `$field_name`.
 		 */
 		public function get_field_id( $field_name ) {
@@ -1680,6 +1772,7 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 		 * @since 4.4.0 Array format field names are now accepted.
 		 *
 		 * @param string $field_name Field name.
+		 *
 		 * @return string Name attribute for `$field_name`.
 		 */
 		public function get_field_name( $field_name ) {
@@ -2024,7 +2117,7 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 				'no'   => __( 'No' ),
 				'auto' => __( 'Auto' ),
 			);
-			$selected_option   = get_option( 'sd_load_widgets', 'yes' );
+			$selected_option   = get_option( 'sd_load_widgets', 'auto' );
 
 			?>
 				<select name="sd_load_widgets" id="sd_load_widgets">

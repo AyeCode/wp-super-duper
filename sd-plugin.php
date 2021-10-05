@@ -5,13 +5,13 @@
  * @wordpress-plugin
  * Plugin Name: Super Duper - Examples
  * Description: This is a Hello World test plugin for WP Super Duper Class.
- * Version: 1.0.6
+ * Version: 2.0.0
  * Author: AyeCode
  * Author URI: https://ayecode.io
  * Text Domain: super-duper
  * Domain Path: /languages
  * Requires at least: 4.2
- * Tested up to: 5.3
+ * Tested up to: 5.8
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -24,11 +24,11 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 }
 
 /*
-	* Hello world example.
-	*/
-	include_once( dirname( __FILE__ ) . "/hello-world.php" );
+ * Hello world example.
+ */
+include_once( dirname( __FILE__ ) . "/hello-world.php" );
 
-	/*
-	* Map example.
-	*/
-	include_once( dirname( __FILE__ ) . "/map.php" );
+/*
+ * Map example.
+ */
+include_once( dirname( __FILE__ ) . "/map.php" );
