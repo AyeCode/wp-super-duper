@@ -79,6 +79,7 @@ class WP_Super_Duper_Block {
 					$value = implode( ',', $value );
 				}
 				$key   = sanitize_title_with_dashes( $key );
+				$key   = str_replace( '__', '-', $key );
 				$value = wp_slash( $value );
 				$attributes .= " $key='$value' ";
 			}
@@ -342,11 +343,13 @@ class WP_Super_Duper_Block {
 
 							if (( !is_fetching && JSON.stringify(prev_attributes[props.id]) != JSON.stringify(props.attributes) ) || $refresh) {
 
+								var attributes = props.attributes;
+								delete attributes['content'];
 								is_fetching = true;
 								var data = {
 									'action': 'super_duper_output_shortcode',
 									'shortcode': '<?php echo $this->sd->options['base_id'];?>',
-									'attributes': props.attributes,
+									'attributes': attributes,
 									'post_id': <?php global $post; if ( isset( $post->ID ) ) {
 									echo $post->ID;
 								} else {
