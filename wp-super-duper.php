@@ -2321,7 +2321,7 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 					}
 				}
 				if ( isset( $args['multiple'] ) && $args['multiple'] ) { //@todo multiselect does not work at the moment: https://github.com/WordPress/gutenberg/issues/5550
-					$extra .= ' multiple: true, ';
+					$extra .= ' multiple:true,style:{height:"auto",paddingRight:"8px"}, ';
 				}
 			} elseif ( $args['type'] == 'alignment' ) {
 				$type = 'AlignmentToolbar'; // @todo this does not seem to work but cant find a example
