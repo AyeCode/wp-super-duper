@@ -1,4 +1,4 @@
-= 1.1 =
+= 1.1.1 =
 * props.id deprecated and replaced with props.clientId, this could cause issues with wrong content displayed - FIXED
 * We will now attempt to auto-recover all blocks - ADDED
 * Nested blocks support -  ADDED

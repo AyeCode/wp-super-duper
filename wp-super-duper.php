@@ -13,11 +13,11 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 	 *
 	 * Class WP_Super_Duper
 	 * @since 1.0.16 change log moved to file change-log.txt - CHANGED
-	 * @ver 1.1
+	 * @ver 1.1.1
 	 */
 	class WP_Super_Duper extends WP_Widget {
 
-		public $version = "1.1";
+		public $version = "1.1.1";
 		public $font_awesome_icon_version = "5.11.2";
 		public $block_code;
 		public $options;
@@ -2486,7 +2486,7 @@ const { deviceType } = wp.data.useSelect( select => {
 
                             ?>
 
-							}
+
 
 							return [
 
