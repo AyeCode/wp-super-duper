@@ -5,6 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 if ( ! class_exists( 'WP_Super_Duper' ) ) {
 
+	define( 'SUPER_DUPER_VER', '1.1.4' );
 
 	/**
 	 * A Class to be able to create a Widget, Shortcode or Block to be able to output content for WordPress.
@@ -17,7 +18,7 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 	 */
 	class WP_Super_Duper extends WP_Widget {
 
-		public $version = "1.1.1";
+		public $version = SUPER_DUPER_VER;
 		public $font_awesome_icon_version = "5.11.2";
 		public $block_code;
 		public $options;
@@ -2054,15 +2055,30 @@ new MutationObserver(() => {
 				// bgtus - background transparent until scroll
                 if ( $args['bgtus'] !== undefined && $args['bgtus'] ) { $classes.push("bg-transparent-until-scroll"); }
 
+				// hover animations
+                if ( $args['hover_animations'] !== undefined && $args['hover_animations'] ) { $classes.push($args['hover_animations'].replace(',',' ')); }
 
 				// build classes from build keys
 				$build_keys = sd_get_class_build_keys();
 				if ( $build_keys.length ) {
 					$build_keys.forEach($key => {
-						if ( $key == 'font_size' && $args[ $key ] == 'custom' ) {
+
+						if($key.endsWith("-MTD")){
+
+							$k = $key.replace("-MTD","");
+
+							// Mobile, Tablet, Desktop
+							if ( $args[$k] !== undefined && $args[$k] !== '' ) { $classes.push( $args[$k] );  $v = $args[$k]; }else{$v = null;}
+							if ( $args[$k + '_md'] !== undefined && $args[$k + '_md'] !== '' ) { $classes.push( $args[$k + '_md'] );  $v_md = $args[$k + '_md']; }else{$v_md = null;}
+							if ( $args[$k + '_lg'] !== undefined && $args[$k + '_lg'] !== '' ) { if($v == null && $v_md == null){ $classes.push( $args[$k + '_lg'].replace('-lg','') ); }else{$classes.push( $args[$k + '_lg'] ); } }
+
+						}else{
+							if ( $key == 'font_size' && $args[ $key ] == 'custom' ) {
 							 return;
+							}
+							if ( $args[$key] !== undefined && $args[$key] !== '' ) { $classes.push($args[$key]); }
 						}
-						if ( $args[$key] !== undefined && $args[$key] !== '' ) { $classes.push($args[$key]); }
+
 					});
 				}
 
@@ -3328,7 +3344,7 @@ if (confirmed) {
 					}
 				}
 				if ( isset( $args['multiple'] ) && $args['multiple'] ) { //@todo multiselect does not work at the moment: https://github.com/WordPress/gutenberg/issues/5550
-					$extra .= ' multiple:true,style:{height:"auto",paddingRight:"8px"}, ';
+					$extra .= ' multiple:true,style:{height:"auto",paddingRight:"8px","overflow-y":"auto"}, ';
 				}
 			} elseif ( $args['type'] == 'tagselect' ) {
 //				$type = 'FormTokenField';
