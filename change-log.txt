@@ -1,4 +1,4 @@
-= 1.1.6 =
+= 1.1.7 =
 * prevent JS error that breaks the GD block - FIXED
 * bug with justify content between helper function - FIXED
 
