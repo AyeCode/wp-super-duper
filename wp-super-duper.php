@@ -2465,15 +2465,18 @@ const parentBlocks = wp.data.select('core/block-editor').getBlocksByClientId(par
 
 								}
 							}
-							<?php }?>
-// Get device type const.
-const { deviceType } = wp.data.useSelect( select => {
-        const { __experimentalGetPreviewDeviceType } = select( 'core/edit-site' ) ? select( 'core/edit-site' ) : select( 'core/edit-post' ) ; // for sie editor https://github.com/WordPress/gutenberg/issues/39248
-
-        return {
-            deviceType: __experimentalGetPreviewDeviceType(),
-        }
-    }, [] );
+							<?php } ?>
+/** Get device type const. */
+try {
+	const { deviceType } = wp.data.useSelect(select => {
+		const { __experimentalGetPreviewDeviceType } = select('core/edit-site') ? select('core/edit-site') : select('core/edit-post'); // For sie editor https://github.com/WordPress/gutenberg/issues/39248
+		return {
+			deviceType: __experimentalGetPreviewDeviceType(),
+		}
+	}, []);
+} catch (err) {
+	console.log(err);
+}
 							var content = props.attributes.content;
 
 							function onChangeContent($type) {
