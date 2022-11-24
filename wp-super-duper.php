@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 if ( ! class_exists( 'WP_Super_Duper' ) ) {
 
-	define( 'SUPER_DUPER_VER', '1.1.10' );
+	define( 'SUPER_DUPER_VER', '1.1.11' );
 
 	/**
 	 * A Class to be able to create a Widget, Shortcode or Block to be able to output content for WordPress.
@@ -1718,7 +1718,7 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 		 * @since 1.0.4 Added block_wrap property which will set the block wrapping output element ie: div, span, p or empty for no wrap.
 		 */
 		public function block() {
-            global $sd_is_js_functions_loaded;
+            global $sd_is_js_functions_loaded, $aui_bs5;
 
 			ob_start();
 
@@ -1733,16 +1733,16 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
                 $sd_is_js_functions_loaded = true;
             ?>
 
-function sd_show_view_options($this) {
-    if (jQuery($this).html().length) {
-        jQuery($this).html('');
-    } else {
-        jQuery($this).html('<div class="position-absolute d-flex flex-column bg-white p-1 rounded border shadow-lg " style="top:-80px;left:-5px;"><div class="dashicons dashicons-desktop mb-1" onclick="sd_set_view_type(\'Desktop\');"></div><div class="dashicons dashicons-tablet mb-1" onclick="sd_set_view_type(\'Tablet\');"></div><div class="dashicons dashicons-smartphone" onclick="sd_set_view_type(\'Mobile\');"></div></div>');
-    }
+function sd_show_view_options($this){
+	if(jQuery($this).html().length){
+		jQuery($this).html('');
+	}else{
+		jQuery($this).html('<div class="position-absolute d-flex flex-column bg-white p-1 rounded border shadow-lg " style="top:-80px;left:-5px;"><div class="dashicons dashicons-desktop mb-1" onclick="sd_set_view_type(\'Desktop\');"></div><div class="dashicons dashicons-tablet mb-1" onclick="sd_set_view_type(\'Tablet\');"></div><div class="dashicons dashicons-smartphone" onclick="sd_set_view_type(\'Mobile\');"></div></div>');
+	}
 }
 
-function sd_set_view_type($device) {
-    wp.data.dispatch('core/edit-site') ? wp.data.dispatch('core/edit-site').__experimentalSetPreviewDeviceType($device) : wp.data.dispatch('core/edit-post').__experimentalSetPreviewDeviceType($device);
+function sd_set_view_type($device){
+	wp.data.dispatch('core/edit-site') ? wp.data.dispatch('core/edit-site').__experimentalSetPreviewDeviceType($device) : wp.data.dispatch('core/edit-post').__experimentalSetPreviewDeviceType($device);
 }
 /**
  * Try to auto-recover blocks.
@@ -1953,41 +1953,61 @@ new MutationObserver(() => {
 
                 $classes = [];
 
+				<?php
+				if($aui_bs5){
+					?>
+				$p_ml = 'ms-';
+				$p_mr = 'me-';
+
+				$p_pl = 'ps-';
+				$p_pr = 'pe-';
+					<?php
+				}else{
+						?>
+				$p_ml = 'ml-';
+				$p_mr = 'mr-';
+
+				$p_pl = 'pl-';
+				$p_pr = 'pr-';
+					<?php
+				}
+				?>
+
                 // margins
 	            if ( $args['mt'] !== undefined && $args['mt'] !== '' ) { $classes.push( "mt-" + $args['mt'] );  $mt = $args['mt']; }else{$mt = null;}
-	            if ( $args['mr'] !== undefined && $args['mr'] !== '' ) { $classes.push( "mr-" + $args['mr'] );  $mr = $args['mr']; }else{$mr = null;}
+	            if ( $args['mr'] !== undefined && $args['mr'] !== '' ) { $classes.push( $p_mr + $args['mr'] );  $mr = $args['mr']; }else{$mr = null;}
 	            if ( $args['mb'] !== undefined && $args['mb'] !== '' ) { $classes.push( "mb-" + $args['mb'] );  $mb = $args['mb']; }else{$mb = null;}
-	            if ( $args['ml'] !== undefined && $args['ml'] !== '' ) { $classes.push( "ml-" + $args['ml'] );  $ml = $args['ml']; }else{$ml = null;}
+	            if ( $args['ml'] !== undefined && $args['ml'] !== '' ) { $classes.push( $p_ml + $args['ml'] );  $ml = $args['ml']; }else{$ml = null;}
 
                 // margins tablet
 	            if ( $args['mt_md'] !== undefined && $args['mt_md'] !== '' ) { $classes.push( "mt-md-" + $args['mt_md'] );  $mt_md = $args['mt_md']; }else{$mt_md = null;}
-	            if ( $args['mr_md'] !== undefined && $args['mr_md'] !== '' ) { $classes.push( "mr-md-" + $args['mr_md'] );  $mt_md = $args['mr_md']; }else{$mr_md = null;}
+	            if ( $args['mr_md'] !== undefined && $args['mr_md'] !== '' ) { $classes.push( $p_mr + "md-" + $args['mr_md'] );  $mt_md = $args['mr_md']; }else{$mr_md = null;}
 	            if ( $args['mb_md'] !== undefined && $args['mb_md'] !== '' ) { $classes.push( "mb-md-" + $args['mb_md'] );  $mt_md = $args['mb_md']; }else{$mb_md = null;}
-	            if ( $args['ml_md'] !== undefined && $args['ml_md'] !== '' ) { $classes.push( "ml-md-" + $args['ml_md'] );  $mt_md = $args['ml_md']; }else{$ml_md = null;}
+	            if ( $args['ml_md'] !== undefined && $args['ml_md'] !== '' ) { $classes.push( $p_ml + "md-" + $args['ml_md'] );  $mt_md = $args['ml_md']; }else{$ml_md = null;}
 
                 // margins desktop
                 if ( $args['mt_lg'] !== undefined && $args['mt_lg'] !== '' ) { if($mt == null && $mt_md == null){ $classes.push( "mt-" + $args['mt_lg'] ); }else{$classes.push( "mt-lg-" + $args['mt_lg'] ); } }
-	            if ( $args['mr_lg'] !== undefined && $args['mr_lg'] !== '' ) { if($mr == null && $mr_md == null){ $classes.push( "mr-" + $args['mr_lg'] ); }else{$classes.push( "mr-lg-" + $args['mr_lg'] ); } }
+	            if ( $args['mr_lg'] !== undefined && $args['mr_lg'] !== '' ) { if($mr == null && $mr_md == null){ $classes.push( $p_mr + $args['mr_lg'] ); }else{$classes.push( $p_mr + "lg-" + $args['mr_lg'] ); } }
 	            if ( $args['mb_lg'] !== undefined && $args['mb_lg'] !== '' ) { if($mb == null && $mb_md == null){ $classes.push( "mb-" + $args['mb_lg'] ); }else{$classes.push( "mb-lg-" + $args['mb_lg'] ); } }
-	            if ( $args['ml_lg'] !== undefined && $args['ml_lg'] !== '' ) { if($ml == null && $ml_md == null){ $classes.push( "ml-" + $args['ml_lg'] ); }else{$classes.push( "ml-lg-" + $args['ml_lg'] ); } }
+	            if ( $args['ml_lg'] !== undefined && $args['ml_lg'] !== '' ) { if($ml == null && $ml_md == null){ $classes.push( $p_ml + $args['ml_lg'] ); }else{$classes.push( $p_ml + "lg-" + $args['ml_lg'] ); } }
 
                 // padding
                 if ( $args['pt'] !== undefined && $args['pt'] !== '' ) { $classes.push( "pt-" + $args['pt'] ); $pt = $args['pt']; }else{$pt = null;}
-	            if ( $args['pr'] !== undefined && $args['pr'] !== '' ) { $classes.push( "pr-" + $args['pr'] ); $pr = $args['pt']; }else{$pr = null;}
+	            if ( $args['pr'] !== undefined && $args['pr'] !== '' ) { $classes.push( $p_pr + $args['pr'] ); $pr = $args['pt']; }else{$pr = null;}
 	            if ( $args['pb'] !== undefined && $args['pb'] !== '' ) { $classes.push( "pb-" + $args['pb'] ); $pb = $args['pt']; }else{$pb = null;}
-	            if ( $args['pl'] !== undefined && $args['pl'] !== '' ) { $classes.push( "pl-" + $args['pl'] ); $pl = $args['pt']; }else{$pl = null;}
+	            if ( $args['pl'] !== undefined && $args['pl'] !== '' ) { $classes.push( $p_pl + $args['pl'] ); $pl = $args['pt']; }else{$pl = null;}
 
                 // padding tablet
                 if ( $args['pt_md'] !== undefined && $args['pt_md'] !== '' ) { $classes.push( "pt-md-" + $args['pt_md'] ); $pt_md = $args['pt_md']; }else{$pt_md = null;}
-	            if ( $args['pr_md'] !== undefined && $args['pr_md'] !== '' ) { $classes.push( "pr-md-" + $args['pr_md'] ); $pr_md = $args['pt_md']; }else{$pr_md = null;}
+	            if ( $args['pr_md'] !== undefined && $args['pr_md'] !== '' ) { $classes.push( $p_pr + "md-" + $args['pr_md'] ); $pr_md = $args['pt_md']; }else{$pr_md = null;}
 	            if ( $args['pb_md'] !== undefined && $args['pb_md'] !== '' ) { $classes.push( "pb-md-" + $args['pb_md'] ); $pb_md = $args['pt_md']; }else{$pb_md = null;}
-	            if ( $args['pl_md'] !== undefined && $args['pl_md'] !== '' ) { $classes.push( "pl-md-" + $args['pl_md'] ); $pl_md = $args['pt_md']; }else{$pl_md = null;}
+	            if ( $args['pl_md'] !== undefined && $args['pl_md'] !== '' ) { $classes.push( $p_pl + "md-" + $args['pl_md'] ); $pl_md = $args['pt_md']; }else{$pl_md = null;}
 
                 // padding desktop
                 if ( $args['pt_lg'] !== undefined && $args['pt_lg'] !== '' ) { if($pt == null && $pt_md == null){ $classes.push( "pt-" + $args['pt_lg'] ); }else{$classes.push( "pt-lg-" + $args['pt_lg'] ); } }
-	            if ( $args['pr_lg'] !== undefined && $args['pr_lg'] !== '' ) { if($pr == null && $pr_md == null){ $classes.push( "pr-" + $args['pr_lg'] ); }else{$classes.push( "pr-lg-" + $args['pr_lg'] ); } }
+	            if ( $args['pr_lg'] !== undefined && $args['pr_lg'] !== '' ) { if($pr == null && $pr_md == null){ $classes.push( $p_pr + $args['pr_lg'] ); }else{$classes.push( $p_pr + "lg-" + $args['pr_lg'] ); } }
 	            if ( $args['pb_lg'] !== undefined && $args['pb_lg'] !== '' ) { if($pb == null && $pb_md == null){ $classes.push( "pb-" + $args['pb_lg'] ); }else{$classes.push( "pb-lg-" + $args['pb_lg'] ); } }
-	            if ( $args['pl_lg'] !== undefined && $args['pl_lg'] !== '' ) { if($pl == null && $pl_md == null){ $classes.push( "pl-" + $args['pl_lg'] ); }else{$classes.push( "pl-lg-" + $args['pl_lg'] ); } }
+	            if ( $args['pl_lg'] !== undefined && $args['pl_lg'] !== '' ) { if($pl == null && $pl_md == null){ $classes.push( $p_pl + $args['pl_lg'] ); }else{$classes.push( $p_pl + "lg-" + $args['pl_lg'] ); } }
 
 				// row cols, mobile, tablet, desktop
 	            if ( $args['row_cols'] !== undefined && $args['row_cols'] !== '' ) { $classes.push( "row-cols-" + $args['row_cols'] );  $row_cols = $args['row_cols']; }else{$row_cols = null;}
@@ -3689,13 +3709,13 @@ if (confirmed) {
 				$class = $this->options['widget_ops']['classname']." sdel-".$this->get_instance_hash();
 
 				// Before widget
-				$before_widget = ! empty( $args['before_widget'] ) ? $args['before_widget'] : '';
+				$before_widget = $args['before_widget'];
 				$before_widget = str_replace($class_original,$class,$before_widget);
 				$before_widget = apply_filters( 'wp_super_duper_before_widget', $before_widget, $args, $instance, $this );
 				$before_widget = apply_filters( 'wp_super_duper_before_widget_' . $this->base_id, $before_widget, $args, $instance, $this );
 
 				// After widget
-				$after_widget = ! empty( $args['after_widget'] ) ? $args['after_widget'] : '';
+				$after_widget = $args['after_widget'];
 				$after_widget = apply_filters( 'wp_super_duper_after_widget', $after_widget, $args, $instance, $this );
 				$after_widget = apply_filters( 'wp_super_duper_after_widget_' . $this->base_id, $after_widget, $args, $instance, $this );
 
