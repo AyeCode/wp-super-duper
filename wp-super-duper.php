@@ -3709,13 +3709,13 @@ if (confirmed) {
 				$class = $this->options['widget_ops']['classname']." sdel-".$this->get_instance_hash();
 
 				// Before widget
-				$before_widget = $args['before_widget'];
-				$before_widget = str_replace($class_original,$class,$before_widget);
+				$before_widget = ! empty( $args['before_widget'] ) ? $args['before_widget'] : '';
+				$before_widget = $before_widget ? str_replace( $class_original, $class, $before_widget ) : $before_widget;
 				$before_widget = apply_filters( 'wp_super_duper_before_widget', $before_widget, $args, $instance, $this );
 				$before_widget = apply_filters( 'wp_super_duper_before_widget_' . $this->base_id, $before_widget, $args, $instance, $this );
 
 				// After widget
-				$after_widget = $args['after_widget'];
+				$after_widget = ! empty( $args['after_widget'] ) ? $args['after_widget'] : '';
 				$after_widget = apply_filters( 'wp_super_duper_after_widget', $after_widget, $args, $instance, $this );
 				$after_widget = apply_filters( 'wp_super_duper_after_widget_' . $this->base_id, $after_widget, $args, $instance, $this );
 
