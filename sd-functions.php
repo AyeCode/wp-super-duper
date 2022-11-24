@@ -50,6 +50,7 @@ function sd_widget_exclude() {
  * @return array
  */
 function sd_get_margin_input( $type = 'mt', $overwrite = array(), $include_negatives = true ) {
+	global $aui_bs5;
 	$options = array(
 		''     => __( 'None', 'super-duper' ),
 		'auto' => __( 'auto', 'super-duper' ),
@@ -63,21 +64,21 @@ function sd_get_margin_input( $type = 'mt', $overwrite = array(), $include_negat
 		'7'    => '7',
 		'8'    => '8',
 		'9'    => '9',
-		'10'    => '10',
-		'11'    => '11',
-		'12'    => '12',
+		'10'   => '10',
+		'11'   => '11',
+		'12'   => '12',
 	);
 
 	if ( $include_negatives ) {
-		$options['n1'] = '-1';
-		$options['n2'] = '-2';
-		$options['n3'] = '-3';
-		$options['n4'] = '-4';
-		$options['n5'] = '-5';
-		$options['n6'] = '-6';
-		$options['n7'] = '-7';
-		$options['n8'] = '-8';
-		$options['n9'] = '-9';
+		$options['n1']  = '-1';
+		$options['n2']  = '-2';
+		$options['n3']  = '-3';
+		$options['n4']  = '-4';
+		$options['n5']  = '-5';
+		$options['n6']  = '-6';
+		$options['n7']  = '-7';
+		$options['n8']  = '-8';
+		$options['n9']  = '-9';
 		$options['n10'] = '-10';
 		$options['n11'] = '-11';
 		$options['n12'] = '-12';
@@ -138,20 +139,20 @@ function sd_get_margin_input( $type = 'mt', $overwrite = array(), $include_negat
  */
 function sd_get_padding_input( $type = 'pt', $overwrite = array() ) {
 	$options = array(
-		''  => __( 'None', 'super-duper' ),
-		'0' => '0',
-		'1' => '1',
-		'2' => '2',
-		'3' => '3',
-		'4' => '4',
-		'5' => '5',
-		'6'    => '6',
-		'7'    => '7',
-		'8'    => '8',
-		'9'    => '9',
-		'10'    => '10',
-		'11'    => '11',
-		'12'    => '12',
+		''   => __( 'None', 'super-duper' ),
+		'0'  => '0',
+		'1'  => '1',
+		'2'  => '2',
+		'3'  => '3',
+		'4'  => '4',
+		'5'  => '5',
+		'6'  => '6',
+		'7'  => '7',
+		'8'  => '8',
+		'9'  => '9',
+		'10' => '10',
+		'11' => '11',
+		'12' => '12',
 	);
 
 	$defaults = array(
@@ -1135,6 +1136,7 @@ function sd_get_sticky_offset_input( $type = 'top', $overwrite = array() ) {
  * @return array
  */
 function sd_get_font_size_input( $type = 'font_size', $overwrite = array(), $has_custom = false ) {
+	global $aui_bs5;
 
 	$options = array(
 		''          => __( 'Inherit from parent', 'super-duper' ),
@@ -1149,6 +1151,11 @@ function sd_get_font_size_input( $type = 'font_size', $overwrite = array(), $has
 		'display-3' => 'display-3',
 		'display-4' => 'display-4',
 	);
+
+	if ( $aui_bs5 ) {
+		$options['display-5'] = 'display-5';
+		$options['display-6'] = 'display-6';
+	}
 
 	if ( $has_custom ) {
 		$options['custom'] = __( 'Custom size', 'super-duper' );
@@ -1413,7 +1420,7 @@ function sd_get_class_input( $type = 'css_class', $overwrite = array() ) {
 function sd_get_hover_animations_input( $type = 'hover_animations', $overwrite = array() ) {
 
 	$options = array(
-		''       => __( 'none', 'super-duper' ),
+		''                 => __( 'none', 'super-duper' ),
 		'hover-zoom'       => __( 'Zoom', 'super-duper' ),
 		'hover-shadow'     => __( 'Shadow', 'super-duper' ),
 		'hover-move-up'    => __( 'Move up', 'super-duper' ),
@@ -1501,12 +1508,12 @@ function sd_get_flex_justify_content_input( $type = 'flex_justify_content', $ove
 		}
 	}
 	$options = array(
-		''                                             => __( 'Default', 'super-duper' ),
-		'justify-content' . $device_size . '-start'    => 'justify-content-start',
-		'justify-content' . $device_size . '-end'      => 'justify-content-end',
-		'justify-content' . $device_size . '-center'   => 'justify-content-center',
+		''                                            => __( 'Default', 'super-duper' ),
+		'justify-content' . $device_size . '-start'   => 'justify-content-start',
+		'justify-content' . $device_size . '-end'     => 'justify-content-end',
+		'justify-content' . $device_size . '-center'  => 'justify-content-center',
 		'justify-content' . $device_size . '-between' => 'justify-content-between',
-		'justify-content' . $device_size . '-stretch'  => 'justify-content-around',
+		'justify-content' . $device_size . '-stretch' => 'justify-content-around',
 	);
 
 	$defaults = array(
@@ -1612,7 +1619,7 @@ function sd_get_flex_order_input( $type = 'flex_order', $overwrite = array() ) {
 	);
 
 	$i = 0;
-	while ( $i <= 12 ) {
+	while ( $i <= 5 ) {
 		$options[ 'order' . $device_size . '-' . $i ] = $i;
 		$i++;
 	}
@@ -1661,8 +1668,23 @@ function sd_get_flex_order_input_group( $type = 'flex_order', $overwrite = array
  * @todo find best way to use px- py- or general p-
  */
 function sd_build_aui_class( $args ) {
+	global $aui_bs5;
 
 	$classes = array();
+
+	if ( $aui_bs5 ) {
+		$p_ml = 'ms-';
+		$p_mr = 'me-';
+
+		$p_pl = 'ps-';
+		$p_pr = 'pe-';
+	} else {
+		$p_ml = 'ml-';
+		$p_mr = 'mr-';
+
+		$p_pl = 'pl-';
+		$p_pr = 'pr-';
+	}
 
 	// margins.
 	if ( isset( $args['mt'] ) && $args['mt'] !== '' ) {
@@ -1672,7 +1694,7 @@ function sd_build_aui_class( $args ) {
 		$mt = null;
 	}
 	if ( isset( $args['mr'] ) && $args['mr'] !== '' ) {
-		$classes[] = 'mr-' . sanitize_html_class( $args['mr'] );
+		$classes[] = $p_mr  . sanitize_html_class( $args['mr'] );
 		$mr        = $args['mr'];
 	} else {
 		$mr = null;
@@ -1684,7 +1706,7 @@ function sd_build_aui_class( $args ) {
 		$mb = null;
 	}
 	if ( isset( $args['ml'] ) && $args['ml'] !== '' ) {
-		$classes[] = 'ml-' . sanitize_html_class( $args['ml'] );
+		$classes[] = $p_ml . sanitize_html_class( $args['ml'] );
 		$ml        = $args['ml'];
 	} else {
 		$ml = null;
@@ -1698,7 +1720,7 @@ function sd_build_aui_class( $args ) {
 		$mt_md = null;
 	}
 	if ( isset( $args['mr_md'] ) && $args['mr_md'] !== '' ) {
-		$classes[] = 'mr-md-' . sanitize_html_class( $args['mr_md'] );
+		$classes[] = $p_mr . 'md-' . sanitize_html_class( $args['mr_md'] );
 		$mt_md     = $args['mr_md'];
 	} else {
 		$mr_md = null;
@@ -1710,7 +1732,7 @@ function sd_build_aui_class( $args ) {
 		$mb_md = null;
 	}
 	if ( isset( $args['ml_md'] ) && $args['ml_md'] !== '' ) {
-		$classes[] = 'ml-md-' . sanitize_html_class( $args['ml_md'] );
+		$classes[] = $p_ml . 'md-' . sanitize_html_class( $args['ml_md'] );
 		$mt_md     = $args['ml_md'];
 	} else {
 		$ml_md = null;
@@ -1726,9 +1748,9 @@ function sd_build_aui_class( $args ) {
 	}
 	if ( isset( $args['mr_lg'] ) && $args['mr_lg'] !== '' ) {
 		if ( $mr == null && $mr_md == null ) {
-			$classes[] = 'mr-' . sanitize_html_class( $args['mr_lg'] );
+			$classes[] = $p_mr . sanitize_html_class( $args['mr_lg'] );
 		} else {
-			$classes[] = 'mr-lg-' . sanitize_html_class( $args['mr_lg'] );
+			$classes[] = $p_mr . 'lg-' . sanitize_html_class( $args['mr_lg'] );
 		}
 	}
 	if ( isset( $args['mb_lg'] ) && $args['mb_lg'] !== '' ) {
@@ -1740,9 +1762,9 @@ function sd_build_aui_class( $args ) {
 	}
 	if ( isset( $args['ml_lg'] ) && $args['ml_lg'] !== '' ) {
 		if ( $ml == null && $ml_md == null ) {
-			$classes[] = 'ml-' . sanitize_html_class( $args['ml_lg'] );
+			$classes[] = $p_ml . sanitize_html_class( $args['ml_lg'] );
 		} else {
-			$classes[] = 'ml-lg-' . sanitize_html_class( $args['ml_lg'] );
+			$classes[] = $p_ml . 'lg-' . sanitize_html_class( $args['ml_lg'] );
 		}
 	}
 
@@ -1754,7 +1776,7 @@ function sd_build_aui_class( $args ) {
 		$pt = null;
 	}
 	if ( isset( $args['pr'] ) && $args['pr'] !== '' ) {
-		$classes[] = 'pr-' . sanitize_html_class( $args['pr'] );
+		$classes[] = $p_pr . sanitize_html_class( $args['pr'] );
 		$pr        = $args['pr'];
 	} else {
 		$pr = null;
@@ -1766,7 +1788,7 @@ function sd_build_aui_class( $args ) {
 		$pb = null;
 	}
 	if ( isset( $args['pl'] ) && $args['pl'] !== '' ) {
-		$classes[] = 'pl-' . sanitize_html_class( $args['pl'] );
+		$classes[] = $p_pl . sanitize_html_class( $args['pl'] );
 		$pl        = $args['pl'];
 	} else {
 		$pl = null;
@@ -1780,7 +1802,7 @@ function sd_build_aui_class( $args ) {
 		$pt_md = null;
 	}
 	if ( isset( $args['pr_md'] ) && $args['pr_md'] !== '' ) {
-		$classes[] = 'pr-md-' . sanitize_html_class( $args['pr_md'] );
+		$classes[] = $p_pr . 'md-' . sanitize_html_class( $args['pr_md'] );
 		$pt_md     = $args['pr_md'];
 	} else {
 		$pr_md = null;
@@ -1792,7 +1814,7 @@ function sd_build_aui_class( $args ) {
 		$pb_md = null;
 	}
 	if ( isset( $args['pl_md'] ) && $args['pl_md'] !== '' ) {
-		$classes[] = 'pl-md-' . sanitize_html_class( $args['pl_md'] );
+		$classes[] = $p_pl . 'md-' . sanitize_html_class( $args['pl_md'] );
 		$pt_md     = $args['pl_md'];
 	} else {
 		$pl_md = null;
@@ -1808,9 +1830,9 @@ function sd_build_aui_class( $args ) {
 	}
 	if ( isset( $args['pr_lg'] ) && $args['pr_lg'] !== '' ) {
 		if ( $pr == null && $pr_md == null ) {
-			$classes[] = 'pr-' . sanitize_html_class( $args['pr_lg'] );
+			$classes[] = $p_pr . sanitize_html_class( $args['pr_lg'] );
 		} else {
-			$classes[] = 'pr-lg-' . sanitize_html_class( $args['pr_lg'] );
+			$classes[] = $p_pr . 'lg-' . sanitize_html_class( $args['pr_lg'] );
 		}
 	}
 	if ( isset( $args['pb_lg'] ) && $args['pb_lg'] !== '' ) {
@@ -1822,9 +1844,9 @@ function sd_build_aui_class( $args ) {
 	}
 	if ( isset( $args['pl_lg'] ) && $args['pl_lg'] !== '' ) {
 		if ( $pl == null && $pl_md == null ) {
-			$classes[] = 'pl-' . sanitize_html_class( $args['pl_lg'] );
+			$classes[] = $p_pl . sanitize_html_class( $args['pl_lg'] );
 		} else {
-			$classes[] = 'pl-lg-' . sanitize_html_class( $args['pl_lg'] );
+			$classes[] = $p_pl . 'lg-' . sanitize_html_class( $args['pl_lg'] );
 		}
 	}
 
@@ -2092,6 +2114,62 @@ function sd_build_aui_styles( $args ) {
 
 	return $style_string;
 
+}
+
+/**
+ * Build the hover styles from args.
+ *
+ * @param $args
+ * @param $is_preview
+ *
+ * @return string
+ */
+function sd_build_hover_styles( $args, $is_preview = false ) {
+	$rules = '';
+	// text color
+	if ( ! empty( $args['styleid'] ) ) {
+		$styleid = $is_preview ? 'html .editor-styles-wrapper .' . esc_attr( $args['styleid'] ) : 'html .' . esc_attr( $args['styleid'] );
+
+		// text
+		if ( ! empty( $args['text_color_hover'] ) ) {
+			$key    = 'custom' === $args['text_color_hover'] && ! empty( $args['text_color_hover_custom'] ) ? 'text_color_hover_custom' : 'text_color_hover';
+			$color  = sd_get_color_from_var( $args[ $key ] );
+			$rules .= $styleid . ':hover {color: ' . $color . ' !important;} ';
+		}
+
+		// bg
+		if ( ! empty( $args['bg_hover'] ) ) {
+			if ( 'custom-gradient' === $args['bg_hover'] ) {
+				$color  = $args['bg_hover_gradient'];
+				$rules .= $styleid . ':hover {background-image: ' . $color . ' !important;} ';
+				$rules .= $styleid . '.btn:hover {border-color: transparent !important;} ';
+			} else {
+				$key    = 'custom-color' === $args['bg_hover'] ? 'bg_hover_color' : 'bg_hover';
+				$color  = sd_get_color_from_var( $args[ $key ] );
+				$rules .= $styleid . ':hover {background: ' . $color . ' !important;} ';
+				$rules .= $styleid . '.btn:hover {border-color: ' . $color . ' !important;} ';
+			}
+		}
+	}
+
+	return $rules ? '<style>' . $rules . '</style>' : '';
+}
+
+/**
+ * Try to get a CSS color varibale for a given value.
+ *
+ * @param $var
+ *
+ * @return mixed|string
+ */
+function sd_get_color_from_var( $var ) {
+
+	//sanitize_hex_color() @todo this does not cover transparency
+	if ( strpos( $var, '#' ) === false ) {
+		$var = defined( 'BLOCKSTRAP_BLOCKS_VERSION' ) ? 'var(--wp--preset--color--' . esc_attr( $var ) . ')' : 'var(--' . esc_attr( $var ) . ')';
+	}
+
+	return $var;
 }
 
 /**

@@ -1733,30 +1733,27 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
                 $sd_is_js_functions_loaded = true;
             ?>
 
-function sd_show_view_options($this){
-	if(jQuery($this).html().length){
-		jQuery($this).html('');
-	}else{
-		jQuery($this).html('<div class="position-absolute d-flex flex-column bg-white p-1 rounded border shadow-lg " style="top:-80px;left:-5px;"><div class="dashicons dashicons-desktop mb-1" onclick="sd_set_view_type(\'Desktop\');"></div><div class="dashicons dashicons-tablet mb-1" onclick="sd_set_view_type(\'Tablet\');"></div><div class="dashicons dashicons-smartphone" onclick="sd_set_view_type(\'Mobile\');"></div></div>');
-	}
+function sd_show_view_options($this) {
+    if (jQuery($this).html().length) {
+        jQuery($this).html('');
+    } else {
+        jQuery($this).html('<div class="position-absolute d-flex flex-column bg-white p-1 rounded border shadow-lg " style="top:-80px;left:-5px;"><div class="dashicons dashicons-desktop mb-1" onclick="sd_set_view_type(\'Desktop\');"></div><div class="dashicons dashicons-tablet mb-1" onclick="sd_set_view_type(\'Tablet\');"></div><div class="dashicons dashicons-smartphone" onclick="sd_set_view_type(\'Mobile\');"></div></div>');
+    }
 }
 
-function sd_set_view_type($device){
-	wp.data.dispatch('core/edit-site') ? wp.data.dispatch('core/edit-site').__experimentalSetPreviewDeviceType($device) : wp.data.dispatch('core/edit-post').__experimentalSetPreviewDeviceType($device);
+function sd_set_view_type($device) {
+    wp.data.dispatch('core/edit-site') ? wp.data.dispatch('core/edit-site').__experimentalSetPreviewDeviceType($device) : wp.data.dispatch('core/edit-post').__experimentalSetPreviewDeviceType($device);
 }
-			/**
+/**
  * Try to auto-recover blocks.
  */
 function sd_auto_recover_blocks() {
-	console.log('recover blocks');
 	var recursivelyRecoverInvalidBlockList = blocks => {
 		const _blocks = [...blocks]
-		// const _blocks = wp.data.select('core/block-editor').getBlocks();
 		let recoveryCalled = false
 		const recursivelyRecoverBlocks = willRecoverBlocks => {
 			willRecoverBlocks.forEach(_block => {
-				consol.log(_block);
-				if (isInvalid(_block)) {
+				if (!_block.isValid) {
 					recoveryCalled = true
 					const newBlock = recoverBlock(_block)
 					for (const key in newBlock) {
@@ -1768,73 +1765,56 @@ function sd_auto_recover_blocks() {
 				}
 			})
 		}
-
 		recursivelyRecoverBlocks(_blocks)
 		return [_blocks, recoveryCalled]
 	}
-
-	var recoverBlock = ({
-							name,
-							attributes,
-							innerBlocks
-						}) => wp.blocks.createBlock(name, attributes, innerBlocks);
-
+	var recoverBlock = ({ name, attributes, innerBlocks }) => wp.blocks.createBlock(name, attributes, innerBlocks);
 	var recoverBlocks = blocks => {
 		return blocks.map(_block => {
-			const block = _block
-//
-// if ( _block.name === 'core/template-part') {
-// 	const template = wp.data.select('core/block-editor').getTemplate(_block);console.log(template )
-// }
-
+			const block = _block;
 			// If the block is a reusable block, recover the Stackable blocks inside it.
 			if (_block.name === 'core/block') {
-				const {
-					attributes: {
-						ref
-					}
-				} = _block
-				const parsedBlocks = wp.blocks.parse(wp.data.select('core').getEntityRecords('postType', 'wp_block', {
-					include: [ref]
-				})?.[0]?.content?.raw) || []
-
+				const { attributes: { ref } } = _block
+				const parsedBlocks = wp.blocks.parse(wp.data.select('core').getEntityRecords('postType', 'wp_block', { include: [ref] })?.[0]?.content?.raw) || []
 				const [recoveredBlocks, recoveryCalled] = recursivelyRecoverInvalidBlockList(parsedBlocks)
-
 				if (recoveryCalled) {
-					console.log('Stackable notice: block ' + block.name + ' (' + block.clientId + ') was auto-recovered, you should not see this after saving your page.') // eslint-disable-line no-console
-					return {
-						blocks: recoveredBlocks,
-						isReusable: true,
-						ref,
-					}
+					console.log('Stackable notice: block ' + block.name + ' (' + block.clientId + ') was auto-recovered, you should not see this after saving your page.');
+					return { blocks: recoveredBlocks, isReusable: true, ref }
+				}
+			} else if (_block.name === 'core/template-part' && _block.attributes && _block.attributes.theme) {
+				var tmplPart = wp.data.select('core').getEntityRecord('postType', 'wp_template_part', _block.attributes.theme + '//' + _block.attributes.slug);
+				var tmplPartBlocks = block.innerBlocks && block.innerBlocks.length ? block.innerBlocks : wp.blocks.parse(tmplPart?.content?.raw) || [];
+				if (tmplPartBlocks && tmplPartBlocks.length && tmplPartBlocks.some(block => !block.isValid)) {
+					block.innerBlocks = tmplPartBlocks;
+					block.tmplPartId = _block.attributes.theme + '//' + _block.attributes.slug;
 				}
 			}
-
 			if (block.innerBlocks && block.innerBlocks.length) {
+				if (block.tmplPartId) {
+					console.log('Template part ' + block.tmplPartId + ' block ' + block.name + ' (' + block.clientId + ') starts');
+				}
 				const newInnerBlocks = recoverBlocks(block.innerBlocks)
 				if (newInnerBlocks.some(block => block.recovered)) {
 					block.innerBlocks = newInnerBlocks
 					block.replacedClientId = block.clientId
 					block.recovered = true
 				}
+				if (block.tmplPartId) {
+					console.log('Template part ' + block.tmplPartId + ' block ' + block.name + ' (' + block.clientId + ') ends');
+				}
 			}
-
 			if (!block.isValid) {
 				const newBlock = recoverBlock(block)
 				newBlock.replacedClientId = block.clientId
 				newBlock.recovered = true
-				console.log('Stackable notice: block ' + block.name + ' (' + block.clientId + ') was auto-recovered, you should not see this after saving your page.') // eslint-disable-line no-console
-
+				console.log('Stackable notice: block ' + block.name + ' (' + block.clientId + ') was auto-recovered, you should not see this after saving your page.');
 				return newBlock
 			}
-
 			return block
 		})
 	}
-
 	// Recover all the blocks that we can find.
-	var mainBlocks = recoverBlocks(wp.data.select('core/block-editor').getBlocks())
-
+	var mainBlocks = recoverBlocks(wp.data.select('core/block-editor').getBlocks());
 	// Replace the recovered blocks with the new ones.
 	mainBlocks.forEach(block => {
 		if (block.isReusable && block.ref) {
@@ -1843,40 +1823,39 @@ function sd_auto_recover_blocks() {
 				content: wp.blocks.serialize(block.blocks)
 			}).then(() => {
 				// But don't save them, let the user do the saving themselves. Our goal is to get rid of the block error visually.
-				// dispatch( 'core' ).saveEditedEntityRecord( 'postType', 'wp_block', block.ref )
 			})
 		}
-
 		if (block.recovered && block.replacedClientId) {
 			wp.data.dispatch('core/block-editor').replaceBlock(block.replacedClientId, block)
 		}
 	})
 }
 
-
 // Wait will window is loaded before calling.
 window.onload = function() {
 	sd_auto_recover_blocks();
 	// fire a second time incase of load delays.
-	setTimeout(function(){
+	setTimeout(function() {
 		sd_auto_recover_blocks();
-		console.log('arb');
 	}, 5000);
 };
 
 // fire when URL changes also.
 let lastUrl = location.href;
 new MutationObserver(() => {
-	const url = location.href;
-	if (url !== lastUrl) {
-		lastUrl = url;
-		sd_auto_recover_blocks();
-		// fire a second time incase of load delays.
-		setTimeout(function(){
-			sd_auto_recover_blocks();
-		}, 2000);
-	}
-}).observe(document, {subtree: true, childList: true});
+    const url = location.href;
+    if (url !== lastUrl) {
+        lastUrl = url;
+        sd_auto_recover_blocks();
+        // fire a second time incase of load delays.
+        setTimeout(function() {
+            sd_auto_recover_blocks();
+        }, 2000);
+    }
+}).observe(document, {
+    subtree: true,
+    childList: true
+});
 
 
 			/**
