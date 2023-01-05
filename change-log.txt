@@ -1,6 +1,7 @@
 = 1.1.11 =
 * Functions added to build CSS for some hover args - ADDED
 * Template parts auto recover blocks not working - FIXED
+* GD sort and taxonomy AJAX calls can repeat if multiple CPTs on page - FIXED
 
 = 1.1.10 =
 * styleid argument now auto added to class list - ADDED
