@@ -1,4 +1,4 @@
-= 1.1.12 =
+= 1.1.14 =
 * Helper functions for BS5 added - ADDED
 * Will try to auto-recover blocks in editor - ADDED
 * Single apostrophe will break block input settings - FIXED
