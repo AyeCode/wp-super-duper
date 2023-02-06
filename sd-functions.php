@@ -210,6 +210,7 @@ function sd_get_padding_input( $type = 'pt', $overwrite = array() ) {
  * @return array
  */
 function sd_get_border_input( $type = 'border', $overwrite = array() ) {
+	global $aui_bs5;
 
 	$defaults = array(
 		'type'     => 'select',
@@ -222,8 +223,8 @@ function sd_get_border_input( $type = 'border', $overwrite = array() ) {
 
 	// title
 	if ( $type == 'rounded' ) {
-		$defaults['title']   = __( 'Border radius type', 'super-duper' );
-		$defaults['options'] = array(
+		$defaults['title']           = __( 'Border radius type', 'super-duper' );
+		$defaults['options']         = array(
 			''               => __( 'Default', 'super-duper' ),
 			'rounded'        => 'rounded',
 			'rounded-top'    => 'rounded-top',
@@ -234,23 +235,63 @@ function sd_get_border_input( $type = 'border', $overwrite = array() ) {
 			'rounded-pill'   => 'rounded-pill',
 			'rounded-0'      => 'rounded-0',
 		);
+		$defaults['element_require'] = '[%border%]';
 	} elseif ( $type == 'rounded_size' ) {
-		$defaults['title']   = __( 'Border radius size', 'super-duper' );
-		$defaults['options'] = array(
-			''   => __( 'Default', 'super-duper' ),
-			'sm' => __( 'Small', 'super-duper' ),
-			'lg' => __( 'Large', 'super-duper' ),
+		$defaults['title'] = __( 'Border radius size', 'super-duper' );
+
+		if ( $aui_bs5 ) {
+			$defaults['options'] = array(
+				''  => __( 'Default', 'super-duper' ),
+				'0' => '0',
+				'1' => '1',
+				'2' => '2',
+				'3' => '3',
+				'4' => '4',
+				'5' => '5',
+			);
+		} else {
+			$defaults['options'] = array(
+				''   => __( 'Default', 'super-duper' ),
+				'sm' => __( 'Small', 'super-duper' ),
+				'lg' => __( 'Large', 'super-duper' ),
+			);
+		}
+		$defaults['element_require'] = '[%border%]';
+	} elseif ( $type == 'width' ) { // BS%
+		$defaults['title']           = __( 'Border width', 'super-duper' );
+		$defaults['options']         = array(
+			''         => __( 'Default', 'super-duper' ),
+			'border-2' => '2',
+			'border-3' => '3',
+			'border-4' => '4',
+			'border-5' => '5',
 		);
+		$defaults['element_require'] = $aui_bs5 ? '[%border%]' : '1==2';
+	} elseif ( $type == 'opacity' ) { // BS%
+		$defaults['title']           = __( 'Border opacity', 'super-duper' );
+		$defaults['options']         = array(
+			''                  => __( 'Default', 'super-duper' ),
+			'border-opacity-75' => '75%',
+			'border-opacity-50' => '50%',
+			'border-opacity-25' => '25%',
+			'border-opacity-10' => '10%',
+		);
+		$defaults['element_require'] = $aui_bs5 ? '[%border%]' : '1==2';
 	} elseif ( $type == 'type' ) {
-		$defaults['title']   = __( 'Border type', 'super-duper' );
-		$defaults['options'] = array(
-			''              => __( 'None', 'super-duper' ),
-			'border'        => __( 'Full', 'super-duper' ),
-			'border-top'    => __( 'Top', 'super-duper' ),
-			'border-bottom' => __( 'Bottom', 'super-duper' ),
-			'border-left'   => __( 'Left', 'super-duper' ),
-			'border-right'  => __( 'Right', 'super-duper' ),
+		$defaults['title']           = __( 'Border show', 'super-duper' );
+		$defaults['options']         = array(
+			'border'          => __( 'Full (set color to show)', 'super-duper' ),
+			'border-top'      => __( 'Top', 'super-duper' ),
+			'border-bottom'   => __( 'Bottom', 'super-duper' ),
+			'border-left'     => __( 'Left', 'super-duper' ),
+			'border-right'    => __( 'Right', 'super-duper' ),
+			'border-top-0'    => __( '-Top', 'super-duper' ),
+			'border-bottom-0' => __( '-Bottom', 'super-duper' ),
+			'border-left-0'   => __( '-Left', 'super-duper' ),
+			'border-right-0'  => __( '-Right', 'super-duper' ),
 		);
+		$defaults['element_require'] = '[%border%]';
+
 	} else {
 		$defaults['title']   = __( 'Border color' );
 		$defaults['options'] = array(
@@ -323,6 +364,46 @@ function sd_get_background_input( $type = 'bg', $overwrite = array() ) {
 }
 
 /**
+ * A function to get th opacity options.
+ *
+ * @param $type
+ * @param $overwrite
+ *
+ * @return array
+ */
+function sd_get_opacity_input( $type = 'opacity', $overwrite = array() ) {
+	$options = array(
+		''            => __( 'Default', 'super-duper' ),
+		'opacity-10'  => '10%',
+		'opacity-15'  => '15%',
+		'opacity-25'  => '25%',
+		'opacity-35'  => '35%',
+		'opacity-40'  => '40%',
+		'opacity-50'  => '50%',
+		'opacity-60'  => '60%',
+		'opacity-65'  => '65%',
+		'opacity-70'  => '70%',
+		'opacity-75'  => '75%',
+		'opacity-80'  => '80%',
+		'opacity-90'  => '90%',
+		'opacity-100' => '100%',
+	);
+
+	$defaults = array(
+		'type'     => 'select',
+		'title'    => __( 'Opacity', 'super-duper' ),
+		'options'  => $options,
+		'default'  => '',
+		'desc_tip' => true,
+		'group'    => __( 'Wrapper Styles', 'super-duper' ),
+	);
+
+	$input = wp_parse_args( $overwrite, $defaults );
+
+	return $input;
+}
+
+/**
  * A helper function for a set of background inputs.
  *
  * @param string $type
@@ -330,15 +411,22 @@ function sd_get_background_input( $type = 'bg', $overwrite = array() ) {
  *
  * @return array
  */
-function sd_get_background_inputs( $type = 'bg', $overwrite = array(), $overwrite_color = array(), $overwrite_gradient = array(), $overwrite_image = array() ) {
+function sd_get_background_inputs( $type = 'bg', $overwrite = array(), $overwrite_color = array(), $overwrite_gradient = array(), $overwrite_image = array(), $include_button_colors = false ) {
+
+	$color_options = $include_button_colors ? sd_aui_colors( false, true, true, true ) : sd_aui_colors();
+
 	$options = array(
 		           ''            => __( 'None', 'super-duper' ),
 		           'transparent' => __( 'Transparent', 'super-duper' ),
-	           ) + sd_aui_colors()
-	           + array(
-		           'custom-color'    => __( 'Custom Color', 'super-duper' ),
-		           'custom-gradient' => __( 'Custom Gradient', 'super-duper' ),
-	           );
+	           ) + $color_options;
+
+	if ( false !== $overwrite_color ) {
+		$options['custom-color'] = __( 'Custom Color', 'super-duper' );
+	}
+
+	if ( false !== $overwrite_gradient ) {
+		$options['custom-gradient'] = __( 'Custom Gradient', 'super-duper' );
+	}
 
 	$defaults = array(
 		'type'     => 'select',
@@ -747,19 +835,20 @@ function sd_get_col_input( $type = 'col', $overwrite = array() ) {
 		}
 	}
 	$options = array(
-		''   => __( 'auto', 'super-duper' ),
-		'1'  => '1/12',
-		'2'  => '2/12',
-		'3'  => '3/12',
-		'4'  => '4/12',
-		'5'  => '5/12',
-		'6'  => '6/12',
-		'7'  => '7/12',
-		'8'  => '8/12',
-		'9'  => '9/12',
-		'10' => '10/12',
-		'11' => '11/12',
-		'12' => '12/12',
+		''     => __( 'Default', 'super-duper' ),
+		'auto' => __( 'auto', 'super-duper' ),
+		'1'    => '1/12',
+		'2'    => '2/12',
+		'3'    => '3/12',
+		'4'    => '4/12',
+		'5'    => '5/12',
+		'6'    => '6/12',
+		'7'    => '7/12',
+		'8'    => '8/12',
+		'9'    => '9/12',
+		'10'   => '10/12',
+		'11'   => '11/12',
+		'12'   => '12/12',
 	);
 
 	$defaults = array(
@@ -936,7 +1025,7 @@ function sd_get_text_justify_input( $type = 'text_justify', $overwrite = array()
  *
  * @return array
  */
-function sd_aui_colors( $include_branding = false, $include_outlines = false, $outline_button_only_text = false ) {
+function sd_aui_colors( $include_branding = false, $include_outlines = false, $outline_button_only_text = false, $include_translucent = false ) {
 	$theme_colors = array();
 
 	$theme_colors['primary']   = __( 'Primary', 'super-duper' );
@@ -952,6 +1041,7 @@ function sd_aui_colors( $include_branding = false, $include_outlines = false, $o
 	$theme_colors['salmon']    = __( 'Salmon', 'super-duper' );
 	$theme_colors['cyan']      = __( 'Cyan', 'super-duper' );
 	$theme_colors['gray']      = __( 'Gray', 'super-duper' );
+	$theme_colors['muted']     = __( 'Muted', 'super-duper' );
 	$theme_colors['gray-dark'] = __( 'Gray dark', 'super-duper' );
 	$theme_colors['indigo']    = __( 'Indigo', 'super-duper' );
 	$theme_colors['orange']    = __( 'Orange', 'super-duper' );
@@ -978,6 +1068,26 @@ function sd_aui_colors( $include_branding = false, $include_outlines = false, $o
 
 	if ( $include_branding ) {
 		$theme_colors = $theme_colors + sd_aui_branding_colors();
+	}
+
+	if ( $include_translucent ) {
+		$button_only                           = $outline_button_only_text ? ' ' . __( '(button only)', 'super-duper' ) : '';
+		$theme_colors['translucent-primary']   = __( 'Primary translucent', 'super-duper' ) . $button_only;
+		$theme_colors['translucent-secondary'] = __( 'Secondary translucent', 'super-duper' ) . $button_only;
+		$theme_colors['translucent-success']   = __( 'Success translucent', 'super-duper' ) . $button_only;
+		$theme_colors['translucent-danger']    = __( 'Danger translucent', 'super-duper' ) . $button_only;
+		$theme_colors['translucent-warning']   = __( 'Warning translucent', 'super-duper' ) . $button_only;
+		$theme_colors['translucent-info']      = __( 'Info translucent', 'super-duper' ) . $button_only;
+		$theme_colors['translucent-light']     = __( 'Light translucent', 'super-duper' ) . $button_only;
+		$theme_colors['translucent-dark']      = __( 'Dark translucent', 'super-duper' ) . $button_only;
+		$theme_colors['translucent-white']     = __( 'White translucent', 'super-duper' ) . $button_only;
+		$theme_colors['translucent-purple']    = __( 'Purple translucent', 'super-duper' ) . $button_only;
+		$theme_colors['translucent-salmon']    = __( 'Salmon translucent', 'super-duper' ) . $button_only;
+		$theme_colors['translucent-cyan']      = __( 'Cyan translucent', 'super-duper' ) . $button_only;
+		$theme_colors['translucent-gray']      = __( 'Gray translucent', 'super-duper' ) . $button_only;
+		$theme_colors['translucent-gray-dark'] = __( 'Gray dark translucent', 'super-duper' ) . $button_only;
+		$theme_colors['translucent-indigo']    = __( 'Indigo translucent', 'super-duper' ) . $button_only;
+		$theme_colors['translucent-orange']    = __( 'Orange translucent', 'super-duper' ) . $button_only;
 	}
 
 	return apply_filters( 'sd_aui_colors', $theme_colors, $include_outlines, $include_branding );
@@ -1031,6 +1141,7 @@ function sd_get_container_class_input( $type = 'container', $overwrite = array()
 		'card-footer'     => 'card-footer',
 		'list-group'      => 'list-group',
 		'list-group-item' => 'list-group-item',
+		''                => __( 'no container class', 'super-duper' ),
 	);
 
 	$defaults = array(
@@ -1138,19 +1249,37 @@ function sd_get_sticky_offset_input( $type = 'top', $overwrite = array() ) {
 function sd_get_font_size_input( $type = 'font_size', $overwrite = array(), $has_custom = false ) {
 	global $aui_bs5;
 
-	$options = array(
-		''          => __( 'Inherit from parent', 'super-duper' ),
-		'h6'        => 'h6',
-		'h5'        => 'h5',
-		'h4'        => 'h4',
-		'h3'        => 'h3',
-		'h2'        => 'h2',
-		'h1'        => 'h1',
-		'display-1' => 'display-1',
-		'display-2' => 'display-2',
-		'display-3' => 'display-3',
-		'display-4' => 'display-4',
-	);
+	$options[] = __( 'Inherit from parent', 'super-duper' );
+	if ( $aui_bs5 ) {
+		// responsive font sizes
+		$options['fs-base'] = 'fs-base (body default)';
+		$options['fs-6']    = 'fs-6';
+		$options['fs-5']    = 'fs-5';
+		$options['fs-4']    = 'fs-4';
+		$options['fs-3']    = 'fs-3';
+		$options['fs-2']    = 'fs-2';
+		$options['fs-1']    = 'fs-1';
+
+		// custom
+		$options['fs-lg']  = 'fs-lg';
+		$options['fs-sm']  = 'fs-sm';
+		$options['fs-xs']  = 'fs-xs';
+		$options['fs-xxs'] = 'fs-xxs';
+
+	}
+
+	$options = $options + array(
+			'h6'        => 'h6',
+			'h5'        => 'h5',
+			'h4'        => 'h4',
+			'h3'        => 'h3',
+			'h2'        => 'h2',
+			'h1'        => 'h1',
+			'display-1' => 'display-1',
+			'display-2' => 'display-2',
+			'display-3' => 'display-3',
+			'display-4' => 'display-4',
+		);
 
 	if ( $aui_bs5 ) {
 		$options['display-5'] = 'display-5';
@@ -1694,7 +1823,7 @@ function sd_build_aui_class( $args ) {
 		$mt = null;
 	}
 	if ( isset( $args['mr'] ) && $args['mr'] !== '' ) {
-		$classes[] = $p_mr  . sanitize_html_class( $args['mr'] );
+		$classes[] = $p_mr . sanitize_html_class( $args['mr'] );
 		$mr        = $args['mr'];
 	} else {
 		$mr = null;
@@ -1896,7 +2025,11 @@ function sd_build_aui_class( $args ) {
 	if ( ! empty( $args['border'] ) && ( $args['border'] == 'none' || $args['border'] === '0' ) ) {
 		$classes[] = 'border-0';
 	} elseif ( ! empty( $args['border'] ) ) {
-		$classes[] = 'border border-' . sanitize_html_class( $args['border'] );
+		$border_class = 'border';
+		if ( ! empty( $args['border_type'] ) && strpos( $args['border_type'], '-0' ) === false ) {
+			$border_class = '';
+		}
+		$classes[] = $border_class . ' border-' . sanitize_html_class( $args['border'] );
 	}
 
 	// border radius type
@@ -1977,6 +2110,11 @@ function sd_build_aui_class( $args ) {
 		$classes[] = sanitize_html_class( 'bg-transparent-until-scroll' );
 	}
 
+	// cscos - change color scheme on scroll
+	if ( ! empty( $args['bgtus'] ) && ! empty( $args['cscos'] ) ) {
+		$classes[] = sanitize_html_class( 'color-scheme-flip-on-scroll' );
+	}
+
 	// hover animations
 	if ( ! empty( $args['hover_animations'] ) ) {
 		$classes[] = sd_sanitize_html_classes( str_replace( ',', ' ', $args['hover_animations'] ) );
@@ -1989,7 +2127,7 @@ function sd_build_aui_class( $args ) {
 
 			if ( substr( $key, -4 ) == '-MTD' ) {
 
-				$k = str_replace( '_MTD', '', $key );
+				$k = str_replace( '-MTD', '', $key );
 
 				// Mobile, Tablet, Desktop
 				if ( ! empty( $args[ $k ] ) && $args[ $k ] !== '' ) {
@@ -2222,6 +2360,10 @@ function sd_get_class_build_keys() {
 		'flex_align_self-MTD',
 		'flex_order-MTD',
 		'styleid',
+		'border_opacity',
+		'border_width',
+		'border_type',
+		'opacity',
 	);
 
 	return apply_filters( 'sd_class_build_keys', $keys );

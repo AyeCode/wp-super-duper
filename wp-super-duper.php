@@ -1931,13 +1931,17 @@ new MutationObserver(() => {
 				}
 
 				// font size
-				if( $args['font_size_custom'] !== undefined && $args['font_size_custom'] !== '' ){
-					$styles['fontSize'] =  $args['font_size_custom'] + "rem";
+				if( $args['font_size'] === undefined || $args['font_size'] === 'custom' ){
+					if( $args['font_size_custom'] !== undefined && $args['font_size_custom'] !== '' ){
+						$styles['fontSize'] =  $args['font_size_custom'] + "rem";
+					}
 				}
 
 				// font color
-				if( $args['text_color_custom'] !== undefined && $args['text_color_custom'] !== '' ){
-					$styles['color'] =  $args['text_color_custom'];
+				if( $args['text_color'] === undefined || $args['text_color'] === 'custom' ){
+					if( $args['text_color_custom'] !== undefined && $args['text_color_custom'] !== '' ){
+						$styles['color'] =  $args['text_color_custom'];
+					}
 				}
 
 				// font line height
@@ -1956,6 +1960,7 @@ new MutationObserver(() => {
 				<?php
 				if($aui_bs5){
 					?>
+				$aui_bs5 = true;
 				$p_ml = 'ms-';
 				$p_mr = 'me-';
 
@@ -1964,6 +1969,7 @@ new MutationObserver(() => {
 					<?php
 				}else{
 						?>
+				$aui_bs5 = false;
 				$p_ml = 'ml-';
 				$p_mr = 'mr-';
 
@@ -2023,7 +2029,16 @@ new MutationObserver(() => {
                 // border
                 if ( $args['border'] === undefined || $args['border']=='')  { }
                 else if ( $args['border'] !== undefined && ( $args['border']=='none' || $args['border']==='0') ) { $classes.push( "border-0" ); }
-	            else if ( $args['border'] !== undefined ) { $classes.push( "border border-" + $args['border'] ); }
+	            else if ( $args['border'] !== undefined ) {
+					if($aui_bs5 && $args['border_type'] !== undefined){
+						$args['border_type'] = $args['border_type'].replace('-left','-start').replace('-right','-end');
+					}
+					$border_class = 'border';
+					if ( $args['border_type'] !== undefined && ! $args['border_type'].includes( '-0' )  ) {
+						$border_class = '';
+					}
+					$classes.push( $border_class + " border-" + $args['border'] );
+				}
 
                 // border radius type
               //  if ( $args['rounded'] !== undefined && $args['rounded'] !== '' ) { $classes.push($args['rounded']); }
@@ -2050,9 +2065,18 @@ new MutationObserver(() => {
                 // text_align
                 if ( $args['text_justify'] !== undefined && $args['text_justify'] ) { $classes.push('text-justify'); }
                 else{
-                    if ( $args['text_align'] !== undefined && $args['text_align'] !== '' ) { $classes.push($args['text_align']); $text_align = $args['text_align']; }else{$text_align = null;}
-                    if ( $args['text_align_md'] !== undefined && $args['text_align_md'] !== '' ) { $classes.push($args['text_align_md']); $text_align_md = $args['text_align_md']; }else{$text_align_md = null;}
-                    if ( $args['text_align_lg'] !== undefined && $args['text_align_lg'] !== '' ) { if($text_align  == null && $text_align_md == null){ $classes.push($args['text_align_lg'].replace("-lg", "")); }else{$classes.push($args['text_align_lg']);} }
+                    if ( $args['text_align'] !== undefined && $args['text_align'] !== '' ) {
+						if($aui_bs5){ $args['text_align'] = $args['text_align'].replace('-left','-start').replace('-right','-end'); }
+						$classes.push($args['text_align']); $text_align = $args['text_align'];
+					}else{$text_align = null;}
+                    if ( $args['text_align_md'] !== undefined && $args['text_align_md'] !== '' ) {
+						if($aui_bs5){ $args['text_align_md'] = $args['text_align_md'].replace('-left','-start').replace('-right','-end'); }
+						$classes.push($args['text_align_md']); $text_align_md = $args['text_align_md'];
+					}else{$text_align_md = null;}
+                    if ( $args['text_align_lg'] !== undefined && $args['text_align_lg'] !== '' ) {
+						if($aui_bs5){ $args['text_align_lg'] = $args['text_align_lg'].replace('-left','-start').replace('-right','-end'); }
+						if($text_align  == null && $text_align_md == null){ $classes.push($args['text_align_lg'].replace("-lg", ""));
+						}else{$classes.push($args['text_align_lg']);} }
                 }
 
 				// display
@@ -2062,6 +2086,9 @@ new MutationObserver(() => {
 
 				// bgtus - background transparent until scroll
                 if ( $args['bgtus'] !== undefined && $args['bgtus'] ) { $classes.push("bg-transparent-until-scroll"); }
+
+				// cscos - change color scheme on scroll
+                if ( $args['bgtus'] !== undefined && $args['bgtus'] && $args['cscos'] !== undefined && $args['cscos'] ) { $classes.push("color-scheme-flip-on-scroll"); }
 
 				// hover animations
                 if ( $args['hover_animations'] !== undefined && $args['hover_animations'] ) { $classes.push($args['hover_animations'].replace(',',' ')); }
@@ -2400,71 +2427,116 @@ const parentBlocks = wp.data.select('core/block-editor').getBlocksByClientId(par
     const block = wp.data.select('core/block-editor').getBlocksByClientId(props.clientId);//.[0].innerBlocks;
     const childBlocks = block[0].innerBlocks;
 
+	var $value = '';
+	<?php
+	// if we have a post_type and a category then link them
+	if( isset($this->arguments['post_type']) && isset($this->arguments['category']) && !empty($this->arguments['category']['post_type_linked']) ){
+	?>
+	if(typeof(prev_attributes[props.clientId]) != 'undefined'){
+		$pt = props.attributes.post_type;
+		if(post_type_rest_slugs.length){
+			$value = post_type_rest_slugs[0][$pt];
+		}
+		var run = false;
 
-							var $value = '';
-							<?php
-							// if we have a post_type and a category then link them
-							if( isset($this->arguments['post_type']) && isset($this->arguments['category']) && !empty($this->arguments['category']['post_type_linked']) ){
-							?>
-							if(typeof(prev_attributes[props.clientId]) != 'undefined' ){
-								$pt = props.attributes.post_type;
-								if(post_type_rest_slugs.length){
-									$value = post_type_rest_slugs[0][$pt];
-								}
-								var run = false;
+		if($pt != term_query_type){
+			run = true;
+			term_query_type = $pt;
+		}
+<?php
+	$cat_path = '';
+	if ( ! empty( $this->arguments['post_type']['onchange_rest']['path'] ) ) {
+		$cat_path = esc_js( strip_tags( $this->arguments['post_type']['onchange_rest']['path'] ) );
+		$cat_path = str_replace( array( '&quot;', '&#039;' ), array( '"', "'" ), $cat_path );
+	}
+?>
+		/* taxonomies */
+		if($value && 'post_type' in prev_attributes[props.clientId] && 'category' in prev_attributes[props.clientId] && run){
+			if (!window.gdCPTCats) {
+				window.gdCPTCats = [];
+			}
+			var gdCatPath = "<?php echo ( ! empty( $cat_path ) ? $cat_path : "/wp/v2/" + $value + "/categories/?per_page=100" ); ?>";
+			if (window.gdCPTCats[gdCatPath]) {
+				terms = window.gdCPTCats[gdCatPath];
+				while (taxonomies_<?php echo str_replace("-","_", $this->id);?>.length) {
+					taxonomies_<?php echo str_replace("-","_", $this->id);?>.pop();
+				}
+				taxonomies_<?php echo str_replace("-","_", $this->id);?>.push({label: "All", value: 0});
+				jQuery.each( terms, function( key, val ) {
+					taxonomies_<?php echo str_replace("-","_", $this->id);?>.push({label: val.name, value: val.id});
+				});
 
-								if($pt != term_query_type){
-									run = true;
-									term_query_type = $pt;
-								}
+				/* Setting the value back and fourth fixes the no update issue that sometimes happens where it won't update the options. */
+				var $old_cat_value = props.attributes.category
+				props.setAttributes({category: [0] });
+				props.setAttributes({category: $old_cat_value });
+			} else {
+				wp.apiFetch({path: gdCatPath}).then(terms => {
+					window.gdCPTCats[gdCatPath] = terms;
+					while (taxonomies_<?php echo str_replace("-","_", $this->id);?>.length) {
+						taxonomies_<?php echo str_replace("-","_", $this->id);?>.pop();
+					}
+					taxonomies_<?php echo str_replace("-","_", $this->id);?>.push({label: "All", value: 0});
+					jQuery.each( terms, function( key, val ) {
+						taxonomies_<?php echo str_replace("-","_", $this->id);?>.push({label: val.name, value: val.id});
+					});
 
-								// taxonomies
-								if( $value && 'post_type' in prev_attributes[props.clientId] && 'category' in prev_attributes[props.clientId] && run ){
-									wp.apiFetch({path: "<?php if(isset($this->arguments['post_type']['onchange_rest']['path'])){echo $this->arguments['post_type']['onchange_rest']['path'];}else{'/wp/v2/"+$value+"/categories/?per_page=100';} ?>"}).then(terms => {
-										while (taxonomies_<?php echo str_replace("-","_", $this->id);?>.length) {
-										taxonomies_<?php echo str_replace("-","_", $this->id);?>.pop();
-									}
-									taxonomies_<?php echo str_replace("-","_", $this->id);?>.push({label: "All", value: 0});
-									jQuery.each( terms, function( key, val ) {
-										taxonomies_<?php echo str_replace("-","_", $this->id);?>.push({label: val.name, value: val.id});
-									});
+					/* Setting the value back and fourth fixes the no update issue that sometimes happens where it won't update the options. */
+					var $old_cat_value = props.attributes.category
+					props.setAttributes({category: [0] });
+					props.setAttributes({category: $old_cat_value });
 
-									// setting the value back and fourth fixes the no update issue that sometimes happens where it won't update the options.
-									var $old_cat_value = props.attributes.category
-									props.setAttributes({category: [0] });
-									props.setAttributes({category: $old_cat_value });
+					return taxonomies_<?php echo str_replace("-","_", $this->id);?>;
+				});
+			}
+		}
 
-									return taxonomies_<?php echo str_replace("-","_", $this->id);?>;
-								});
-								}
+		/* sort_by */
+		if($value && 'post_type' in prev_attributes[props.clientId] && 'sort_by' in prev_attributes[props.clientId] && run){
+			if (!window.gdCPTSort) {
+				window.gdCPTSort = [];
+			}
+			if (window.gdCPTSort[$pt]) {
+				response = window.gdCPTSort[$pt];
+				while (sort_by_<?php echo str_replace("-","_", $this->id);?>.length) {
+					sort_by_<?php echo str_replace("-","_", $this->id);?>.pop();
+				}
 
-								// sort_by
-								if( $value && 'post_type' in prev_attributes[props.clientId] && 'sort_by' in prev_attributes[props.clientId] && run ){
-									var data = {
-										'action': 'geodir_get_sort_options',
-										'post_type': $pt
-									};
-									jQuery.post(ajaxurl, data, function(response) {
-										response = JSON.parse(response);
-										while (sort_by_<?php echo str_replace("-","_", $this->id);?>.length) {
-											sort_by_<?php echo str_replace("-","_", $this->id);?>.pop();
-										}
+				jQuery.each( response, function( key, val ) {
+					sort_by_<?php echo str_replace("-","_", $this->id);?>.push({label: val, value: key});
+				});
 
-										jQuery.each( response, function( key, val ) {
-											sort_by_<?php echo str_replace("-","_", $this->id);?>.push({label: val, value: key});
-										});
+				// setting the value back and fourth fixes the no update issue that sometimes happens where it won't update the options.
+				var $old_sort_by_value = props.attributes.sort_by
+				props.setAttributes({sort_by: [0] });
+				props.setAttributes({sort_by: $old_sort_by_value });
+			} else {
+				var data = {
+					'action': 'geodir_get_sort_options',
+					'post_type': $pt
+				};
+				jQuery.post(ajaxurl, data, function(response) {
+					response = JSON.parse(response);
+					window.gdCPTSort[$pt] = response;
+					while (sort_by_<?php echo str_replace("-","_", $this->id);?>.length) {
+						sort_by_<?php echo str_replace("-","_", $this->id);?>.pop();
+					}
 
-										// setting the value back and fourth fixes the no update issue that sometimes happens where it won't update the options.
-										var $old_sort_by_value = props.attributes.sort_by
-										props.setAttributes({sort_by: [0] });
-										props.setAttributes({sort_by: $old_sort_by_value });
+					jQuery.each( response, function( key, val ) {
+						sort_by_<?php echo str_replace("-","_", $this->id);?>.push({label: val, value: key});
+					});
 
-										return sort_by_<?php echo str_replace("-","_", $this->id);?>;
-									});
+					// setting the value back and fourth fixes the no update issue that sometimes happens where it won't update the options.
+					var $old_sort_by_value = props.attributes.sort_by
+					props.setAttributes({sort_by: [0] });
+					props.setAttributes({sort_by: $old_sort_by_value });
 
-								}
-							}
-							<?php } ?>
+					return sort_by_<?php echo str_replace("-","_", $this->id);?>;
+				});
+			}
+		}
+	}
+	<?php } ?>
 <?php
 $current_screen = function_exists('get_current_screen') ? get_current_screen() : '';
 if(!empty($current_screen->base) && $current_screen->base==='widgets'){
@@ -2732,8 +2804,9 @@ const { deviceType } = wp.data.useSelect != 'undefined' ?  wp.data.useSelect(sel
                                    echo $this->options['block-edit-return'];
 							}else{
 								// if no block-output is set then we try and get the shortcode html output via ajax.
+								$block_edit_wrap_tag = !empty($this->options['block_edit_wrap_tag']) ? esc_attr($this->options['block_edit_wrap_tag']) : 'div';
 								?>
-								el('div', wp.blockEditor.useBlockProps({
+								el('<?php echo esc_attr($block_edit_wrap_tag); ?>', wp.blockEditor.useBlockProps({
 									dangerouslySetInnerHTML: {__html: onChangeContent()},
 									className: props.className,
 									style: {'minHeight': '30px'}
@@ -2770,7 +2843,7 @@ const { deviceType } = wp.data.useSelect != 'undefined' ?  wp.data.useSelect(sel
 								} else if ('<?php echo esc_attr( $args['type'] );?>' == 'image_xy') {
 									content += " <?php echo esc_attr( $key );?>='{x:" + attr.<?php echo esc_attr( $key );?>.x + ",y:"+attr.<?php echo esc_attr( $key );?>.y +"}' ";
 								} else {
-									content += " <?php echo esc_attr( $key );?>='" + attr.<?php echo esc_attr( $key );?>+ "' ";
+									content += " <?php echo esc_attr( $key );?>='" + attr.<?php echo esc_attr( $key );?>.toString().replace('\'','&#39;') + "' ";
 								}
 							}
 							<?php
@@ -2945,7 +3018,7 @@ const { deviceType } = wp.data.useSelect != 'undefined' ?  wp.data.useSelect(sel
 								el(
 									'div',
 									{
-										className: 'col pr-2',
+										className: 'col pr-2 pe-2',
 									},
 
 					<?php
@@ -2955,7 +3028,7 @@ const { deviceType } = wp.data.useSelect != 'undefined' ?  wp.data.useSelect(sel
 						el(
 							'div',
 							{
-								className: 'col pl-0',
+								className: 'col pl-0 ps-0',
 							},
 					<?php
 					if(false){?></script><?php }
@@ -2964,7 +3037,7 @@ const { deviceType } = wp.data.useSelect != 'undefined' ?  wp.data.useSelect(sel
 						el(
 							'div',
 							{
-								className: 'col pl-0 pr-2',
+								className: 'col pl-0 ps-0 pr-2 pe-2',
 							},
 					<?php
 					if(false){?></script><?php }
@@ -3114,7 +3187,7 @@ el('div',{className: 'bsui'},
 				$notice_message = !empty($args['desc']) ? addslashes($args['desc']) : '';
 				$notice_status = !empty($args['status']) ? esc_attr($args['status']) : 'info';
 
-				$notice = "el('div',{className:'bsui'},el(wp.components.Notice, {status: '$notice_status',isDismissible: false,className: 'm-0 pr-0 mb-3'},el('div',{dangerouslySetInnerHTML: {__html: '$notice_message'}}))),";
+				$notice = "el('div',{className:'bsui'},el(wp.components.Notice, {status: '$notice_status',isDismissible: false,className: 'm-0 pr-0 pe-0 mb-3'},el('div',{dangerouslySetInnerHTML: {__html: '$notice_message'}}))),";
 				echo $notice_message ? $element_require . $notice : '';
 				return;
 			}
@@ -3261,12 +3334,12 @@ wp.data.select('core/edit-post').__experimentalGetPreviewDeviceType();
 							images.push( el('div',{className: 'col p-2',draggable: 'true','data-index': index}, el('img', { src: upload.sizes.thumbnail.url,style: {maxWidth:'100%',background: '#ccc',pointerEvents:'none'}}),el('i',{
 							className: 'fas fa-times-circle text-danger position-absolute  ml-n2 mt-n1 bg-white rounded-circle c-pointer',
 							onClick: function(){
-							    aui_confirm('".__('Are you sure?')."', '".__('Delete')."', '".__('Cancel')."', true).then(function(confirmed) {
+							    aui_confirm('".esc_attr__('Are you sure?')."', '".esc_attr__('Delete')."', '".esc_attr__('Cancel')."', true).then(function(confirmed) {
 if (confirmed) {
-											let new_uploads = JSON.parse(props.attributes.$key);
+											let new_uploads = JSON.parse('['+props.attributes.$key+']');
 											new_uploads.splice(index, 1); //remove
                                               return props.setAttributes({
-                                                  {$key}: JSON.stringify( new_uploads ),
+                                                  {$key}: JSON.stringify( new_uploads ).replace('[','').replace(']',''),
                                                 });
                                                 }
                                            });
@@ -4021,9 +4094,9 @@ if (confirmed) {
 					<div class='col pr-2'>
 					<?php
 				}elseif(!empty($args['row']['close'])){
-					echo "<div class='col pl-0'>";
+					echo "<div class='col pl-0 ps-0'>";
 				}else{
-					echo "<div class='col pl-0 pr-2'>";
+					echo "<div class='col pl-0 ps-0 pr-2 pe-2'>";
 				}
 			}
 		}
@@ -4446,7 +4519,7 @@ if (confirmed) {
 				'<' => '&lt;',
 				'>' => '&gt;',
 				'"' => '&quot;',
-				"'" => '&apos;',
+				"'" => '&#39;',
 			);
 
 			$content = strtr( $content, $trans );
