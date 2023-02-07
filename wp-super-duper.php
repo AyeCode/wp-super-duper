@@ -1704,10 +1704,8 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 				}
 			}
 
-//			echo '###';print_r($arguments);
 			return $arguments;
 		}
-
 
 		/**
 		 * Output the JS for building the dynamic Guntenberg block.
@@ -1718,20 +1716,39 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 		 * @since 1.0.4 Added block_wrap property which will set the block wrapping output element ie: div, span, p or empty for no wrap.
 		 */
 		public function block() {
-            global $sd_is_js_functions_loaded, $aui_bs5;
+			global $sd_is_js_functions_loaded, $aui_bs5;
 
 			ob_start();
-
 			$show_advanced = $this->block_show_advanced();
-
-
-			?>
-			<script>
-
-			<?php
-			if(!$sd_is_js_functions_loaded){
-                $sd_is_js_functions_loaded = true;
-            ?>
+?><script><?php
+			if ( ! $sd_is_js_functions_loaded ) {
+				$sd_is_js_functions_loaded = true;
+?>
+function sd_cpt_sort_options(cProps) {
+	var rOptions = [{label:"Please wait",value:0}];
+	if (cProps && cProps['attributes'] && 'post_type' in cProps['attributes'] && 'sort_by' in cProps['attributes']) {
+		var cpt = cProps['attributes']['post_type'] ? cProps['attributes']['post_type'] : 'gd_place';
+		if (!window.gdCptSort) {
+			window.gdCptSort = [];
+		}
+		if (window.gdCptSort && window.gdCptSort[cpt]) {
+			rOptions = window.gdCptSort[cpt];
+		} else {
+			jQuery.post(ajaxurl, {'action':'geodir_get_sort_options','post_type':cpt}, function(res) {
+				var oOptions = [];
+				if (res) {
+					res = JSON.parse(res);
+					jQuery.each(res, function(key, val) {
+						oOptions.push({label:val,value:key});
+					});
+				}
+				window.gdCptSort[cpt] = oOptions;
+				return sd_cpt_sort_options(cProps);
+			});
+		}
+	}
+	return rOptions;
+}
 
 function sd_show_view_options($this){
 	if(jQuery($this).html().length){
@@ -2424,25 +2441,24 @@ function hasSelectedInnerBlock(props) {
 const parentBlocksIDs = wp.data.select( 'core/block-editor' ).getBlockParents(props.clientId);
 const parentBlocks = wp.data.select('core/block-editor').getBlocksByClientId(parentBlocksIDs);
 // const isParentOfSelectedBlock = useSelect( ( select ) => wp.data.select( 'core/block-editor' ).hasSelectedInnerBlock( props.clientId, true ) ):
-    const block = wp.data.select('core/block-editor').getBlocksByClientId(props.clientId);//.[0].innerBlocks;
-    const childBlocks = block[0].innerBlocks;
+const block = wp.data.select('core/block-editor').getBlocksByClientId(props.clientId);//.[0].innerBlocks;
+const childBlocks = block[0].innerBlocks;
 
-	var $value = '';
-	<?php
-	// if we have a post_type and a category then link them
-	if( isset($this->arguments['post_type']) && isset($this->arguments['category']) && !empty($this->arguments['category']['post_type_linked']) ){
-	?>
-	if(typeof(prev_attributes[props.clientId]) != 'undefined'){
-		$pt = props.attributes.post_type;
-		if(post_type_rest_slugs.length){
-			$value = post_type_rest_slugs[0][$pt];
-		}
-		var run = false;
+var $value = '';
+<?php
+	// If we have a post_type and a category then link them
+	if ( isset( $this->arguments['post_type'] ) && isset( $this->arguments['category'] ) && ! empty( $this->arguments['category']['post_type_linked'] ) ) { ?>
+if(typeof(prev_attributes[props.clientId]) != 'undefined'){
+	$pt = props.attributes.post_type;
+	if(post_type_rest_slugs.length){
+		$value = post_type_rest_slugs[0][$pt];
+	}
+	var run = false;
 
-		if($pt != term_query_type){
-			run = true;
-			term_query_type = $pt;
-		}
+	if($pt != term_query_type){
+		run = true;
+		term_query_type = $pt;
+	}
 <?php
 	$cat_path = '';
 	if ( ! empty( $this->arguments['post_type']['onchange_rest']['path'] ) ) {
@@ -2450,14 +2466,29 @@ const parentBlocks = wp.data.select('core/block-editor').getBlocksByClientId(par
 		$cat_path = str_replace( array( '&quot;', '&#039;' ), array( '"', "'" ), $cat_path );
 	}
 ?>
-		/* taxonomies */
-		if($value && 'post_type' in prev_attributes[props.clientId] && 'category' in prev_attributes[props.clientId] && run){
-			if (!window.gdCPTCats) {
-				window.gdCPTCats = [];
+	/* taxonomies */
+	if($value && 'post_type' in prev_attributes[props.clientId] && 'category' in prev_attributes[props.clientId] && run){
+		if (!window.gdCPTCats) {
+			window.gdCPTCats = [];
+		}
+		var gdCatPath = "<?php echo ( ! empty( $cat_path ) ? $cat_path : "/wp/v2/" + $value + "/categories/?per_page=100" ); ?>";
+		if (window.gdCPTCats[gdCatPath]) {
+			terms = window.gdCPTCats[gdCatPath];
+			while (taxonomies_<?php echo str_replace("-","_", $this->id);?>.length) {
+				taxonomies_<?php echo str_replace("-","_", $this->id);?>.pop();
 			}
-			var gdCatPath = "<?php echo ( ! empty( $cat_path ) ? $cat_path : "/wp/v2/" + $value + "/categories/?per_page=100" ); ?>";
-			if (window.gdCPTCats[gdCatPath]) {
-				terms = window.gdCPTCats[gdCatPath];
+			taxonomies_<?php echo str_replace("-","_", $this->id);?>.push({label: "All", value: 0});
+			jQuery.each( terms, function( key, val ) {
+				taxonomies_<?php echo str_replace("-","_", $this->id);?>.push({label: val.name, value: val.id});
+			});
+
+			/* Setting the value back and fourth fixes the no update issue that sometimes happens where it won't update the options. */
+			var $old_cat_value = props.attributes.category
+			props.setAttributes({category: [0] });
+			props.setAttributes({category: $old_cat_value });
+		} else {
+			wp.apiFetch({path: gdCatPath}).then(terms => {
+				window.gdCPTCats[gdCatPath] = terms;
 				while (taxonomies_<?php echo str_replace("-","_", $this->id);?>.length) {
 					taxonomies_<?php echo str_replace("-","_", $this->id);?>.pop();
 				}
@@ -2470,34 +2501,40 @@ const parentBlocks = wp.data.select('core/block-editor').getBlocksByClientId(par
 				var $old_cat_value = props.attributes.category
 				props.setAttributes({category: [0] });
 				props.setAttributes({category: $old_cat_value });
-			} else {
-				wp.apiFetch({path: gdCatPath}).then(terms => {
-					window.gdCPTCats[gdCatPath] = terms;
-					while (taxonomies_<?php echo str_replace("-","_", $this->id);?>.length) {
-						taxonomies_<?php echo str_replace("-","_", $this->id);?>.pop();
-					}
-					taxonomies_<?php echo str_replace("-","_", $this->id);?>.push({label: "All", value: 0});
-					jQuery.each( terms, function( key, val ) {
-						taxonomies_<?php echo str_replace("-","_", $this->id);?>.push({label: val.name, value: val.id});
-					});
 
-					/* Setting the value back and fourth fixes the no update issue that sometimes happens where it won't update the options. */
-					var $old_cat_value = props.attributes.category
-					props.setAttributes({category: [0] });
-					props.setAttributes({category: $old_cat_value });
-
-					return taxonomies_<?php echo str_replace("-","_", $this->id);?>;
-				});
-			}
+				return taxonomies_<?php echo str_replace("-","_", $this->id);?>;
+			});
 		}
+	}
 
-		/* sort_by */
-		if($value && 'post_type' in prev_attributes[props.clientId] && 'sort_by' in prev_attributes[props.clientId] && run){
-			if (!window.gdCPTSort) {
-				window.gdCPTSort = [];
+	/* sort_by */
+	<?php /* ?>
+	if($value && 'post_type' in prev_attributes[props.clientId] && 'sort_by' in prev_attributes[props.clientId] && run){
+		if (!window.gdCPTSort) {
+			window.gdCPTSort = [];
+		}
+		if (window.gdCPTSort[$pt]) {
+			response = window.gdCPTSort[$pt];
+			while (sort_by_<?php echo str_replace("-","_", $this->id);?>.length) {
+				sort_by_<?php echo str_replace("-","_", $this->id);?>.pop();
 			}
-			if (window.gdCPTSort[$pt]) {
-				response = window.gdCPTSort[$pt];
+
+			jQuery.each( response, function( key, val ) {
+				sort_by_<?php echo str_replace("-","_", $this->id);?>.push({label: val, value: key});
+			});
+
+			// setting the value back and fourth fixes the no update issue that sometimes happens where it won't update the options.
+			var $old_sort_by_value = props.attributes.sort_by
+			props.setAttributes({sort_by: [0] });
+			props.setAttributes({sort_by: $old_sort_by_value });
+		} else {
+			var data = {
+				'action': 'geodir_get_sort_options',
+				'post_type': $pt
+			};
+			jQuery.post(ajaxurl, data, function(response) {
+				response = JSON.parse(response);
+				window.gdCPTSort[$pt] = response;
 				while (sort_by_<?php echo str_replace("-","_", $this->id);?>.length) {
 					sort_by_<?php echo str_replace("-","_", $this->id);?>.pop();
 				}
@@ -2510,38 +2547,17 @@ const parentBlocks = wp.data.select('core/block-editor').getBlocksByClientId(par
 				var $old_sort_by_value = props.attributes.sort_by
 				props.setAttributes({sort_by: [0] });
 				props.setAttributes({sort_by: $old_sort_by_value });
-			} else {
-				var data = {
-					'action': 'geodir_get_sort_options',
-					'post_type': $pt
-				};
-				jQuery.post(ajaxurl, data, function(response) {
-					response = JSON.parse(response);
-					window.gdCPTSort[$pt] = response;
-					while (sort_by_<?php echo str_replace("-","_", $this->id);?>.length) {
-						sort_by_<?php echo str_replace("-","_", $this->id);?>.pop();
-					}
 
-					jQuery.each( response, function( key, val ) {
-						sort_by_<?php echo str_replace("-","_", $this->id);?>.push({label: val, value: key});
-					});
-
-					// setting the value back and fourth fixes the no update issue that sometimes happens where it won't update the options.
-					var $old_sort_by_value = props.attributes.sort_by
-					props.setAttributes({sort_by: [0] });
-					props.setAttributes({sort_by: $old_sort_by_value });
-
-					return sort_by_<?php echo str_replace("-","_", $this->id);?>;
-				});
-			}
+				return sort_by_<?php echo str_replace("-","_", $this->id);?>;
+			});
 		}
-	}
-	<?php } ?>
-<?php
-$current_screen = function_exists('get_current_screen') ? get_current_screen() : '';
-if(!empty($current_screen->base) && $current_screen->base==='widgets'){
+	}<?php */ ?>
+}
+<?php }
+$current_screen = function_exists( 'get_current_screen' ) ? get_current_screen() : '';
+if ( ! empty( $current_screen->base ) && $current_screen->base === 'widgets' ) {
 	echo 'const { deviceType } = "";';
-}else{
+} else {
 ?>
 /** Get device type const. */
 const { deviceType } = wp.data.useSelect != 'undefined' ?  wp.data.useSelect(select => {
@@ -3421,7 +3437,8 @@ if (confirmed) {
 				if($args['name'] == 'category' && !empty($args['post_type_linked'])){
 					$options .= "options: taxonomies_".str_replace("-","_", $this->id).",";
 				}elseif($args['name'] == 'sort_by' && !empty($args['post_type_linked'])){
-					$options .= "options: sort_by_".str_replace("-","_", $this->id).",";
+					//$options .= "options: sort_by_".str_replace("-","_", $this->id).",";
+					$options .= "options: sd_cpt_sort_options( props ), ";
 				}else {
 
 					if ( ! empty( $args['options'] ) ) {
