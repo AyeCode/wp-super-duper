@@ -1708,6 +1708,51 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 			return $arguments;
 		}
 
+		/**
+		 * Parse used group tabs.
+		 *
+		 * @since 1.1.17
+		 */
+		public function group_block_tabs( $tabs, $arguments ) {
+			if ( ! empty( $tabs ) && ! empty( $arguments ) ) {
+				$has_sections = false;
+
+				foreach ( $this->arguments as $key => $args ) {
+					if ( isset( $args['group'] ) ) {
+						$has_sections = true;
+						break;
+					}
+				}
+
+				if ( ! $has_sections ) {
+					return $tabs;
+				}
+
+				$new_tabs = array();
+
+				foreach ( $tabs as $tab_key => $tab ) {
+					$new_groups = array();
+
+					if ( ! empty( $tab['groups'] ) && is_array( $tab['groups'] ) ) {
+						foreach ( $tab['groups'] as $group ) {
+							if ( isset( $arguments[ $group ] ) ) {
+								$new_groups[] = $group;
+							}
+						}
+					}
+
+					if ( ! empty( $new_groups ) ) {
+						$tab['groups'] = $new_groups;
+
+						$new_tabs[ $tab_key ] = $tab;
+					}
+				}
+
+				$tabs = $new_tabs;
+			}
+
+			return $tabs;
+		}
 
 		/**
 		 * Output the JS for building the dynamic Guntenberg block.
@@ -2748,12 +2793,9 @@ const { deviceType } = wp.data.useSelect != 'undefined' ?  wp.data.useSelect(sel
 
 									}
 
-								//	print_r( $this->arguments);
-
-									//echo '####';
-
 									$arguments = $this->group_arguments( $this->arguments );
-//print_r($arguments ); exit;
+									$block_group_tabs = ! empty( $this->options['block_group_tabs'] ) ? $this->group_block_tabs( $this->options['block_group_tabs'], $arguments ) : array();
+
 									// Do we have sections?
 									$has_sections = $arguments == $this->arguments ? false : true;
 
@@ -2764,47 +2806,36 @@ const { deviceType } = wp.data.useSelect != 'undefined' ?  wp.data.useSelect(sel
 
 									$open_tab_groups = array();
 									$used_tabs = array();
-									foreach($arguments as $key => $args){
 
+									foreach ( $arguments as $key => $args ) {
 										$close_tab = false;
 										$close_tabs = false;
 
-										 if(!empty($this->options['block_group_tabs'])) {
-											foreach($this->options['block_group_tabs'] as $tab_name => $tab_args){
-												if(in_array($key,$tab_args['groups'])){
-
+										 if ( ! empty( $block_group_tabs ) ) {
+											foreach ( $block_group_tabs as $tab_name => $tab_args ) {
+												if ( in_array( $key, $tab_args['groups'] ) ) {
 													$open_tab_groups[] = $key;
 
-													if($open_tab != $tab_name){
+													if ( $open_tab != $tab_name ) {
 														$tab_args['tab']['tabs_open'] = $open_tab == '' ? true : false;
 														$tab_args['tab']['open'] = true;
 
 														$this->block_tab_start( '', $tab_args );
-//														echo '###open'.$tab_name;print_r($tab_args);
 														$open_tab = $tab_name;
 														$used_tabs[] = $tab_name;
 													}
 
-													if($open_tab_groups == $tab_args['groups']){
-														//$open_tab = '';
+													if ( $open_tab_groups == $tab_args['groups'] ) {
 														$close_tab = true;
 														$open_tab_groups = array();
 
-//													print_r(array_keys($this->options['block_group_tabs']));echo '####';print_r($used_tabs);
-													if($used_tabs == array_keys($this->options['block_group_tabs'])){
-//														echo '@@@';
+														if ( $used_tabs == array_keys( $block_group_tabs ) ) {
 															$close_tabs = true;
 														}
 													}
-
 												}
 											}
 										}
-
-//
-
-									//	print_r($arguments);exit;
-
 										?>
 										el(wp.components.PanelBody, {
 												title: '<?php esc_attr_e( $key ); ?>',
@@ -2815,11 +2846,7 @@ const { deviceType } = wp.data.useSelect != 'undefined' ?  wp.data.useSelect(sel
 											}?>
 											},
 											<?php
-
-
-
 											foreach ( $args as $k => $a ) {
-
 												$this->block_tab_start( $k, $a );
 												$this->block_row_start( $k, $a );
 												$this->build_block_arguments( $k, $a );
@@ -2830,7 +2857,6 @@ const { deviceType } = wp.data.useSelect != 'undefined' ?  wp.data.useSelect(sel
 										),
 										<?php
 										$panel_count ++;
-
 
 										if($close_tab || $close_tabs){
 											$tab_args = array(
@@ -3183,14 +3209,10 @@ el('div',{className: 'bsui'},
 
 				if(!empty($args['tab']['tabs_close'])){
 					if(false){?><script><?php }?>
-							],
-									},
-									( tab ) => {
-
-									return tab.content;
-
-								}
-								)), /* tabs close */
+						]}, ( tab ) => {
+								return tab.content;
+							}
+						)), /* tabs close */
 					<?php if(false){ ?></script><?php }
 				}
 			}
