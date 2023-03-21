@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 if ( ! class_exists( 'WP_Super_Duper' ) ) {
 
-	define( 'SUPER_DUPER_VER', '1.1.16' );
+	define( 'SUPER_DUPER_VER', '1.1.17' );
 
 	/**
 	 * A Class to be able to create a Widget, Shortcode or Block to be able to output content for WordPress.
@@ -129,8 +129,9 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 				add_action( 'wp_ajax_super_duper_get_widget_settings', array( __CLASS__, 'get_widget_settings' ) );
 				add_action( 'wp_ajax_super_duper_get_picker', array( __CLASS__, 'get_picker' ) );
 
-				// add generator text to admin head
+				// add generator text to head
 				add_action( 'admin_head', array( $this, 'generator' ) );
+				add_action( 'wp_head', array( $this, 'generator' ) );
 			}
 
 			do_action( 'wp_super_duper_widget_init', $options, $this );
@@ -343,10 +344,25 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 		}
 
 		/**
-		 * Output the version in the admin header.
+		 * Output the version in the header.
 		 */
 		public function generator() {
-			echo '<meta name="generator" content="WP Super Duper v' . $this->version . '" />';
+			$file = str_replace( array( "/", "\\" ), "/", realpath( __FILE__ ) );
+			$plugins_dir = str_replace( array( "/", "\\" ), "/", realpath( WP_PLUGIN_DIR ) );
+
+			// Find source plugin/theme of SD
+			$source = array();
+			if ( strpos( $file, $plugins_dir ) !== false ) {
+				$source = explode( "/", plugin_basename( $file ) );
+			} else if ( function_exists( 'get_theme_root' ) ) {
+				$themes_dir = str_replace( array( "/", "\\" ), "/", realpath( get_theme_root() ) );
+
+				if ( strpos( $file, $themes_dir ) !== false ) {
+					$source = explode( "/", ltrim( str_replace( $themes_dir, "", $file ), "/" ) );
+				}
+			}
+
+			echo '<meta name="generator" content="WP Super Duper v' . $this->version . '"' . ( ! empty( $source[0] ) ? ' data-sd-source="' . esc_attr( $source[0] ) . '"' : '' ) . ' />';
 		}
 
 		/**
@@ -790,10 +806,8 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 				 Gets the shortcode options.
 				 */
 				function sd_get_shortcode_options($this) {
-
 					$short_code = jQuery($this).val();
 					if ($short_code) {
-
 						var data = {
 							'action': 'super_duper_get_widget_settings',
 							'shortcode': $short_code,
@@ -824,18 +838,15 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 								jQuery('#TB_ajaxContent').css('width', 'auto').css('height', '75vh');
 							}, 200);
 
-
 							return response;
 						});
 					}
-
 				}
 
 				/*
 				 Builds and inserts the shortcode into the viewer.
 				 */
 				function sd_build_shortcode($id) {
-
 					var multiSelects = {};
 					var multiSelectsRemove = [];
 
@@ -878,11 +889,9 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 						$form_data = $form_data.concat($ms_arr);
 					}
 
-
 					if ($form_data) {
 						$content = '';
 						$form_data.forEach(function (element) {
-
 							if (element.value) {
 								$field_name = element.name.substr(element.name.indexOf("][") + 2);
 								$field_name = $field_name.replace("]", "");
@@ -892,7 +901,6 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 									$output = $output + " " + $field_name + '="' + element.value + '"';
 								}
 							}
-
 						});
 					}
 					$output = $output + "]";
@@ -904,7 +912,6 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 
 					jQuery('#TB_ajaxContent #sd-shortcode-output').html($output);
 				}
-
 
 				/*
 				 Delay the init of the textareas for 1 second.
@@ -919,10 +926,8 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 				 Init the textareas to be able to show the shortcode builder button.
 				 */
 				function sd_init_textareas() {
-
 					// General textareas
 					jQuery(document).on('focus', 'textarea', function () {
-
 						if (jQuery(this).hasClass('wp-editor-area')) {
 							// insert the shortcode button to the textarea lable if not there already
 							if (!jQuery(this).parent().find('.sd-lable-shortcode-inserter').length) {
@@ -994,7 +999,6 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 //							jQuery(this).parent().parent().find('.wpb_element_label').append(sd_shortcode_button());
 //						}
 //					});
-
 				}
 
 				/**
@@ -1043,7 +1047,6 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 						return '<?php echo self::shortcode_button();?>';
 					}
 				}
-
 			</script>
 			<?php
 		}
