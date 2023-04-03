@@ -4881,10 +4881,9 @@ if (confirmed) {
 									)
 								)
 							);
-
-							$content .= '</div>';
 						}
 
+						$content .= '</div>';
 						$content .= '<div class="col-sm-12">';
 
 							$content .= aui()->select(
