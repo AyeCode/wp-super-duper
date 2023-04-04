@@ -1802,7 +1802,7 @@ function sd_block_visibility_init() {
 	});
 
 	jQuery(document).off('click', '.bs-vc-save').on('click', '.bs-vc-save', function() {
-		var $bsvcModal = jQuery(this).closest('.bs-vc-modal'), $bsvcForm = $bsvcModal.find('.bs-vc-modal-form'), vOutput = jQuery('#bsvc_output', $bsvcForm).val(), rawValue = '', oVal = {}, oOut = {}, oRules = [];
+		var $bsvcModal = jQuery(this).closest('.bs-vc-modal'), $bsvcForm = $bsvcModal.find('.bs-vc-modal-form'), vOutput = jQuery('#bsvc_output', $bsvcForm).val(), rawValue = '', oVal = {}, oOut = {}, iRule = 0;
 		jQuery(this).addClass('disabled');
 		jQuery('.bs-vc-modal-form .bs-vc-rule-sets .bs-vc-rule').each(function(){
 			vRule = jQuery(this).find('.bsvc_rule').val(), oRule = {};
@@ -1810,8 +1810,13 @@ function sd_block_visibility_init() {
 				oRule.type = vRule;
 			} else if (vRule == 'user_roles') {
 				oRule.type = vRule;
-				if (jQuery(this).find('.bsvc_user_roles').val()) {
-					oRule.user_roles = jQuery(this).find('.bsvc_user_roles').val();
+				if (jQuery(this).find('.bsvc_user_roles:checked').length) {
+					var user_roles = jQuery(this).find('.bsvc_user_roles:checked').map(function() {
+						return jQuery(this).val();
+					}).get();
+					if (user_roles && user_roles.length) {
+						oRule.user_roles = user_roles.join(",");
+					}
 				}
 			} else if (vRule == 'gd_field') {
 				if (jQuery(this).find('.bsvc_gd_field ').val() && jQuery(this).find('.bsvc_gd_field_condition').val()) {
@@ -1824,12 +1829,10 @@ function sd_block_visibility_init() {
 				}
 			}
 			if (Object.keys(oRule).length > 0) {
-				oRules.push(oRule);
+				iRule++;
+				oVal['rule'+iRule] = oRule;
 			}
 		});
-		if (Object.keys(oRules).length > 0) {
-			oVal.rules = oRules;
-		}
 		if (vOutput == 'hide') {
 			oOut.type = vOutput;
 		} else if (vOutput == 'message') {
@@ -1870,15 +1873,7 @@ function sd_block_visibility_init() {
 		}
 		bsvcTmpl = bsvcTmpl.replace(/BSVCINDEX/g, c);
 		jQuery('.bs-vc-modal-form .bs-vc-rule-sets').append(bsvcTmpl);
-		jQuery('.bs-vc-modal-form .bs-vc-rule-sets .bs-vc-rule:last').find('select').each(function(){
-			if (!jQuery(this).hasClass('no-select2')) {
-				jQuery(this).addClass('aui-select2');
-			}
-		});
 		if (!jQuery(this).hasClass('bs-vc-rendering')) {
-			if(typeof aui_init_select2 == 'function') {
-				aui_init_select2();
-			}
 			if(typeof aui_conditional_fields == 'function') {
 				aui_conditional_fields('.bs-vc-modal-form');
 			}
@@ -1889,14 +1884,23 @@ function sd_block_visibility_init() {
 	});
 }
 function sd_block_visibility_render_fields(oValue) {
-	if (typeof oValue == 'object' && oValue.rules && typeof oValue.rules == 'object' && oValue.rules.length > 0) {
-		for(k = 0; k < oValue.rules.length; k++) {
-			var oRule = oValue.rules[k];
-			if (oRule.type) {
+	if (typeof oValue == 'object' && oValue.rule1 && typeof oValue.rule1 == 'object') {
+		for(k = 1; k <= Object.keys(oValue).length; k++) {
+			if (oValue['rule' + k] && oValue['rule' + k].type) {
+				var oRule = oValue['rule' + k];
 				jQuery('.bs-vc-modal-form .bs-vc-add-rule').addClass('bs-vc-rendering').trigger('click');
 				var elRule = jQuery('.bs-vc-modal-form .bs-vc-rule-sets .bs-vc-rule:last');
 				jQuery('select.bsvc_rule', elRule).val(oRule.type);
 				if (oRule.type == 'user_roles' && oRule.user_roles) {
+					var user_roles = oRule.user_roles;
+					if (typeof user_roles == 'string') {
+						user_roles = user_roles.split(",");
+					}
+					if (user_roles.length) {
+						jQuery.each(user_roles, function(i, role){
+							elRule.find("input[value='" + role + "']").prop('checked', true);
+						});
+					}
 					jQuery('select.bsvc_user_roles', elRule).val(oRule.user_roles);
 				} else if (oRule.type == 'gd_field') {
 					if (oRule.field) {
@@ -3759,9 +3763,6 @@ if (confirmed) {
 									if (!jQuery('.bs-vc-modal-form .bs-vc-rule-sets .bs-vc-rule').length) {
 										jQuery('.bs-vc-modal-form .bs-vc-add-rule').trigger('click');
 									}
-									if(typeof aui_init_select2 == 'function') {
-										aui_init_select2();
-									}
 									jQuery('.bs-vc-modal-form').trigger('change');
 								}
 							});
@@ -4838,72 +4839,54 @@ if (confirmed) {
 							);
 
 						$content .= '</div>';
-						$content .= '<div class="col-md-7 col-sm-12">';
 
 						if ( class_exists( 'GeoDirectory' ) ) {
-							$content .= aui()->select(
-								array(
-									'id'          => 'bsvc_gd_field_BSVCINDEX',
-									'name'        => 'bsvc_gd_field_BSVCINDEX',
-									'label'       => __( 'FIELD', 'super-duper' ),
-									'placeholder' => __( 'FIELD', 'super-duper' ),
-									'class'       => 'bsvc_gd_field form-select-sm',
-									'options'     => sd_visibility_gd_field_options(),
-									'default'     => '',
-									'value'       => '',
-									'label_type'  => '',
-									'select2'     => false,
-									'element_require'  => '[%bsvc_rule_BSVCINDEX%]=="gd_field"',
-									'extra_attributes' => array(
-										'data-minimum-results-for-search' => '-1'
+							$content .= '<div class="col-md-7 col-sm-12">';
+
+								$content .= aui()->select(
+									array(
+										'id'          => 'bsvc_gd_field_BSVCINDEX',
+										'name'        => 'bsvc_gd_field_BSVCINDEX',
+										'label'       => __( 'FIELD', 'super-duper' ),
+										'placeholder' => __( 'FIELD', 'super-duper' ),
+										'class'       => 'bsvc_gd_field form-select-sm',
+										'options'     => sd_visibility_gd_field_options(),
+										'default'     => '',
+										'value'       => '',
+										'label_type'  => '',
+										'select2'     => false,
+										'element_require'  => '[%bsvc_rule_BSVCINDEX%]=="gd_field"',
+										'extra_attributes' => array(
+											'data-minimum-results-for-search' => '-1'
+										)
 									)
-								)
-							);
+								);
 
 							$content .= '</div>';
 							$content .= '<div class="col-md-5 col-sm-12">';
 
-							$content .= aui()->select(
-								array(
-									'id'          => 'bsvc_gd_field_condition_BSVCINDEX',
-									'name'        => 'bsvc_gd_field_condition_BSVCINDEX',
-									'label'       => __( 'CONDITION', 'super-duper' ),
-									'placeholder' => __( 'CONDITION', 'super-duper' ),
-									'class'       => 'bsvc_gd_field_condition form-select-sm',
-									'options'     => sd_visibility_field_condition_options(),
-									'default'     => '',
-									'value'       => '',
-									'label_type'  => '',
-									'select2'     => false,
-									'element_require'  => '[%bsvc_rule_BSVCINDEX%]=="gd_field"',
-									'extra_attributes' => array(
-										'data-minimum-results-for-search' => '-1'
+								$content .= aui()->select(
+									array(
+										'id'          => 'bsvc_gd_field_condition_BSVCINDEX',
+										'name'        => 'bsvc_gd_field_condition_BSVCINDEX',
+										'label'       => __( 'CONDITION', 'super-duper' ),
+										'placeholder' => __( 'CONDITION', 'super-duper' ),
+										'class'       => 'bsvc_gd_field_condition form-select-sm',
+										'options'     => sd_visibility_field_condition_options(),
+										'default'     => '',
+										'value'       => '',
+										'label_type'  => '',
+										'select2'     => false,
+										'element_require'  => '[%bsvc_rule_BSVCINDEX%]=="gd_field"',
+										'extra_attributes' => array(
+											'data-minimum-results-for-search' => '-1'
+										)
 									)
-								)
-							);
-						}
+								);
 
-						$content .= '</div>';
-						$content .= '<div class="col-sm-12">';
+							$content .= '</div>';
+							$content .= '<div class="col-sm-12">';
 
-							$content .= aui()->select(
-								array(
-									'id'              => 'bsvc_user_roles_BSVCINDEX',
-									'name'            => 'bsvc_user_roles_BSVCINDEX',
-									'label'           => __( 'User Roles', 'super-duper' ),
-									//'placeholder'     => __( 'Select User Roles...', 'super-duper' ),
-									'class'           => 'bsvc_user_roles form-select-sm',
-									'options'         => sd_user_roles_options(),
-									'default'         => '',
-									'value'           => '',
-									'label_type'      => 'top',
-									'select2'         => false,
-									'multiple'        => true,
-									'element_require' => '[%bsvc_rule_BSVCINDEX%]=="user_roles"'
-								)
-							);
-
-							if ( class_exists( 'GeoDirectory' ) ) {
 								$content .= aui()->input(
 									array(
 										'type'            => 'text',
@@ -4917,9 +4900,35 @@ if (confirmed) {
 										'element_require' => '([%bsvc_rule_BSVCINDEX%]=="gd_field" && [%bsvc_gd_field_condition_BSVCINDEX%] && [%bsvc_gd_field_condition_BSVCINDEX%]!="is_empty" && [%bsvc_gd_field_condition_BSVCINDEX%]!="is_not_empty")'
 									)
 								);
-							}
 
-						$content .= '</div>';
+							$content .= '</div>';
+						}
+
+					$content .= '</div>';
+
+					$content .= '<div class="row aui-conditional-field" data-element-require="jQuery(form).find(\'[name=bsvc_rule_BSVCINDEX]\').val()==\'user_roles\'" data-argument="bsvc_user_roles_BSVCINDEX_1"><label for="bsvc_user_roles_BSVCINDEX_1" class="form-label mb-3">' . __( 'Select User Roles:', 'super-duper' ) . '</label>';
+						$role_options = sd_user_roles_options();
+
+						$role_option_i = 0;
+						foreach ( $role_options as $role_option_key => $role_option_name ) {
+							$role_option_i++;
+
+							$content .= '<div class="col-sm-6">';
+							$content .= aui()->input(
+								array(
+									'id'               => 'bsvc_user_roles_BSVCINDEX_' . $role_option_i,
+									'name'             => 'bsvc_user_roles_BSVCINDEX[]',
+									'type'             => 'checkbox',
+									'label'            => $role_option_name,
+									'label_type'       => 'hidden',
+									'class'            => 'bsvc_user_roles',
+									'value'            => $role_option_key,
+									'switch'           => 'md',
+									'no_wrap'          => true
+								)
+							);
+							$content .= '</div>';
+						}
 					$content .= '</div>';
 				$content .= '</div>';
 			$content .= '</div>';
@@ -4938,7 +4947,7 @@ if (confirmed) {
 					'default'     => '',
 					'value'       => '',
 					'label_type'  => 'top',
-					'select2'     => true,
+					'select2'     => false,
 					'extra_attributes' => array(
 						'data-minimum-results-for-search' => '-1'
 					)
@@ -4958,7 +4967,7 @@ if (confirmed) {
 					'default'         => '',
 					'value'           => '',
 					'label_type'      => 'top',
-					'select2'         => true,
+					'select2'         => false,
 					'element_require' => '[%bsvc_output%]=="page"'
 				)
 			);
@@ -4974,7 +4983,7 @@ if (confirmed) {
 					'default'     => '',
 					'value'       => '',
 					'label_type'  => 'top',
-					'select2'     => true,
+					'select2'     => false,
 					'element_require'  => '[%bsvc_output%]=="template_part"',
 					'extra_attributes' => array(
 						'data-minimum-results-for-search' => '-1'
@@ -4993,7 +5002,7 @@ if (confirmed) {
 					'default'          => '',
 					'value'            => '',
 					'label_type'       => 'top',
-					'select2'          => true,
+					'select2'          => false,
 					'element_require'  => '[%bsvc_output%]=="message"',
 					'extra_attributes' => array(
 						'data-minimum-results-for-search' => '-1'
