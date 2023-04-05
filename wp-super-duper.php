@@ -1873,7 +1873,15 @@ function sd_block_visibility_init() {
 		}
 		bsvcTmpl = bsvcTmpl.replace(/BSVCINDEX/g, c);
 		jQuery('.bs-vc-modal-form .bs-vc-rule-sets').append(bsvcTmpl);
+		jQuery('.bs-vc-modal-form .bs-vc-rule-sets .bs-vc-rule:last').find('select').each(function(){
+			if (!jQuery(this).hasClass('no-select2')) {
+				jQuery(this).addClass('aui-select2');
+			}
+		});
 		if (!jQuery(this).hasClass('bs-vc-rendering')) {
+			if(typeof aui_init_select2 == 'function') {
+				aui_init_select2();
+			}
 			if(typeof aui_conditional_fields == 'function') {
 				aui_conditional_fields('.bs-vc-modal-form');
 			}
@@ -3763,6 +3771,9 @@ if (confirmed) {
 									if (!jQuery('.bs-vc-modal-form .bs-vc-rule-sets .bs-vc-rule').length) {
 										jQuery('.bs-vc-modal-form .bs-vc-add-rule').trigger('click');
 									}
+									if(typeof aui_init_select2 == 'function') {
+										aui_init_select2();
+									}
 									jQuery('.bs-vc-modal-form').trigger('change');
 								}
 							});
@@ -4947,7 +4958,7 @@ if (confirmed) {
 					'default'     => '',
 					'value'       => '',
 					'label_type'  => 'top',
-					'select2'     => false,
+					'select2'     => true,
 					'extra_attributes' => array(
 						'data-minimum-results-for-search' => '-1'
 					)
@@ -4967,7 +4978,7 @@ if (confirmed) {
 					'default'         => '',
 					'value'           => '',
 					'label_type'      => 'top',
-					'select2'         => false,
+					'select2'         => true,
 					'element_require' => '[%bsvc_output%]=="page"'
 				)
 			);
@@ -4983,7 +4994,7 @@ if (confirmed) {
 					'default'     => '',
 					'value'       => '',
 					'label_type'  => 'top',
-					'select2'     => false,
+					'select2'     => true,
 					'element_require'  => '[%bsvc_output%]=="template_part"',
 					'extra_attributes' => array(
 						'data-minimum-results-for-search' => '-1'
@@ -5002,7 +5013,7 @@ if (confirmed) {
 					'default'          => '',
 					'value'            => '',
 					'label_type'       => 'top',
-					'select2'          => false,
+					'select2'          => true,
 					'element_require'  => '[%bsvc_output%]=="message"',
 					'extra_attributes' => array(
 						'data-minimum-results-for-search' => '-1'
