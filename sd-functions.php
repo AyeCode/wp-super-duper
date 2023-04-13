@@ -2944,13 +2944,16 @@ function sd_render_block( $block_content, $block, $instance ) {
 	}
 
 	$attributes = json_decode( $block['attrs']['visibility_conditions'], true );
+	$rules = ! empty( $attributes ) ? sd_block_parse_rules( $attributes ) : array();
 
 	// No rules set.
-	if ( empty( $attributes['rules'] ) ) {
+	if ( empty( $rules ) ) {
 		return $block_content;
 	}
 
-	if ( sd_block_check_rules( $attributes['rules'] ) ) {
+	$_block_content = $block_content;
+
+	if ( ! empty( $rules ) && sd_block_check_rules( $rules ) ) {
 		if ( ! empty( $attributes['output']['type'] ) ) {
 			switch ( $attributes['output']['type'] ) {
 				case 'hide':
@@ -2997,11 +3000,9 @@ function sd_render_block( $block_content, $block, $instance ) {
 				$block_content = '<div class="' . esc_attr( wp_get_block_default_classname( $instance->name ) ) . ' sd-block-has-rule">' . $content . '</div>';
 			}
 		}
-	} else {
-		$block_content = '';
 	}
 
-	return $block_content;
+	return apply_filters( 'sd_render_block_visibility_content', $block_content, $_block_content, $attributes, $block, $instance );
 }
 add_filter( 'render_block', 'sd_render_block', 9, 3 );
 
@@ -3046,6 +3047,22 @@ function sd_get_template_part_content( $template_part ) {
 	return apply_filters( 'sd_get_template_part_content', $content, $template_part );
 }
 
+function sd_block_parse_rules( $attrs ) {
+	$rules = array();
+
+	if ( ! empty( $attrs ) && is_array( $attrs ) ) {
+		$attrs_keys = array_keys( $attrs );
+
+		for ( $i = 1; $i <= count( $attrs_keys ); $i++ ) {
+			if ( ! empty( $attrs[ 'rule' . $i ] ) && is_array( $attrs[ 'rule' . $i ] ) ) {
+				$rules[] = $attrs[ 'rule' . $i ];
+			}
+		}
+	}
+
+	return apply_filters( 'sd_block_parse_rules', $rules, $attrs );
+}
+
 function sd_block_check_rules( $rules ) {
 	if ( ! ( is_array( $rules ) && ! empty( $rules ) ) ) {
 		return true;
@@ -3076,12 +3093,20 @@ function sd_block_check_rule( $match, $rule ) {
 			case 'user_roles':
 				$match = false;
 
-				if ( ! empty( $rule['user_roles'] ) && is_array( $rule['user_roles'] ) && is_user_logged_in() && ( $current_user = wp_get_current_user() ) ) {
-					$user_roles = $current_user->roles;
+				if ( ! empty( $rule['user_roles'] ) ) {
+					$user_roles = is_scalar( $rule['user_roles'] ) ? explode( ",", $rule['user_roles'] ) : $rule['user_roles'];
 
-					foreach ( $rule['user_roles'] as $role ) {
-						if ( in_array( $role, $user_roles ) ) {
-							$match = true;
+					if ( is_array( $user_roles ) ) {
+						$user_roles = array_filter( array_map( 'trim', $user_roles ) );
+					}
+
+					if ( ! empty( $user_roles ) && is_array( $user_roles ) && is_user_logged_in() && ( $current_user = wp_get_current_user() ) ) {
+						$current_user_roles = $current_user->roles;
+
+						foreach ( $user_roles as $role ) {
+							if ( in_array( $role, $current_user_roles ) ) {
+								$match = true;
+							}
 						}
 					}
 				}
