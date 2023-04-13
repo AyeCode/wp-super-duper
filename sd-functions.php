@@ -2677,19 +2677,15 @@ function sd_get_class_build_keys() {
  */
 function sd_get_visibility_conditions_input( $type = 'visibility_conditions', $overwrite = array() ) {
 	$defaults = array(
-		'type'         => 'hidden',
+		'type'         => 'visibility_conditions',
 		'title'        => __( 'Block Visibility', 'super-duper' ),
 		'button_title' => __( 'Set Block Visibility', 'super-duper' ),
 		'default'      => '',
 		'desc_tip'     => true,
-		'group'        => '',
+		'group'        => __( 'Visibility Conditions', 'super-duper' ),
 	);
 
 	$input = wp_parse_args( $overwrite, $defaults );
-
-	if ( empty( $input['type'] ) ) {
-		$input['type'] = 'visibility_conditions';
-	}
 
 	return $input;
 }
@@ -2697,7 +2693,7 @@ function sd_get_visibility_conditions_input( $type = 'visibility_conditions', $o
 /**
  * Get a array of user roles.
  *
- * 
+ *
  *
  * @param array $exclude An array of roles to exclude from the return array.
  * @return array An array of roles.
@@ -2723,7 +2719,7 @@ function sd_user_roles_options( $exclude = array() ) {
 /**
  * Get visibility conditions rule options.
  *
- * 
+ *
  *
  * @return array Rule options.
  */
@@ -2803,7 +2799,7 @@ function sd_visibility_field_condition_options(){
 /**
  * Get visibility conditions output options.
  *
- * 
+ *
  *
  * @return array Template type options.
  */
@@ -2821,7 +2817,7 @@ function sd_visibility_output_options() {
 /**
  * Get the template page options.
  *
- * 
+ *
  *
  * @param array $args Array of arguments.
  * @return array Template page options.
@@ -2871,7 +2867,7 @@ function sd_template_page_options( $args = array() ) {
 /**
  * Get the template part options.
  *
- * 
+ *
  *
  * @param array $args Array of arguments.
  * @return array Template part options.
@@ -2901,7 +2897,7 @@ function sd_template_part_options( $args = array() ) {
 /**
  * Get the template part by slug.
  *
- * 
+ *
  *
  * @param string $slug Template slug.
  * @return array Template part object.
@@ -2931,7 +2927,7 @@ function sd_get_template_part_by_slug( $slug ) {
 /**
  * Filters the content of a single block.
  *
- * 
+ *
  *
  * @param string   $block_content The block content.
  * @param array    $block         The full block, including name and attributes.

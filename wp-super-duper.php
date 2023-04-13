@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 if ( ! class_exists( 'WP_Super_Duper' ) ) {
 
-	define( 'SUPER_DUPER_VER', '1.1.18' );
+	define( 'SUPER_DUPER_VER', '1.1.19' );
 
 	/**
 	 * A Class to be able to create a Widget, Shortcode or Block to be able to output content for WordPress.
@@ -3755,12 +3755,13 @@ if (confirmed) {
 				$type = 'TextControl';
 				$value = "(props.attributes.$key ? props.attributes.$key : '')";
 				$args['type'] = 'text';
+				$options .= 'disabled:true,';
 				$bsvc_title = esc_attr( addslashes( $args['title'] ) );
 				$bsvc_body = $this->block_visibility_fields( $args );
 				// @TODO reset button
-				$bsvc_footer = '<button type="button" class="btn btn-danger d-none">' . __( 'Reset', 'super-duper' ) . '</button><button type="button" class="btn btn-secondary bs-vc-close" data-bs-dismiss="modal">' . __( 'Close', 'super-duper' ) . '</button><button type="button" class="btn btn-primary bs-vc-save">' . __( 'Save Rules', 'super-duper' ) . '</button>';
+				$bsvc_footer = '<button type="button" class="btn btn-danger d-none">' . __( 'Reset', 'super-duper' ) . '</button><button type="button" class="btn btn-secondary bs-vc-close text-white" data-bs-dismiss="modal">' . __( 'Close', 'super-duper' ) . '</button><button type="button" class="btn btn-primary bs-vc-save">' . __( 'Save Rules', 'super-duper' ) . '</button>';
 				$after_elements .= "el('div', {className: 'components-base-control bs-vc-button-wrap'}, el(wp.components.Button, {
-						className: 'components-button components-circular-option-picker__clear is-primary is-smallx', 
+						className: 'components-button components-circular-option-picker__clear is-primary is-smallx',
 						onClick: function() {
 							var sValue = props.attributes." . $key . ";
 							var oValue;
@@ -3777,7 +3778,7 @@ if (confirmed) {
 									jQuery('.bs-vc-modal-form').trigger('change');
 								}
 							});
-							aui_modal('" . $bsvc_title . "', '" . addslashes( $bsvc_body ) . "', '" . $bsvc_footer . "', true, 'bs-vc-modal', '', '');
+							aui_modal('" . $bsvc_title . "', '" . addslashes( $bsvc_body ) . "', '" . $bsvc_footer . "', true, 'bs-vc-modal', 'modal-lg', '');
 							jQuery(document).off('change', '#bsvc_raw_value').on('change', '#bsvc_raw_value', function(e) {
 								props.setAttributes({" . $key . ": e.target.value});
 							});
