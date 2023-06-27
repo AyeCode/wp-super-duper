@@ -3809,54 +3809,28 @@ if (confirmed) {
 			echo $icon;
 			?>
 			el( <?php echo $args['type'] == 'image' || $args['type'] == 'images' ? $type  : "wp.components.".$type; ?>, {
-			label: <?php
-			if(empty($args['title'])){
-                echo "''";
-			}elseif(empty($args['row']) && !empty($args['device_type'])){
-                ?>el('label', {
-									className: 'components-base-control__label',
-									style: {width:"100%"}
-								},
-								el('span',{dangerouslySetInnerHTML: {__html: '<?php echo addslashes( $args['title'] ) ?>'}}),
-								<?php if($device_type_icon){ ?>
-                                    deviceType == '<?php echo $device_type;?>' && el('span',{dangerouslySetInnerHTML: {__html: '<?php echo $device_type_icon; ?>'},title: deviceType + ": Set preview mode to change",style: {right:"0",position:"absolute",color:"var(--wp-admin-theme-color)"}})
-								<?php
-                                }
-                                ?>
-
-
-							)<?php
-
-			}else{
-                 ?>'<?php echo addslashes( $args['title'] ); ?>'<?php
-
-			}
-
-			?>,
-			help: <?php if ( isset( $args['desc'] ) ) {
-				echo "el('span',{dangerouslySetInnerHTML: {__html: '".wp_kses_post( addslashes($args['desc']) )."'}})";
-			}else{ echo "''"; } ?>,
+			label: <?php if ( empty( $args['title'] ) ) { echo "''"; } else if ( empty( $args['row'] ) && ! empty( $args['device_type'] ) ) { ?>el('label',{className:'components-base-control__label',style:{width:"100%"}},el('span',{dangerouslySetInnerHTML: {__html: '<?php echo addslashes( $args['title'] ) ?>'}}),<?php if ( $device_type_icon ) { ?>deviceType == '<?php echo $device_type;?>' && el('span',{dangerouslySetInnerHTML: {__html: '<?php echo $device_type_icon; ?>'},title: deviceType + ": Set preview mode to change",style: {right:"0",position:"absolute",color:"var(--wp-admin-theme-color)"}})<?php } ?>)<?php
+			} else { ?>'<?php echo addslashes( trim( esc_html( $args['title'] ) ) ); ?>'<?php } ?>,
+			help: <?php echo ( isset( $args['desc'] ) ? "el('span', {dangerouslySetInnerHTML: {__html: '" . trim( wp_kses_post( addslashes( $args['desc'] ) ) ) . "'}})" : "''" ); ?>,
 			value: <?php echo $value; ?>,
 			<?php if ( $type == 'TextControl' && $args['type'] != 'text' ) {
 				echo "type: '" . addslashes( $args['type'] ) . "',";
 			} ?>
 			<?php if ( ! empty( $args['placeholder'] ) ) {
-				echo "placeholder: '" . addslashes( $args['placeholder'] ) . "',";
+				echo "placeholder: '" . addslashes( trim( esc_html( $args['placeholder'] ) ) ) . "',";
 			} ?>
 			<?php echo $options; ?>
 			<?php echo $extra; ?>
 			<?php echo $custom_attributes; ?>
-			<?php echo $onchangecomplete;
-            if($onchange){
-            ?>
+			<?php echo $onchangecomplete; ?>
+			<?php if ( $onchange ) { ?>
 			onChange: function ( <?php echo $key; ?> ) {
-			<?php echo $onchange; ?>
+				<?php echo $onchange; ?>
 			}
-			<?php }?>
-			} <?php echo $inside_elements; ?> ),
+			<?php } ?>
+		} <?php echo $inside_elements; ?> ),
 			<?php
 			echo $after_elements;
-
 		}
 
 		/**
