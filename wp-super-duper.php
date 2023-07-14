@@ -232,7 +232,7 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 						if ( isset( $val['default'] ) && $val['default'] == '0' ) {
 							unset( $param['default'] );
 						}
-						$param['value'] = array( '' => __( "No" ), '1' => __( "Yes" ) );
+						$param['value'] = array( '0' => __( "No" ), '1' => __( "Yes" ) );
 					} elseif ( $param['type'] == 'select' || $param['type'] == 'multiple_select' ) {
 						$param['value'] = isset( $val['options'] ) ? $val['options'] : array();
 					} else {
