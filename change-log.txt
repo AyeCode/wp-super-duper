@@ -1,5 +1,6 @@
 = 1.1.22 =
 * Avada converts checkbox to select dropdown don't saves empty value - CHANGED
+* Check preview for Kallyas theme Zion builder editor - ADDED
 
 = 1.1.21 =
 * New line character in translation results in JS error - FIXED

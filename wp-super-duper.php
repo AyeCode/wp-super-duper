@@ -4250,6 +4250,23 @@ if (confirmed) {
 		}
 
 		/**
+		 * Check for Kallyas theme Zion builder preview.
+		 *
+		 * @since 1.1.22
+		 *
+		 * @return bool True when preview page otherwise false.
+		 */
+		public function is_kallyas_zion_preview() {
+			$result = false;
+
+			if ( function_exists( 'znhg_kallyas_theme_config' ) && ! empty( $_REQUEST['zn_pb_edit'] ) ) {
+				$result = true;
+			}
+
+			return $result;
+		}
+
+		/**
 		 * General function to check if we are in a preview situation.
 		 *
 		 * @return bool
@@ -4270,6 +4287,8 @@ if (confirmed) {
 			} elseif ( $this->is_fusion_preview() ) {
 				$preview = true;
 			} elseif ( $this->is_oxygen_preview() ) {
+				$preview = true;
+			} elseif( $this->is_kallyas_zion_preview() ) {
 				$preview = true;
 			} elseif( $this->is_block_content_call() ) {
 				$preview = true;
