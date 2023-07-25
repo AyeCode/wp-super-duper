@@ -4070,8 +4070,11 @@ if (confirmed) {
 		 * @param array $instance
 		 */
 		public function widget( $args, $instance ) {
+			if ( ! is_array( $args ) ) {
+				$args = array();
+			}
 
-			// get the filtered values
+			// Get the filtered values
 			$argument_values = $this->argument_values( $instance );
 			$argument_values = $this->string_to_bool( $argument_values );
 			$output          = $this->output( $argument_values, $args );
