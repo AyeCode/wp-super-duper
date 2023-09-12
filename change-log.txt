@@ -1,3 +1,6 @@
+= 1.1.24 =
+* Undefined array key "title" thrown for some blocks when using Avada - FIXED
+
 = 1.1.23 =
 * Type missing ; causing error - FIXED
 
