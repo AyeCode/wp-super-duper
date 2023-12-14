@@ -2036,7 +2036,9 @@ function sd_auto_recover_blocks_fallback(editTmpl) {
 			jQuery('.edit-site-page-panels__edit-template-button').addClass('bs-edit-tmpl-clicked').trigger('click');
 			jQuery('body').addClass('bs-edit-tmpl-untick');
 		}
-		$bsRecoverBtn.removeAttr('disabled').trigger('click');
+		if(jQuery('.edit-site-layout.is-edit-mode').length){
+			$bsRecoverBtn.removeAttr('disabled').trigger('click');
+		}
 	} else {
 		if (jQuery('body').hasClass('bs-edit-tmpl-untick')) {
 			jQuery('body').removeClass('bs-edit-tmpl-untick');
