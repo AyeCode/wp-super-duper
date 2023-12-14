@@ -3868,7 +3868,7 @@ wp.data.select('core/edit-post').__experimentalGetPreviewDeviceType();
 				echo "type: '" . addslashes( $args['type'] ) . "',";
 			} ?>
 			<?php if ( ! empty( $args['placeholder'] ) ) {
-				echo "placeholder: '" . addslashes( trim( esc_html( $args['placeholder'] ) ) ) . "',";
+				echo "placeholder: '" . esc_js( addslashes( trim( esc_html( $args['placeholder'] ) ) ) ) . "',";
 			} ?>
 			<?php echo $options; ?>
 			<?php echo $extra; ?>
