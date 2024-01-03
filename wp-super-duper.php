@@ -3743,7 +3743,7 @@ wp.data.select('core/edit-post').__experimentalGetPreviewDeviceType();
 					if ( ! empty( $args['options'] ) ) {
 						$options .= "options: [";
 						foreach ( $args['options'] as $option_val => $option_label ) {
-							$options .= "{ value: '" . esc_attr( $option_val ) . "', label: '" . addslashes( $option_label ) . "' },";
+							$options .= "{ value: '" . esc_attr( $option_val ) . "', label: '" . esc_js( addslashes( $option_label ) ) . "' },";
 						}
 						$options .= "],";
 					}
