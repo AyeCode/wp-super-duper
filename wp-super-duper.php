@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 if ( ! class_exists( 'WP_Super_Duper' ) ) {
 
-	define( 'SUPER_DUPER_VER', '1.1.37' );
+	define( 'SUPER_DUPER_VER', '1.1.38' );
 
 	/**
 	 * A Class to be able to create a Widget, Shortcode or Block to be able to output content for WordPress.
@@ -1353,11 +1353,11 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 								$value = $this->encode_shortcodes( $value );
 							}
 						}
-						$attributes .= " " . sanitize_title_with_dashes( $key ) . "='" . esc_attr( $value ) . "' ";
+						$attributes .= " " . esc_attr( sanitize_title_with_dashes( $key ) ) . "='" . esc_attr( $value ) . "' ";
 					}
 				}
 
-				$shortcode = "[" . $shortcode_name . " " . $attributes . "]";
+				$shortcode = "[" . esc_attr( $shortcode_name ) . " " . $attributes . "]";
 
 				$content = do_shortcode( $shortcode );
 
