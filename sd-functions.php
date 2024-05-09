@@ -2614,6 +2614,10 @@ function sd_build_aui_class( $args ) {
 		}
 	}
 
+	if ( ! empty( $classes ) ) {
+		$classes = array_unique( array_filter( array_map( 'trim', $classes ) ) );
+	}
+
 	return implode( ' ', $classes );
 }
 
