@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 if ( ! class_exists( 'WP_Super_Duper' ) ) {
 
-    define( 'SUPER_DUPER_VER', '1.1.42' );
+    define( 'SUPER_DUPER_VER', '1.1.43' );
 
     /**
      * A Class to be able to create a Widget, Shortcode or Block to be able to output content for WordPress.
@@ -2512,7 +2512,20 @@ jQuery(function() {
                         }elseif( !empty( $this->options['example'] ) ){
                             unset($this->options['example']['viewportWidth']);
                             unset($this->options['example']['innerBlocks']);
-                            echo "example : {".$this->array_to_attributes( $this->options['example'] ).$viewport_width.$example_inner_blocks."},";
+                            $example_atts = $this->array_to_attributes( $this->options['example'] );
+                            $example_parts = array();
+                            if($example_atts){
+                                $example_parts[] = rtrim($example_atts,",");
+                            }
+                            if($viewport_width){
+                                $example_parts[] = $viewport_width;
+                            }
+                            if($example_inner_blocks){
+                                $example_parts[] = $example_inner_blocks;
+                            }
+                            if(!empty($example_parts)){
+                                echo "example : {".implode(',', $example_parts)."},";
+                            }
                         }else{
                             echo 'example : {viewportWidth: 500},';
                         }
