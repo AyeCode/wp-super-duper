@@ -2010,21 +2010,24 @@ function sd_auto_recover_blocks() {
         })
     }
     // Recover all the blocks that we can find.
-    var mainBlocks = recoverBlocks(wp.data.select('core/block-editor').getBlocks());
+    var sdBlockEditor = wp.data.select('core/block-editor');
+    var mainBlocks = sdBlockEditor ? recoverBlocks(sdBlockEditor.getBlocks()) : null;
     // Replace the recovered blocks with the new ones.
-    mainBlocks.forEach(block => {
-        if (block.isReusable && block.ref) {
-            // Update the reusable blocks.
-            wp.data.dispatch('core').editEntityRecord('postType', 'wp_block', block.ref, {
-                content: wp.blocks.serialize(block.blocks)
-            }).then(() => {
-                // But don't save them, let the user do the saving themselves. Our goal is to get rid of the block error visually.
-            })
-        }
-        if (block.recovered && block.replacedClientId) {
-            wp.data.dispatch('core/block-editor').replaceBlock(block.replacedClientId, block)
-        }
-    })
+    if (mainBlocks) {
+        mainBlocks.forEach(block => {
+            if (block.isReusable && block.ref) {
+                // Update the reusable blocks.
+                wp.data.dispatch('core').editEntityRecord('postType', 'wp_block', block.ref, {
+                    content: wp.blocks.serialize(block.blocks)
+                }).then(() => {
+                    // But don't save them, let the user do the saving themselves. Our goal is to get rid of the block error visually.
+                })
+            }
+            if (block.recovered && block.replacedClientId) {
+                wp.data.dispatch('core/block-editor').replaceBlock(block.replacedClientId, block)
+            }
+        })
+    }
 }
 
 /**
@@ -2439,6 +2442,9 @@ jQuery(function() {
                  *        style.css  — Editor & Front end styles for the block.
                  */
                 (function (blocksx, elementx, blockEditor) {
+                    if (typeof blockEditor === 'undefined') {
+                        return;<?php /* Yoast SEO load blocks.js without block-editor.js on post edit pages */ ?>
+                    }
                     var __ = wp.i18n.__; // The __() for internationalization.
                     var el = wp.element.createElement; // The wp.element.createElement() function to create elements.
                     var editable = wp.blocks.Editable;
