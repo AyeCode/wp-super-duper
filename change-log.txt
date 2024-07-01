@@ -1,5 +1,6 @@
 = 1.2.0 - 2024-TBD =
 * Added color options for upcoming dark mode - ADDED
+* Improvements to blocks to help prevent broken blocks - CHANGED
 
 = 1.1.45 - 2024-06-20 =
 * Yoast SEO conflict causes JS error on post edit pages - FIXED
