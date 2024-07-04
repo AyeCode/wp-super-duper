@@ -2651,6 +2651,10 @@ jQuery(function() {
 							echo "content : {type : 'string',default: 'Please select the attributes in the block settings'},";
 							echo "sd_shortcode : {type : 'string',default: ''},";
 
+							if(!empty($this->options['nested-block'])){
+								echo "sd_shortcode_close : {type : 'string',default: ''},";
+							}
+
 							echo "className: { type: 'string', default: '' },";
 
 							echo "},";
@@ -2956,7 +2960,7 @@ const { deviceType } = wp.data.useSelect != 'undefined' ?  wp.data.useSelect(sel
 
 
 
-							if(empty($this->options['nested-block'])){
+							//if(empty($this->options['nested-block'])){
 							?>
 								///////////////////////////////////////////////////////////////////////
 
@@ -2979,7 +2983,8 @@ const { deviceType } = wp.data.useSelect != 'undefined' ?  wp.data.useSelect(sel
 									} else if ('<?php echo esc_attr( $args['type'] );?>' == 'image_xy') {
 										shortcode += props.attributes.<?php echo esc_attr( $key );?>.length && ( props.attributes.<?php echo esc_attr( $key );?>.x.length || props.attributes.<?php echo esc_attr( $key );?>.y.length ) ? " <?php echo esc_attr( $key );?>='{x:" + props.attributes.<?php echo esc_attr( $key );?>.x + ",y:"+props.attributes.<?php echo esc_attr( $key );?>.y +"}' " : "";
 									} else {
-										shortcode += props.attributes.<?php echo esc_attr( $key );?>.length ? " <?php echo esc_attr( $key );?>='" + props.attributes.<?php echo esc_attr( $key );?>.toString().replace('\'','&#39;') + "' " : "";
+										//shortcode += props.attributes.<?php echo esc_attr( $key );?>.length ? " <?php echo esc_attr( $key );?>='" + props.attributes.<?php echo esc_attr( $key );?>.toString().replace('\'','&#39;') + "' " : "";
+										shortcode +=  " <?php echo esc_attr( $key );?>='" + props.attributes.<?php echo esc_attr( $key );?>.toString().replace('\'','&#39;') + "' ";
 									}
 								}
 								<?php
@@ -2989,12 +2994,20 @@ const { deviceType } = wp.data.useSelect != 'undefined' ?  wp.data.useSelect(sel
 								?>
 								shortcode += "]";
 
-								if(shortcode){props.setAttributes({sd_shortcode: shortcode});}
+								if(shortcode){
+									props.setAttributes({sd_shortcode: shortcode});
+
+									<?php
+									if(!empty($this->options['nested-block'])){
+										echo "props.setAttributes({sd_shortcode_close: '[/".esc_attr( $this->options['base_id'] )."]'});";
+									}
+									?>
+								}
 
 
 							///////////////////////////////////////////////////////////////////////
 							<?php
-							} // end nested block check
+							//} // end nested block check
 							?>
 
 							return [
@@ -3269,7 +3282,7 @@ const { deviceType } = wp.data.useSelect != 'undefined' ?  wp.data.useSelect(sel
 								   {},
 								   el('', {dangerouslySetInnerHTML: {__html: content+"\n"}}),
 								   InnerBlocks.Content ? el( InnerBlocks.Content ) : '', // @todo i think we need a comma here
-								   el('', {dangerouslySetInnerHTML: {__html: "[/<?php echo $this->options['base_id'];?>]"}})
+								 //  el('', {dangerouslySetInnerHTML: {__html: "[/<?php echo $this->options['base_id'];?>]"}})
 							   );
 								<?php
 							}elseif(!empty( $this->options['block-save-return'] ) ){
