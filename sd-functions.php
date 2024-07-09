@@ -2609,6 +2609,11 @@ function sd_build_aui_class( $args ) {
 		$classes[] = 'bg-' . sanitize_html_class( $args['bg'] );
 	}
 
+	// background image fixed bg_image_fixed this helps fix a iOS bug
+	if ( ! empty( $args['bg_image_fixed'] ) ) {
+		$classes[] = 'bg-image-fixed';
+	}
+
 	// text_color
 	if ( ! empty( $args['text_color'] ) ) {
 		$classes[] = 'text-' . sanitize_html_class( $args['text_color'] );

@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 if ( ! class_exists( 'WP_Super_Duper' ) ) {
 
-	define( 'SUPER_DUPER_VER', '1.1.45' );
+	define( 'SUPER_DUPER_VER', '1.2.0' );
 
 	/**
 	 * A Class to be able to create a Widget, Shortcode or Block to be able to output content for WordPress.
@@ -2330,6 +2330,9 @@ new MutationObserver(() => {
 
 				// background
 				if ( $args['bg'] !== undefined  && $args['bg'] !== '' ) { $classes.push("bg-" + $args['bg']); }
+
+                // background image fixed bg_image_fixed
+                if ( $args['bg_image_fixed'] !== undefined  && $args['bg_image_fixed'] !== '' ) { $classes.push("bg-image-fixed"); }
 
 				// text_color
 				if ( $args['text_color'] !== undefined && $args['text_color'] !== '' ) { $classes.push( "text-" + $args['text_color']); }
