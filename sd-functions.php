@@ -2609,6 +2609,11 @@ function sd_build_aui_class( $args ) {
 		$classes[] = 'bg-' . sanitize_html_class( $args['bg'] );
 	}
 
+	// background image fixed bg_image_fixed this helps fix a iOS bug
+	if ( ! empty( $args['bg_image_fixed'] ) ) {
+		$classes[] = 'bg-image-fixed';
+	}
+
 	// text_color
 	if ( ! empty( $args['text_color'] ) ) {
 		$classes[] = 'text-' . sanitize_html_class( $args['text_color'] );
@@ -3697,3 +3702,28 @@ function sd_gd_field_rule_search( $search, $post_type, $rule, $field = array(), 
 
 	return apply_filters( 'sd_gd_field_rule_search', $search, $post_type, $rule, $orig_search );
 }
+
+
+/**
+ * Add the shortcodes to the block content if sett as an attribute.
+ *
+ * We have moved the shortcodes from the block content to a block argument to help prevent broken blocks.
+ *
+ * @param $block_content
+ * @param $parsed_block
+ * @param $thiss
+ * @return mixed|string
+ */
+function blockstrap_blocks_render_blocks($block_content, $parsed_block, $thiss ){
+
+	// Check if ita a nested block that needs to be wrapped
+	if(! empty($parsed_block['attrs']['sd_shortcode_close'])){
+		$block_content = $parsed_block['attrs']['sd_shortcode'].$block_content.$parsed_block['attrs']['sd_shortcode_close'];
+	}elseif(! empty($parsed_block['attrs']['sd_shortcode'])){
+		// Add the shortcode if its not a wrapped block
+		$block_content .= $parsed_block['attrs']['sd_shortcode'];
+	}
+	return $block_content;
+}
+add_filter('render_block', 'blockstrap_blocks_render_blocks',10,3);
+
