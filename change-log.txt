@@ -1,3 +1,6 @@
+= 1.2.1 - 2024-07-10 =
+* `html` argument not wrapped correctly in shortcode with new system for blocks - FIXED
+
 = 1.2.0 - 2024-07-09 =
 * Added color options for upcoming dark mode feature - ADDED
 * Improvements to blocks to help prevent broken blocks - CHANGED
