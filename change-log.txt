@@ -1,3 +1,6 @@
+= 1.2.11 - 2024-10-09 =
+* Multiple blocks with taxonomy linking feature can cause ajax query to loop and freeze browser - FIXED
+
 = 1.2.10 - 2024-10-08 =
 * Selecting multiple similar blocks with different settings can cause editor to freeze - FIXED
 * Blocks with content already set will not call a refresh on load - CHANGED
