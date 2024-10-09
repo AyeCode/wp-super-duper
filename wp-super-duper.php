@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 if ( ! class_exists( 'WP_Super_Duper' ) ) {
 
-	define( 'SUPER_DUPER_VER', '1.2.9' );
+	define( 'SUPER_DUPER_VER', '1.2.10' );
 
 	/**
 	 * A Class to be able to create a Widget, Shortcode or Block to be able to output content for WordPress.
@@ -2889,20 +2889,35 @@ const { deviceType } = wp.data.useSelect != 'undefined' ?  wp.data.useSelect(sel
 }, []) : '';
 <?php } ?>
 							var content = props.attributes.content;
+							//console.log(props.attributes);
                             var shortcode = '';
 
 							function onChangeContent($type) {
-// console.log(deviceType);
+
 								$refresh = false;
 								// Set the old content the same as the new one so we only compare all other attributes
 								if(typeof(prev_attributes[props.clientId]) != 'undefined'){
 									prev_attributes[props.clientId].content = props.attributes.content;
+
+									// don't compare the sd_shortcode as it is changed later
+									prev_attributes[props.clientId].sd_shortcode = props.attributes.sd_shortcode;
 								}else if(props.attributes.content === ""){
 									// if first load and content empty then refresh
 									$refresh = true;
+
+								}else{
+
+									// if not new and has content then set it so we dont go fetch it
+									if(props.attributes.content && props.attributes.content !== 'Please select the attributes in the block settings'){
+										prev_attributes[props.clientId] = props.attributes;
+									}
+
 								}
 
+
+
 								if ( ( !is_fetching &&  JSON.stringify(prev_attributes[props.clientId]) != JSON.stringify(props.attributes) ) || $refresh  ) {
+
 
 									is_fetching = true;
 
@@ -3002,7 +3017,11 @@ const { deviceType } = wp.data.useSelect != 'undefined' ?  wp.data.useSelect(sel
 
 								if(shortcode){
 
-									props.setAttributes({sd_shortcode: shortcode});
+									// can cause a react exception when selecting multile blocks of the same type when the settings are not the same
+									if (props.attributes.sd_shortcode !== shortcode) {
+									  props.setAttributes({ sd_shortcode: shortcode });
+									}
+
 
 									<?php
 									if(!empty($this->options['nested-block']) || !empty($this->arguments['html']) ){
