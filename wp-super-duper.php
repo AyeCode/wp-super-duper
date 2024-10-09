@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 if ( ! class_exists( 'WP_Super_Duper' ) ) {
 
-	define( 'SUPER_DUPER_VER', '1.2.10' );
+	define( 'SUPER_DUPER_VER', '1.2.11' );
 
 	/**
 	 * A Class to be able to create a Widget, Shortcode or Block to be able to output content for WordPress.
@@ -2672,6 +2672,7 @@ jQuery(function() {
 						// The "edit" property must be a valid function.
 						edit: function (props) {
 
+							const selectedBlock = wp.data.select('core/block-editor').getSelectedBlock();
 
 <?php
 // only include the drag/drop functions if required.
@@ -2769,7 +2770,7 @@ const parentBlocks = wp.data.select('core/block-editor').getBlocksByClientId(par
 	// if we have a post_type and a category then link them
 	if( isset($this->arguments['post_type']) && isset($this->arguments['category']) && !empty($this->arguments['category']['post_type_linked']) ){
 	?>
-	if(typeof(prev_attributes[props.clientId]) != 'undefined'){
+	if(typeof(prev_attributes[props.clientId]) != 'undefined' && selectedBlock && selectedBlock.clientId === props.clientId){
 		$pt = props.attributes.post_type;
 		if(post_type_rest_slugs.length){
 			$value = post_type_rest_slugs[0][$pt];
