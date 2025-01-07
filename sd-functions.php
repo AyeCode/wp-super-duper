@@ -3014,6 +3014,9 @@ function sd_user_roles_options( $exclude = array() ) {
 		}
 	}
 
+	// Logged out user
+	$user_roles['loggedout'] = __( 'Logged Out', 'ayecode-connect' );
+
 	return apply_filters( 'sd_user_roles_options', $user_roles );
 }
 
@@ -3476,11 +3479,18 @@ function sd_block_check_rule( $match, $rule ) {
 						$user_roles = array_filter( array_map( 'trim', $user_roles ) );
 					}
 
-					if ( ! empty( $user_roles ) && is_array( $user_roles ) && is_user_logged_in() && ( $current_user = wp_get_current_user() ) ) {
-						$current_user_roles = $current_user->roles;
+					if ( ! empty( $user_roles ) && is_array( $user_roles ) ) {
+						if ( is_user_logged_in() && ( $current_user = wp_get_current_user() ) ) {
+							$current_user_roles = $current_user->roles;
 
-						foreach ( $user_roles as $role ) {
-							if ( in_array( $role, $current_user_roles ) ) {
+							foreach ( $user_roles as $role ) {
+								if ( in_array( $role, $current_user_roles ) ) {
+									$match = true;
+								}
+							}
+						} else {
+							// Logged out role.
+							if ( in_array( 'loggedout', $user_roles ) ) {
 								$match = true;
 							}
 						}
