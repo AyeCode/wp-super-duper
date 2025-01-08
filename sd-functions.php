@@ -3512,6 +3512,10 @@ function sd_block_check_rule( $match, $rule ) {
 				$match = sd_block_check_rule_gd_field( $rule );
 
 				break;
+
+			default:
+				$match = apply_filters( 'sd_block_check_custom_rule', $match, $rule );
+				break;
 		}
 	}
 
