@@ -3014,8 +3014,8 @@ function sd_user_roles_options( $exclude = array() ) {
 		}
 	}
 
-	// Logged out user
-	$user_roles['loggedout'] = __( 'Logged Out', 'ayecode-connect' );
+	// Logged out as a custom role.
+	$user_roles['logged_out'] = __( 'Guest (logged out)', 'ayecode-connect' );
 
 	return apply_filters( 'sd_user_roles_options', $user_roles );
 }
@@ -3150,6 +3150,7 @@ function sd_visibility_field_condition_options(){
  */
 function sd_visibility_output_options() {
 	$options = array(
+		''              => __( 'Show Block', 'ayecode-connect' ),
 		'hide'          => __( 'Hide Block', 'ayecode-connect' ),
 		'message'       => __( 'Show Custom Message', 'ayecode-connect' ),
 		'page'          => __( 'Show Page Content', 'ayecode-connect' ),
@@ -3320,11 +3321,20 @@ function sd_render_block( $block_content, $block, $instance = '' ) {
 		return $block_content;
 	}
 
+	$check_rules = null;
 	$_block_content = $block_content;
 
-	if ( ! empty( $rules ) && sd_block_check_rules( $rules ) ) {
-		if ( ! empty( $attributes['output']['type'] ) ) {
-			switch ( $attributes['output']['type'] ) {
+	if ( ! empty( $rules ) && ( ! empty( $attributes['output'] ) || ! empty( $attributes['outputN'] ) ) ) {
+		$check_rules = sd_block_check_rules( $rules );
+
+		if ( $check_rules ) {
+			$output_condition = ! empty( $attributes['output'] ) ? $attributes['output'] : array();
+		} else {
+			$output_condition = ! empty( $attributes['outputN'] ) ? $attributes['outputN'] : array();
+		}
+
+		if ( ! empty( $output_condition ) && ! empty( $output_condition['type'] ) ) {
+			switch ( $output_condition['type'] ) {
 				case 'hide':
 					$valid_type = true;
 					$content = '';
@@ -3333,12 +3343,12 @@ function sd_render_block( $block_content, $block, $instance = '' ) {
 				case 'message':
 					$valid_type = true;
 
-					if ( isset( $attributes['output']['message'] ) ) {
-						$content = $attributes['output']['message'] != '' ? __( stripslashes( $attributes['output']['message'] ), 'ayecode-connect' ) : $attributes['output']['message'];
+					if ( isset( $output_condition['message'] ) ) {
+						$content = $output_condition['message'] != '' ? __( stripslashes( $output_condition['message'] ), 'ayecode-connect' ) : $output_condition['message'];
 
-						if ( ! empty( $attributes['output']['message_type'] ) ) {
+						if ( ! empty( $output_condition['message_type'] ) ) {
 							$content = aui()->alert( array(
-									'type'=> $attributes['output']['message_type'],
+									'type'=> $output_condition['message_type'],
 									'content'=> $content
 								)
 							);
@@ -3349,14 +3359,14 @@ function sd_render_block( $block_content, $block, $instance = '' ) {
 				case 'page':
 					$valid_type = true;
 
-					$page_id = ! empty( $attributes['output']['page'] ) ? absint( $attributes['output']['page'] ) : 0;
+					$page_id = ! empty( $output_condition['page'] ) ? absint( $output_condition['page'] ) : 0;
 					$content = sd_get_page_content( $page_id );
 
 					break;
 				case 'template_part':
 					$valid_type = true;
 
-					$template_part = ! empty( $attributes['output']['template_part'] ) ? $attributes['output']['template_part'] : '';
+					$template_part = ! empty( $output_condition['template_part'] ) ? $output_condition['template_part'] : '';
 					$content = sd_get_template_part_content( $template_part );
 
 					break;
@@ -3371,7 +3381,7 @@ function sd_render_block( $block_content, $block, $instance = '' ) {
 		}
 	}
 
-	return apply_filters( 'sd_render_block_visibility_content', $block_content, $_block_content, $attributes, $block, $instance );
+	return apply_filters( 'sd_render_block_visibility_content', $block_content, $_block_content, $attributes, $block, $instance, $check_rules );
 }
 add_filter( 'render_block', 'sd_render_block', 9, 3 );
 
@@ -3490,7 +3500,7 @@ function sd_block_check_rule( $match, $rule ) {
 							}
 						} else {
 							// Logged out role.
-							if ( in_array( 'loggedout', $user_roles ) ) {
+							if ( in_array( 'logged_out', $user_roles ) ) {
 								$match = true;
 							}
 						}
