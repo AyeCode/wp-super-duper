@@ -1824,7 +1824,7 @@ function sd_block_visibility_init() {
 	});
 
 	jQuery(document).off('click', '.bs-vc-save').on('click', '.bs-vc-save', function() {
-		var $bsvcModal = jQuery(this).closest('.bs-vc-modal'), $bsvcForm = $bsvcModal.find('.bs-vc-modal-form'), vOutput = jQuery('#bsvc_output', $bsvcForm).val(), rawValue = '', oVal = {}, oOut = {}, iRule = 0;
+		var $bsvcModal = jQuery(this).closest('.bs-vc-modal'), $bsvcForm = $bsvcModal.find('.bs-vc-modal-form'), vOutput = jQuery('#bsvc_output', $bsvcForm).val(), vOutputN = jQuery('#bsvc_output_n', $bsvcForm).val(), rawValue = '', oVal = {}, oOut = {}, oOutN = {}, iRule = 0;
 		jQuery(this).addClass('disabled');
 		jQuery('.bs-vc-modal-form .bs-vc-rule-sets .bs-vc-rule').each(function(){
 			vRule = jQuery(this).find('.bsvc_rule').val(), oRule = {};
@@ -1879,6 +1879,30 @@ function sd_block_visibility_init() {
 		if (Object.keys(oOut).length > 0) {
 			oVal.output = oOut;
 		}
+		if (vOutputN == 'hide') {
+			oOutN.type = vOutputN;
+		} else if (vOutputN == 'message') {
+			if (jQuery('#bsvc_message_n', $bsvcForm).val()) {
+				oOutN.type = vOutputN;
+				oOutN.message = jQuery('#bsvc_message_n', $bsvcForm).val();
+				if (jQuery('#bsvc_message_type_n', $bsvcForm).val()) {
+					oOutN.message_type = jQuery('#bsvc_message_type_n', $bsvcForm).val();
+				}
+			}
+		} else if (vOutputN == 'page') {
+			if (jQuery('#bsvc_page_n', $bsvcForm).val()) {
+				oOutN.type = vOutputN;
+				oOutN.page = jQuery('#bsvc_page_n', $bsvcForm).val();
+			}
+		} else if (vOutputN == 'template_part') {
+			if (jQuery('#bsvc_tmpl_part_n', $bsvcForm).val()) {
+				oOutN.type = vOutputN;
+				oOutN.template_part = jQuery('#bsvc_tmpl_part_n', $bsvcForm).val();
+			}
+		}
+		if (Object.keys(oOutN).length > 0) {
+			oVal.outputN = oOutN;
+		}
 		if (Object.keys(oVal).length > 0) {
 			rawValue = JSON.stringify(oVal);
 		}
@@ -1915,7 +1939,7 @@ function sd_block_visibility_init() {
 		jQuery(this).closest('.bs-vc-rule').remove();
 	});
 }
-function sd_block_visibility_render_fields(oValue) {
+function sd_block_visibility_render_fields(oValue) {console.log(oValue);
 	if (typeof oValue == 'object' && oValue.rule1 && typeof oValue.rule1 == 'object') {
 		for(k = 1; k <= Object.keys(oValue).length; k++) {
 			if (oValue['rule' + k] && oValue['rule' + k].type) {
@@ -1960,6 +1984,20 @@ function sd_block_visibility_render_fields(oValue) {
 				jQuery('.bs-vc-modal-form #bsvc_page').val(oValue.output.page);
 			} else if (oValue.output.type == 'template_part' && typeof oValue.output.template_part != 'undefined') {
 				jQuery('.bs-vc-modal-form #bsvc_template_part').val(oValue.output.template_part);
+			}
+		}
+
+		if (oValue.outputN && oValue.outputN.type) {
+			jQuery('.bs-vc-modal-form #bsvc_output_n').val(oValue.outputN.type);
+			if (oValue.outputN.type == 'message' && typeof oValue.outputN.message != 'undefined') {
+				jQuery('.bs-vc-modal-form #bsvc_message_n').val(oValue.outputN.message);
+				if (typeof oValue.outputN.message_type != 'undefined') {
+					jQuery('.bs-vc-modal-form #bsvc_message_type_n').val(oValue.outputN.message_type);
+				}
+			} else if (oValue.outputN.type == 'page' && typeof oValue.outputN.page != 'undefined') {
+				jQuery('.bs-vc-modal-form #bsvc_page_n').val(oValue.outputN.page);
+			} else if (oValue.outputN.type == 'template_part' && typeof oValue.outputN.template_part != 'undefined') {
+				jQuery('.bs-vc-modal-form #bsvc_template_part_n').val(oValue.outputN.template_part);
 			}
 		}
 	}
@@ -5201,7 +5239,7 @@ wp.data.select('core/edit-post').__experimentalGetPreviewDeviceType();
 					'id'          => 'bsvc_output',
 					'name'        => 'bsvc_output',
 					'label'       => __( 'What should happen if rules met.', 'ayecode-connect' ),
-					'placeholder' => __( 'Default Output', 'ayecode-connect' ),
+					'placeholder' => __( 'Show Block', 'ayecode-connect' ),
 					'class'       => 'bsvc_output form-select-sm no-select2 mw-100',
 					'options'     => sd_visibility_output_options(),
 					'default'     => '',
@@ -5278,12 +5316,104 @@ wp.data.select('core/edit-post').__experimentalGetPreviewDeviceType();
 					'id'              => 'bsvc_message',
 					'name'            => 'bsvc_message',
 					'label'           => '',
-					'class'           => 'bsvc_message form-control-sm',
+					'class'           => 'bsvc_message form-control-sm mb-3',
 					'placeholder'     => __( 'CUSTOM MESSAGE TO SHOW', 'ayecode-connect' ),
 					'label_type'      => '',
 					'value'           => '',
 					'form_group_class' => ' ',
 					'element_require' => '[%bsvc_output%]=="message"',
+				)
+			);
+
+			$content .= '</div></div><div class="row"><div class="col col-12"><div class="pt-3 mt-1 border-top"></div></div><div class="col-md-6 col-sm-12">';
+			$content .= aui()->select(
+				array(
+					'id'          => 'bsvc_output_n',
+					'name'        => 'bsvc_output_n',
+					'label'       => __( 'What should happen if rules NOT met.', 'ayecode-connect' ),
+					'placeholder' => __( 'Show Block', 'ayecode-connect' ),
+					'class'       => 'bsvc_output_n form-select-sm no-select2 mw-100',
+					'options'     => sd_visibility_output_options(),
+					'default'     => '',
+					'value'       => '',
+					'label_type'  => 'top',
+					'select2'     => false,
+					'extra_attributes' => array(
+						'data-minimum-results-for-search' => '-1'
+					)
+				)
+			);
+
+			$content .= '</div><div class="col-md-6 col-sm-12">';
+
+			$content .= aui()->select(
+				array(
+					'id'              => 'bsvc_page_n',
+					'name'            => 'bsvc_page_n',
+					'label'           => __( 'Page Content', 'ayecode-connect' ),
+					'placeholder'     => __( 'Select Page ID...', 'ayecode-connect' ),
+					'class'           => 'bsvc_page_n form-select-sm no-select2 mw-100',
+					'options'         => sd_template_page_options(),
+					'default'         => '',
+					'value'           => '',
+					'label_type'      => 'top',
+					'select2'         => false,
+					'element_require' => '[%bsvc_output_n%]=="page"'
+				)
+			);
+
+			$content .= aui()->select(
+				array(
+					'id'          => 'bsvc_tmpl_part_n',
+					'name'        => 'bsvc_tmpl_part_n',
+					'label'       => __( 'Template Part', 'ayecode-connect' ),
+					'placeholder' => __( 'Select Template Part...', 'ayecode-connect' ),
+					'class'       => 'bsvc_tmpl_part_n form-select-sm no-select2 mw-100',
+					'options'     => sd_template_part_options(),
+					'default'     => '',
+					'value'       => '',
+					'label_type'  => 'top',
+					'select2'     => false,
+					'element_require'  => '[%bsvc_output_n%]=="template_part"',
+					'extra_attributes' => array(
+						'data-minimum-results-for-search' => '-1'
+					)
+				)
+			);
+
+			$content .= aui()->select(
+				array(
+					'id'               => 'bsvc_message_type_n',
+					'name'             => 'bsvc_message_type_n',
+					'label'            => __( 'Custom Message Type', 'ayecode-connect' ),
+					'placeholder'      => __( 'Default (none)', 'ayecode-connect' ),
+					'class'            => 'bsvc_message_type_n form-select-sm no-select2 mw-100',
+					'options'          => sd_aui_colors(),
+					'default'          => '',
+					'value'            => '',
+					'label_type'       => 'top',
+					'select2'          => false,
+					'element_require'  => '[%bsvc_output_n%]=="message"',
+					'extra_attributes' => array(
+						'data-minimum-results-for-search' => '-1'
+					)
+				)
+			);
+
+			$content .= '</div><div class="col-sm-12">';
+
+			$content .= aui()->input(
+				array(
+					'type'            => 'text',
+					'id'              => 'bsvc_message_n',
+					'name'            => 'bsvc_message_n',
+					'label'           => '',
+					'class'           => 'bsvc_message_n form-control-sm',
+					'placeholder'     => __( 'CUSTOM MESSAGE TO SHOW', 'ayecode-connect' ),
+					'label_type'      => '',
+					'value'           => '',
+					'form_group_class' => ' ',
+					'element_require' => '[%bsvc_output_n%]=="message"',
 				)
 			);
 
