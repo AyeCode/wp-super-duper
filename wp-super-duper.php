@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 if ( ! class_exists( 'WP_Super_Duper' ) ) {
 
-	define( 'SUPER_DUPER_VER', '1.2.16' );
+	define( 'SUPER_DUPER_VER', '1.2.17' );
 
 	/**
 	 * A Class to be able to create a Widget, Shortcode or Block to be able to output content for WordPress.
@@ -1849,7 +1849,10 @@ function sd_block_visibility_init() {
 						oRule.search = jQuery(this).find('.bsvc_gd_field_search').val();
 					}
 				}
-			}
+			} else {
+                oRule = jQuery(document).triggerHandler('sd_block_visibility_init', [vRule, oRule, jQuery(this)]);
+            }
+
 			if (Object.keys(oRule).length > 0) {
 				iRule++;
 				oVal['rule'+iRule] = oRule;
@@ -1968,7 +1971,10 @@ function sd_block_visibility_render_fields(oValue) {console.log(oValue);
 							}
 						}
 					}
-				}
+				} else {
+                    jQuery(document).trigger('sd_block_visibility_render_fields', [oRule, elRule]);
+                }
+
 				jQuery('.bs-vc-modal-form .bs-vc-add-rule').removeClass('bs-vc-rendering');
 			}
 		}
@@ -5200,6 +5206,8 @@ wp.data.select('core/edit-post').__experimentalGetPreviewDeviceType();
 
 							$content .= '</div>';
 						}
+
+                        $content .= apply_filters( 'sd_block_visibility_fields', '', $args );
 
 					$content .= '</div>';
 
