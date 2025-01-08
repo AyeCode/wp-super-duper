@@ -1895,6 +1895,8 @@ function sd_block_visibility_init() {
 		}
 		bsvcTmpl = bsvcTmpl.replace(/BSVCINDEX/g, c);
 		jQuery('.bs-vc-modal-form .bs-vc-rule-sets').append(bsvcTmpl);
+		jQuery('.bs-vc-modal-form .bs-vc-rule-sets .bs-vc-rule .bs-vc-sep-wrap').removeClass('d-none');
+		jQuery('.bs-vc-modal-form .bs-vc-rule-sets .bs-vc-rule:first .bs-vc-sep-wrap').addClass('d-none');
 		jQuery('.bs-vc-modal-form .bs-vc-rule-sets .bs-vc-rule:last').find('select').each(function(){
 			if (!jQuery(this).hasClass('no-select2')) {
 				jQuery(this).addClass('aui-select2');
@@ -5187,6 +5189,7 @@ wp.data.select('core/edit-post').__experimentalGetPreviewDeviceType();
 							$content .= '</div>';
 						}
 					$content .= '</div>';
+					$content .= '<div class="bs-vc-sep-wrap text-center position-absolute top-0 mt-n3"><div class="bs-vc-sep-cond d-inline-block badge text-dark bg-gray mt-1">' . esc_html__( 'AND', 'ayecode-connect' ) . '</div></div>';
 				$content .= '</div>';
 			$content .= '</div>';
 			$content .= '<form id="bs-vc-modal-form" class="bs-vc-modal-form">';
