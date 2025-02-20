@@ -1,4 +1,4 @@
-= 1.2.19 - TBD =
+= 1.2.19 - 2025-02-20 =
 * BS > Nav Item hide block condition is not working - FIXED
 
 = 1.2.18 - 2025-02-06 =
