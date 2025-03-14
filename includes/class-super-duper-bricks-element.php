@@ -79,6 +79,12 @@ class Super_Duper_Bricks_Element extends \Bricks\Element {
 	 */
 	public function sd_get_arguments() {
 		$args = $this->widget->set_arguments();
+
+		$widget_options = ! empty( $this->widget->options ) ? $this->widget->options : array();
+		$widget_instance = ! empty( $this->widget->instance ) ? $this->widget->instance : array();
+
+		$args = apply_filters( 'wp_super_duper_arguments', $args, $widget_options, $widget_instance );
+
 		$arg_keys_subtract = $this->sd_remove_arguments();
 
 		if ( ! empty( $arg_keys_subtract ) ) {
@@ -97,17 +103,18 @@ class Super_Duper_Bricks_Element extends \Bricks\Element {
 	 * @return void
 	 */
 	public function render() {
-		$settings   = $this->sd_maybe_convert_values( $this->settings );
+		$settings = $this->sd_maybe_convert_values( $this->settings );
 
-
-		// set the AyeCode UI calss on the wrapper
+		// Set the AyeCode UI calss on the wrapper
 		$this->set_attribute( '_root', 'class', 'bsui' );
 
-		// we might need to add a placeholder here for previews.
+		// We might need to add a placeholder here for previews.
 
-		// add the bricks attributes to wrapper
+		do_action( 'super_duper_before_render_bricks_element', $settings, $this->widget, $this );
+
+		// Add the bricks attributes to wrapper
 		echo "<div {$this->render_attributes( '_root' )}>";
-		echo $this->widget->output($settings);
+		echo $this->widget->output( $settings );
 		echo '</div>';
 	}
 

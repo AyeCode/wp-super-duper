@@ -1,3 +1,6 @@
+= 1.2.20 - TBD =
+* Advance Search Filters options are not available in Bricks GD > Search element - FIXED
+
 = 1.2.19 - 2025-02-20 =
 * BS > Nav Item hide block condition is not working - FIXED
 
