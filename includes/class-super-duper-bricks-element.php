@@ -156,49 +156,54 @@ class Super_Duper_Bricks_Element extends \Bricks\Element {
 	 *
 	 * @return array
 	 */
-	public function sd_convert_arguments()
-	{
+	public function sd_convert_arguments() {
 		$bricks_args = array();
 
 		$args = $this->sd_get_arguments();
 
-		if (!empty($args)) {
-			foreach ($args as $key => $arg) {
-
+		if ( ! empty( $args ) ) {
+			foreach ( $args as $key => $arg ) {
 				// convert title
-				if (!empty($arg['title'])) {
+				if ( ! empty( $arg['title'] ) ) {
 					$arg['label'] = $arg['title'];
-					unset($arg['title']);
+					unset( $arg['title'] );
 				}
 
 				// set fields not to use dynamic data
 				$arg['hasDynamicData'] = false;
 
-				if (!empty($arg['group'])) {
-					$arg['group'] =  sanitize_title($arg['group']);
+				if ( ! empty( $arg['group'] ) ) {
+					$arg['group'] =  sanitize_title( $arg['group'] );
 				}
 
 				$arg['rerender'] = true;
 
 				// required
-				if(!empty($arg['element_require'])) {
-					$arg['required'] = $this->sd_convert_required($arg['element_require']);
-					unset($arg['element_require']);
+				if( ! empty( $arg['element_require'] ) ) {
+					$arg['required'] = $this->sd_convert_required( $arg['element_require'] );
+					unset( $arg['element_require'] );
 				}
 
 				// icons
-				if ('icon' === $key) {
+				if ( 'icon' === $key ) {
 					$arg['type'] = 'icon';
 				}
 
+				// Bricks don't render dropdown when first option key is 0.
+				if ( in_array( $key, array( 'zoom', 'mapzoom' ) ) && ! empty( $arg['options'] ) && is_array( $arg['options'] ) && ( $option_keys = array_keys( $arg['options'] ) ) ) {
+					// Move first element to last.
+					if ( $option_keys[0] === 0 || $option_keys[0] === '0' ) {
+						$options = $arg['options'];
+						unset( $arg['options'][0] );
+						$arg['options'][0] = $options[0];
+					}
+				}
+
 				$bricks_args[$key] = $arg;
-
 			}
-
 		}
 
 		return $bricks_args;
-
 	}
 
 	/**
