@@ -4494,6 +4494,17 @@ wp.data.select('core/edit-post').__experimentalGetPreviewDeviceType();
 		}
 
 		/**
+		 * Check for Breakdance builder preview.
+		 *
+		 * @since 1.2.28
+		 *
+		 * @return bool True when preview page otherwise false.
+		 */
+		public function is_breakdance_preview() {
+			return ( \function_exists( 'Breakdance\\isRequestFromBuilderIframe' ) && ( \Breakdance\isRequestFromBuilderIframe() || \Breakdance\isRequestFromBuilderSsr() ) );
+		}
+
+		/**
 		 * General function to check if we are in a preview situation.
 		 *
 		 * @return bool
@@ -4520,6 +4531,8 @@ wp.data.select('core/edit-post').__experimentalGetPreviewDeviceType();
 			} elseif( $this->is_block_content_call() ) {
 				$preview = true;
 			} elseif( $this->is_bricks_preview() ) {
+				$preview = true;
+			} elseif( $this->is_breakdance_preview() ) {
 				$preview = true;
 			}
 
