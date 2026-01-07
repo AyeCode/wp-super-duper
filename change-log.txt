@@ -1,3 +1,12 @@
+= 1.3.? - TBA =
+* HUGE improvisations in all aspects, this is a complete re-wrtie, for speed and efficiency - CHANGED
+* Empty params now removed from output - CHANGED
+* Blocks no longer contain full shortcode, sizes significantly reduced - CHANGED
+* Block now created by JS from JSON config - CHANGED
+* transforms feature added to be able to set block to be able to transform to and from other blocks - ADDED
+* Block block_group_tabs settings changed to be able to set a group id and title to prevent broken arguments when translated - FIXED
+* Block arguments "group" should now use the group ID string and not a translatable string - CHANGED
+
 = 1.2.23 - 2025-06-18 =
 * Single quote in setting default attribute causes JS error - FIXED
 

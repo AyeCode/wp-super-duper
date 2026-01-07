@@ -292,9 +292,9 @@ function sd_get_border_input( $type = 'border', $overwrite = array() ) {
 	} else {
 		$defaults['title']   = __( 'Border color', 'ayecode-connect' );
 		$defaults['options'] = array(
-			''  => __( 'Default', 'ayecode-connect' ),
-			'0' => __( 'None', 'ayecode-connect' )
-		) + sd_aui_colors( false, false, false, false, true );
+			                       ''  => __( 'Default', 'ayecode-connect' ),
+			                       '0' => __( 'None', 'ayecode-connect' )
+		                       ) + sd_aui_colors( false, false, false, false, true );
 	}
 
 	$input = wp_parse_args( $overwrite, $defaults );
@@ -432,6 +432,17 @@ function sd_get_background_inputs( $type = 'bg', $overwrite = array(), $overwrit
 		'default'  => '',
 		'desc_tip' => true,
 		'group'    => __( 'Background', 'ayecode-connect' ),
+		'clears_on_change' => [
+			// This array tells the system what to do for each value.
+			// When 'bg' is set to 'custom-color', the 'bg_gradient' attribute will be cleared.
+			'custom-color' => ['bg_gradient'],
+
+			// When 'bg' is set to 'custom-gradient', the 'bg_color' attribute will be cleared.
+			'custom-gradient' => ['bg_color'],
+
+			// For any other value, clear BOTH custom fields.
+			'default_case' => ['bg_color', 'bg_gradient']
+		]
 	);
 
 	if ( $overwrite !== false ) {
@@ -445,7 +456,7 @@ function sd_get_background_inputs( $type = 'bg', $overwrite = array(), $overwrit
 				'type'            => 'color',
 				'title'           => __( 'Custom color', 'ayecode-connect' ),
 				'placeholder'     => '',
-				'default'         => '#0073aa',
+				//'default'         => '#0073aa',
 				'desc_tip'        => true,
 				'group'           => __( 'Background', 'ayecode-connect' ),
 				'element_require' => '[%' . $type . '%]=="custom-color"',
@@ -460,7 +471,7 @@ function sd_get_background_inputs( $type = 'bg', $overwrite = array(), $overwrit
 				'type'            => 'gradient',
 				'title'           => __( 'Custom gradient', 'ayecode-connect' ),
 				'placeholder'     => '',
-				'default'         => 'linear-gradient(135deg,rgba(6,147,227,1) 0%,rgb(155,81,224) 100%)',
+				//'default'         => 'linear-gradient(135deg,rgba(6,147,227,1) 0%,rgb(155,81,224) 100%)',
 				'desc_tip'        => true,
 				'group'           => __( 'Background', 'ayecode-connect' ),
 				'element_require' => '[%' . $type . '%]=="custom-gradient"',
@@ -1023,6 +1034,8 @@ function sd_get_text_justify_input( $type = 'text_justify', $overwrite = array()
  * @return array
  */
 function sd_aui_colors( $include_branding = false, $include_outlines = false, $outline_button_only_text = false, $include_translucent = false, $include_subtle = false, $include_emphasis = false ) {
+	global $aui_ver;
+
 	$theme_colors = array();
 
 	$theme_colors['primary']   = __( 'Primary', 'ayecode-connect' );
@@ -1035,20 +1048,28 @@ function sd_aui_colors( $include_branding = false, $include_outlines = false, $o
 	$theme_colors['dark']      = __( 'Dark', 'ayecode-connect' );
 	$theme_colors['black']     = __( 'Black', 'ayecode-connect' );
 	$theme_colors['white']     = __( 'White', 'ayecode-connect' );
-	$theme_colors['purple']    = __( 'Purple', 'ayecode-connect' );
-	$theme_colors['salmon']    = __( 'Salmon', 'ayecode-connect' );
-	$theme_colors['cyan']      = __( 'Cyan', 'ayecode-connect' );
-	$theme_colors['gray']      = __( 'Gray', 'ayecode-connect' );
-	$theme_colors['muted']     = __( 'Muted', 'ayecode-connect' );
-	$theme_colors['gray-dark'] = __( 'Gray dark', 'ayecode-connect' );
-	$theme_colors['indigo']    = __( 'Indigo', 'ayecode-connect' );
-	$theme_colors['orange']    = __( 'Orange', 'ayecode-connect' );
+
+	if ( $aui_ver < 5.3 ) {
+		// we remove these in 5.3 as custom ones can easily be added
+		$theme_colors['purple']    = __( 'Purple', 'ayecode-connect' );
+		$theme_colors['salmon']    = __( 'Salmon', 'ayecode-connect' );
+		$theme_colors['cyan']      = __( 'Cyan', 'ayecode-connect' );
+		$theme_colors['gray']      = __( 'Gray', 'ayecode-connect' );
+		$theme_colors['muted']     = __( 'Muted', 'ayecode-connect' );
+		$theme_colors['gray-dark'] = __( 'Gray dark', 'ayecode-connect' );
+		$theme_colors['indigo']    = __( 'Indigo', 'ayecode-connect' );
+		$theme_colors['orange']    = __( 'Orange', 'ayecode-connect' );
+	}else{
+		$theme_colors['body-secondary']      = __( 'Body Secondary', 'ayecode-connect' );
+		$theme_colors['body-tertiary']      = __( 'Body Tertiary', 'ayecode-connect' );
+	}
+
 	$theme_colors['body']      = __( 'Body', 'ayecode-connect' );
 
 
+
 	// for bg and borders
-	if ( $include_subtle ) {
-		$theme_colors['primary-subtle']   = __( 'Primary Subtle', 'ayecode-connect' );
+	if ( $include_subtle && $aui_ver > 5 ) {
 		$theme_colors['primary-subtle']   = __( 'Primary Subtle', 'ayecode-connect' );
 		$theme_colors['secondary-subtle'] = __( 'Secondary Subtle', 'ayecode-connect' );
 		$theme_colors['success-subtle']   = __( 'Success Subtle', 'ayecode-connect' );
@@ -1057,13 +1078,6 @@ function sd_aui_colors( $include_branding = false, $include_outlines = false, $o
 		$theme_colors['info-subtle']      = __( 'Info Subtle', 'ayecode-connect' );
 		$theme_colors['light-subtle']     = __( 'Light Subtle', 'ayecode-connect' );
 		$theme_colors['dark-subtle']      = __( 'Dark Subtle', 'ayecode-connect' );
-		$theme_colors['purple-subtle']    = __( 'Purple Subtle', 'ayecode-connect' );
-		$theme_colors['salmon-subtle']    = __( 'Salmon Subtle', 'ayecode-connect' );
-		$theme_colors['cyan-subtle']      = __( 'Cyan Subtle', 'ayecode-connect' );
-		$theme_colors['gray-subtle']      = __( 'Gray Subtle', 'ayecode-connect' );
-		$theme_colors['gray-dark-subtle'] = __( 'Gray dark Subtle', 'ayecode-connect' );
-		$theme_colors['indigo-subtle']    = __( 'Indigo Subtle', 'ayecode-connect' );
-		$theme_colors['orange-subtle']    = __( 'Orange Subtle', 'ayecode-connect' );
 	}
 
 	// for texts
@@ -1097,20 +1111,24 @@ function sd_aui_colors( $include_branding = false, $include_outlines = false, $o
 		$theme_colors['outline-light']     = __( 'Light outline', 'ayecode-connect' ) . $button_only;
 		$theme_colors['outline-dark']      = __( 'Dark outline', 'ayecode-connect' ) . $button_only;
 		$theme_colors['outline-white']     = __( 'White outline', 'ayecode-connect' ) . $button_only;
-		$theme_colors['outline-purple']    = __( 'Purple outline', 'ayecode-connect' ) . $button_only;
-		$theme_colors['outline-salmon']    = __( 'Salmon outline', 'ayecode-connect' ) . $button_only;
-		$theme_colors['outline-cyan']      = __( 'Cyan outline', 'ayecode-connect' ) . $button_only;
-		$theme_colors['outline-gray']      = __( 'Gray outline', 'ayecode-connect' ) . $button_only;
-		$theme_colors['outline-gray-dark'] = __( 'Gray dark outline', 'ayecode-connect' ) . $button_only;
-		$theme_colors['outline-indigo']    = __( 'Indigo outline', 'ayecode-connect' ) . $button_only;
-		$theme_colors['outline-orange']    = __( 'Orange outline', 'ayecode-connect' ) . $button_only;
+
+		if ( $aui_ver <= 5 ) {
+			$theme_colors['outline-purple']    = __( 'Purple outline', 'ayecode-connect' ) . $button_only;
+			$theme_colors['outline-salmon']    = __( 'Salmon outline', 'ayecode-connect' ) . $button_only;
+			$theme_colors['outline-cyan']      = __( 'Cyan outline', 'ayecode-connect' ) . $button_only;
+			$theme_colors['outline-gray']      = __( 'Gray outline', 'ayecode-connect' ) . $button_only;
+			$theme_colors['outline-gray-dark'] = __( 'Gray dark outline', 'ayecode-connect' ) . $button_only;
+			$theme_colors['outline-indigo']    = __( 'Indigo outline', 'ayecode-connect' ) . $button_only;
+			$theme_colors['outline-orange']    = __( 'Orange outline', 'ayecode-connect' ) . $button_only;
+		}
+
 	}
 
-	if ( $include_branding ) {
+	if ( $include_branding && $aui_ver <= 5) {
 		$theme_colors = $theme_colors + sd_aui_branding_colors();
 	}
 
-	if ( $include_translucent ) {
+	if ( $include_translucent && $aui_ver <= 5) {
 		$button_only                           = $outline_button_only_text ? ' ' . __( '(button only)', 'ayecode-connect' ) : '';
 		$theme_colors['translucent-primary']   = __( 'Primary translucent', 'ayecode-connect' ) . $button_only;
 		$theme_colors['translucent-secondary'] = __( 'Secondary translucent', 'ayecode-connect' ) . $button_only;
@@ -1668,6 +1686,43 @@ function sd_get_hover_animations_input( $type = 'hover_animations', $overwrite =
 		'type'     => 'select',
 		'multiple' => true,
 		'title'    => __( 'Hover Animations', 'ayecode-connect' ),
+		'options'  => $options,
+		'default'  => '',
+		'desc_tip' => true,
+		'group'    => __( 'Hover Animations', 'ayecode-connect' ),
+	);
+
+	$input = wp_parse_args( $overwrite, $defaults );
+
+	return $input;
+}
+
+/**
+ * Get hover icon animations input settings.
+ *
+ * @param string $type The input type parameter name. Default 'hover_icon_animation'.
+ * @param array $overwrite Optional array to override default settings. Default empty array.
+ *
+ * @return array Array of input settings.
+ */
+function sd_get_hover_icon_animation_input( $type = 'hover_icon_animation', $overwrite = array() ) {
+
+	$options = array(
+		''                 => __( 'none', 'ayecode-connect' ),
+		'animate-shake'       => __( 'Shake', 'ayecode-connect' ),
+		'animate-pulse'     => __( 'Pulse', 'ayecode-connect' ),
+		'animate-rotate'    => __( 'Rotate', 'ayecode-connect' ),
+		'animate-scale'    => __( 'Scale', 'ayecode-connect' ),
+		'animate-slide-end'    => __( 'Slide end', 'ayecode-connect' ),
+		'animate-slide-start'    => __( 'Slide start', 'ayecode-connect' ),
+		'animate-slide-up'    => __( 'Slide up', 'ayecode-connect' ),
+		'animate-slide-down'    => __( 'Slide down', 'ayecode-connect' ),
+	);
+
+	$defaults = array(
+		'type'     => 'select',
+		'multiple' => false,
+		'title'    => __( 'Icon Hover Animations', 'ayecode-connect' ),
 		'options'  => $options,
 		'default'  => '',
 		'desc_tip' => true,
@@ -2682,6 +2737,10 @@ function sd_build_aui_class( $args ) {
 	// hover animations
 	if ( ! empty( $args['hover_animations'] ) ) {
 		$classes[] = sd_sanitize_html_classes( str_replace( ',', ' ', $args['hover_animations'] ) );
+	}
+
+	if ( ! empty( $args['hover_icon_animation'] ) ) {
+		$classes[] = sanitize_html_class( $args['hover_icon_animation'] );
 	}
 
 	// absolute_position
@@ -3783,6 +3842,10 @@ if(!function_exists('sd_blocks_render_blocks')){
 	 * @return mixed|string
 	 */
 	function sd_blocks_render_blocks($block_content, $parsed_block, $thiss = array() ){
+
+//		if(!empty($parsed_block['blockName'])){
+//			print_r( $parsed_block );exit;		}
+
 		// Check hide block visibility conditions.
 		if ( ! empty( $parsed_block ) && ! empty( $parsed_block['attrs']['visibility_conditions'] ) && $block_content && strpos( strrev( $block_content ), strrev( ' sd-block-has-rule sd-block-hide-rule"></div>' ) ) === 0 && ! empty( $thiss ) && $thiss->name ) {
 			$match_content = '<div class="' . esc_attr( wp_get_block_default_classname( $thiss->name ) ) . ' sd-block-has-rule sd-block-hide-rule"></div>';
@@ -3796,29 +3859,292 @@ if(!function_exists('sd_blocks_render_blocks')){
 		// Check if ita a nested block that needs to be wrapped
 		if(! empty($parsed_block['attrs']['sd_shortcode_close'])){
 			$content = isset($parsed_block['attrs']['html']) ? $parsed_block['attrs']['html'] : $block_content;
-			$block_content = $parsed_block['attrs']['sd_shortcode'].$content.$parsed_block['attrs']['sd_shortcode_close'];
+
+			$block_content = sd_build_shortcode($parsed_block['attrs']['sd_shortcode'], $parsed_block['attrs'],$content);
+
 
 			$block_content = do_shortcode($block_content);
 
 		}elseif(! empty($parsed_block['attrs']['sd_shortcode'])){
+
+			$shortcode = sd_build_shortcode($parsed_block['attrs']['sd_shortcode'], $parsed_block['attrs']);
 			$has_warp = false;
 			if($block_content && strpos(trim($block_content), '<div class="wp-block-') === 0 ){
 				$parts = explode('></', $block_content);
 				if(count($parts) === 2){
-					$block_content = $parts[0].'>'.$parsed_block['attrs']['sd_shortcode'].'</'.$parts[1];
+					$block_content = $parts[0].'>'.$shortcode.'</'.$parts[1];
 					$has_warp = true;
 				}
 			}
 			if (!$has_warp) {
 				// Add the shortcode if its not a wrapped block
-				$block_content .= $parsed_block['attrs']['sd_shortcode'];
+				$block_content .= $shortcode;
 			}
 
 			$block_content = do_shortcode($block_content);
 		}
+
 		return  $block_content;
 	}
 }
 
 add_filter('render_block', 'sd_blocks_render_blocks',10,3);
 
+/**
+ * Retrieves the shortcode slug from a given string.
+ *
+ * @param string $str The input string from which to extract the shortcode slug.
+ *
+ * @return string The extracted shortcode slug.
+ */
+function sd_get_shortcode_slug($str){
+
+	// very fast check for leading “[”
+	if ( isset( $str[0] ) && $str[0] === '[' ) {
+		// drop exactly one char, no regex, no extra trimming
+		$str = substr( $str, 1 );
+	}
+
+	// split on first space and return the first piece
+	return strtok( $str, ' ' );
+}
+
+/**
+ * Builds a shortcode string based on provided name, attributes, and content.
+ *
+ * @param string $name Name of the shortcode. Required.
+ * @param array $args Optional. Array of attributes for the shortcode. Default empty array.
+ * @param string $content Optional. Content to be enclosed within the shortcode. Default empty string.
+ *
+ * @return string Shortcode string if successful, otherwise an empty string.
+ */
+function sd_build_shortcode( $name, $args = array(), $content = '' ) {
+
+	if ( ! $name ) {
+		return '';
+	}
+
+	// check incase its a full shortcode, get the slug
+	$name = sd_get_shortcode_slug($name);
+
+	$attributes = '';
+	if ( ! empty( $args ) ) {
+		unset( $args['content'] );
+		unset( $args['sd_shortcode'] );
+		unset( $args['sd_shortcode_close'] );
+		foreach ( $args as $key => $value ) {
+			if ( is_array( $value ) ) {
+				$value = implode( ",", $value );
+			}
+
+			if ( ! empty( $value ) ) {
+				$value = wp_unslash( $value );
+			}
+			$attributes .= " " . esc_attr( sanitize_title_with_dashes( $key ) ) . "='" . esc_attr( $value ) . "' ";
+		}
+	}
+
+	$shortcode = $attributes ? "[" . esc_attr( $name ) . " " . $attributes . "]" : "[" . esc_attr( $name ) . "]";;
+
+	if( ! empty( $content ) ){
+		$shortcode .= $content;
+		$shortcode .= "[/" . esc_attr( $name ) ."]";
+	}
+
+	return $shortcode;
+
+}
+
+
+/**
+ * Finds and replaces a comprehensive set of dynamic data variables.
+ *
+ * This function is optimized for performance and is extensible via WordPress filters.
+ * It supports advanced syntax for HTML link generation (e.g., {post_title:link:newTab}),
+ * fallbacks, and formatting.
+ *
+ * @param string|null $text The input string containing variables.
+ * @return string The text with variables replaced, which may include HTML.
+ */
+function sd_replace_variables( $text ) {
+	// Return early if there's nothing to process.
+	if ( ! is_string( $text ) || strpos( $text, '{' ) === false ) {
+		return $text;
+	}
+
+	// Regex to capture: {variable_name:filter:option|fallback_text}
+	$pattern = '/\{([a-zA-Z0-9_:]+)(?:\|([^}]+))?\}/';
+
+	return preg_replace_callback(
+		$pattern,
+		function( $matches ) {
+			// --- 1. Advanced Tag Parsing ---
+			$parts    = explode( ':', $matches[1] );
+			$var_name = array_shift( $parts ); // The first part is always the variable name
+			$filters  = $parts;                // The rest are filters and options
+			$fallback = isset( $matches[2] ) ? $matches[2] : '';
+
+			// --- 2. Performance Cache & Context ---
+			static $cache = [];
+			if ( !isset($cache['post']) ) $cache['post'] = get_post();
+			if ( !isset($cache['user']) ) $cache['user'] = wp_get_current_user();
+
+			$raw_value = null;
+
+			// --- 3. Process Built-in Tags to Get Raw Value ---
+			switch ( true ) {
+
+				// Post Fields
+				case strpos($var_name, 'post_') === 0:
+					if ($cache['post']) {
+						switch ($var_name) {
+							case 'post_title': $raw_value = get_the_title($cache['post']); break;
+							case 'post_id': $raw_value = $cache['post']->ID; break;
+							case 'post_url': $raw_value = get_permalink($cache['post']); break;
+							case 'post_slug': $raw_value = $cache['post']->post_name; break;
+							case 'post_date': $raw_value = get_the_date('', $cache['post']); break;
+							case 'post_modified_date': $raw_value = get_the_modified_date('', $cache['post']); break;
+							case 'post_excerpt': $raw_value = get_the_excerpt($cache['post']); break;
+							case 'post_content': $raw_value = apply_filters('the_content', $cache['post']->post_content); break;
+							case 'post_status': $raw_value = get_post_status($cache['post']); break;
+							case 'post_type': $raw_value = get_post_type($cache['post']); break;
+							case 'comment_count': $raw_value = get_comments_number($cache['post']); break;
+							case 'comments_link': $raw_value = get_comments_link($cache['post']); break;
+							case 'post_terms':
+								$taxonomy = !empty($filters) && !is_numeric($filters[0]) ? $filters[0] : 'category';
+								$terms = wp_get_post_terms($cache['post']->ID, $taxonomy, ['fields' => 'names']);
+								if (!is_wp_error($terms)) $raw_value = implode(', ', $terms);
+								break;
+						}
+					}
+					break;
+
+				// Featured Image Fields
+				case strpos($var_name, 'featured_image_') === 0:
+					if ($cache['post'] && has_post_thumbnail($cache['post'])) {
+						$thumb_id = get_post_thumbnail_id($cache['post']);
+						switch($var_name) {
+							case 'featured_image_url': $raw_value = get_the_post_thumbnail_url($cache['post'], 'full'); break;
+							case 'featured_image_id': $raw_value = $thumb_id; break;
+							case 'featured_image_alt': $raw_value = get_post_meta($thumb_id, '_wp_attachment_image_alt', true); break;
+							case 'featured_image_title': $raw_value = get_the_title($thumb_id); break;
+							case 'featured_image_caption': $raw_value = get_the_post_thumbnail_caption($cache['post']); break;
+						}
+					}
+					break;
+
+				// Author Fields (of the post)
+				case strpos($var_name, 'author_') === 0:
+					if ($cache['post']) {
+						$author_id = $cache['post']->post_author;
+						switch ($var_name) {
+							case 'author_name': $raw_value = get_the_author_meta('display_name', $author_id); break;
+							case 'author_id': $raw_value = $author_id; break;
+							case 'author_bio': $raw_value = get_the_author_meta('description', $author_id); break;
+							case 'author_url': $raw_value = get_author_posts_url($author_id); break;
+							case 'author_website': $raw_value = get_the_author_meta('user_url', $author_id); break;
+							case 'author_email': $raw_value = get_the_author_meta('user_email', $author_id); break;
+							case 'author_profile_picture_url': $raw_value = get_avatar_url($author_id); break;
+						}
+					}
+					break;
+
+				// Current Logged-in User Fields
+				case strpos($var_name, 'user_') === 0:
+					if ($cache['user'] && $cache['user']->exists()) {
+						$user_id = $cache['user']->ID;
+						switch ($var_name) {
+							case 'user_display_name': $raw_value = $cache['user']->display_name; break;
+							case 'user_id': $raw_value = $user_id; break;
+							case 'user_email': $raw_value = $cache['user']->user_email; break;
+							case 'user_first_name': $raw_value = $cache['user']->user_firstname; break;
+							case 'user_last_name': $raw_value = $cache['user']->user_lastname; break;
+							case 'user_website': $raw_value = $cache['user']->user_url; break;
+							case 'user_profile_picture_url': $raw_value = get_avatar_url($user_id); break;
+						}
+					}
+					break;
+
+				// Term & Archive Fields
+				case strpos($var_name, 'term_') === 0 || strpos($var_name, 'archive_') === 0:
+					$queried_object = get_queried_object();
+					if ($queried_object instanceof WP_Term) {
+						switch ($var_name) {
+							case 'term_name': $raw_value = $queried_object->name; break;
+							case 'term_description': $raw_value = $queried_object->description; break;
+							case 'term_url': $raw_value = get_term_link($queried_object); break;
+							case 'term_id': $raw_value = $queried_object->term_id; break;
+							case 'term_post_count': $raw_value = $queried_object->count; break;
+						}
+					}
+					switch($var_name) {
+						case 'archive_title': $raw_value = get_the_archive_title(); break;
+						case 'archive_description': $raw_value = get_the_archive_description(); break;
+						case 'archive_url': if ($queried_object) $raw_value = get_term_link($queried_object); break;
+					}
+					break;
+
+				// Site, Date & Other Fields
+				default:
+					switch ($var_name) {
+						case 'site_title': $raw_value = get_bloginfo('name'); break;
+						case 'site_tagline': $raw_value = get_bloginfo('description'); break;
+						case 'site_url': $raw_value = home_url(); break;
+						case 'admin_email': $raw_value = get_bloginfo('admin_email'); break;
+						case 'wp_version': $raw_value = get_bloginfo('version'); break;
+						case 'current_date': $raw_value = wp_date(get_option('date_format')); break;
+						case 'current_time': $raw_value = wp_date(get_option('time_format')); break;
+						case 'query_results_count': global $wp_query; $raw_value = $wp_query->found_posts; break;
+						case 'request_parameter': if (!empty($filters[0]) && isset($_REQUEST[$filters[0]])) $raw_value = sanitize_text_field($_REQUEST[$filters[0]]); break;
+					}
+					break;
+			}
+
+			// --- 4. Extensibility Filter ---
+			if ( $raw_value === null ) {
+				$raw_value = apply_filters( 'sd_dynamic_data_replace_variable', null, $var_name, $filters, $cache['post'] );
+			}
+
+			// --- 5. Apply Fallback if value is empty ---
+			if ( empty($raw_value) && !is_numeric($raw_value) && !empty($fallback) ) {
+				return esc_html($fallback);
+			}
+
+			// --- 6. Process Filters ---
+			$final_value = $raw_value;
+			$is_html = false;
+
+			if ( !empty($filters) ) {
+				// Link Generation Filter
+				if ( in_array('link', $filters) ) {
+					$link_url = '';
+					if (strpos($var_name, 'post_') === 0 && $cache['post']) $link_url = get_permalink($cache['post']);
+					elseif (strpos($var_name, 'author_') === 0 && $cache['post']) $link_url = get_author_posts_url($cache['post']->post_author);
+					elseif (strpos($var_name, 'term_') === 0 && get_queried_object() instanceof WP_Term) $link_url = get_term_link(get_queried_object());
+
+					if ( !empty($link_url) ) {
+						$target_attr = in_array('newTab', $filters) ? ' target="_blank" rel="noopener noreferrer"' : '';
+						$final_value = sprintf( '<a href="%s"%s>%s</a>', esc_url($link_url), $target_attr, esc_html($raw_value) );
+						$is_html = true; // Mark output as HTML
+					}
+				}
+
+				// Standard Text Formatting Filters
+				foreach ($filters as $filter) {
+					if (is_numeric($filter)) { // Word trim
+						if (is_string($final_value)) $final_value = wp_trim_words(strip_tags($final_value), (int)$filter, '...');
+					} else if (!in_array($filter, ['link', 'newTab'])) { // Date format
+						if (in_array($var_name, ['post_date', 'post_modified_date', 'current_date']) && is_string($final_value)) {
+							$final_value = wp_date($filter, strtotime($final_value));
+						}
+					}
+				}
+			}
+
+			// --- 7. Return Final Value ---
+			// If we generated HTML, return it directly. Otherwise, escape the plain text.
+			return $is_html ? $final_value : (is_scalar($final_value) ? esc_html($final_value) : '');
+		},
+		$text
+	);
+}
