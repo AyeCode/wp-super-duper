@@ -126,6 +126,12 @@ function sd_get_margin_input( $type = 'mt', $overwrite = array(), $include_negat
 
 	$input = wp_parse_args( $overwrite, $defaults );
 
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) && $include_negatives) {
+		$input['block_component'] = $type ? __FUNCTION__ . '_' . $type : __FUNCTION__;
+	}
+
 	return $input;
 }
 
@@ -197,6 +203,12 @@ function sd_get_padding_input( $type = 'pt', $overwrite = array() ) {
 	}
 
 	$input = wp_parse_args( $overwrite, $defaults );
+
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$input['block_component'] = $type ? __FUNCTION__ . '_' . $type : __FUNCTION__;
+	}
 
 	return $input;
 }
@@ -299,6 +311,12 @@ function sd_get_border_input( $type = 'border', $overwrite = array() ) {
 
 	$input = wp_parse_args( $overwrite, $defaults );
 
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$input['block_component'] = $type ? __FUNCTION__ . '_' . $type : __FUNCTION__;
+	}
+
 	return $input;
 }
 
@@ -329,6 +347,12 @@ function sd_get_shadow_input( $type = 'shadow', $overwrite = array() ) {
 
 	$input = wp_parse_args( $overwrite, $defaults );
 
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$input['block_component'] = __FUNCTION__;
+	}
+
 	return $input;
 }
 
@@ -356,6 +380,12 @@ function sd_get_background_input( $type = 'bg', $overwrite = array() ) {
 	);
 
 	$input = wp_parse_args( $overwrite, $defaults );
+
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$input['block_component'] =  __FUNCTION__;
+	}
 
 	return $input;
 }
@@ -396,6 +426,12 @@ function sd_get_opacity_input( $type = 'opacity', $overwrite = array() ) {
 	);
 
 	$input = wp_parse_args( $overwrite, $defaults );
+
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$input['block_component'] = __FUNCTION__;
+	}
 
 	return $input;
 }
@@ -471,7 +507,7 @@ function sd_get_background_inputs( $type = 'bg', $overwrite = array(), $overwrit
 				'type'            => 'gradient',
 				'title'           => __( 'Custom gradient', 'ayecode-connect' ),
 				'placeholder'     => '',
-				//'default'         => 'linear-gradient(135deg,rgba(6,147,227,1) 0%,rgb(155,81,224) 100%)',
+				'default'         => 'linear-gradient(135deg,rgba(6,147,227,1) 0%,rgb(155,81,224) 100%)',
 				'desc_tip'        => true,
 				'group'           => __( 'Background', 'ayecode-connect' ),
 				'element_require' => '[%' . $type . '%]=="custom-gradient"',
@@ -509,6 +545,7 @@ function sd_get_background_inputs( $type = 'bg', $overwrite = array(), $overwrit
 				'placeholder' => '',
 				'default'     => '',
 				'desc_tip'    => true,
+				'focalpoint'  => true,
 				'group'       => __( 'Background', 'ayecode-connect' ),
 				//          'element_require' => ' ![%' . $type . '_image_use_featured%] '
 			)
@@ -778,6 +815,14 @@ function sd_get_text_color_input( $type = 'text_color', $overwrite = array(), $h
 
 	$input = wp_parse_args( $overwrite, $defaults );
 
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$function_name = $has_custom ? '_has_custom' : '';
+		$function_name .= $emphasis ? '' : '_no_emphasis';
+		$input['block_component'] = __FUNCTION__ . $function_name;
+	}
+
 	return $input;
 }
 
@@ -821,6 +866,13 @@ function sd_get_custom_color_input( $type = 'color_custom', $overwrite = array()
 
 	$input = wp_parse_args( $overwrite, $defaults );
 
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$function_name = $parent_type ? '_'.$parent_type : '';
+		$input['block_component'] = __FUNCTION__ . $function_name;
+	}
+
 	return $input;
 }
 
@@ -834,14 +886,6 @@ function sd_get_custom_color_input( $type = 'color_custom', $overwrite = array()
  */
 function sd_get_col_input( $type = 'col', $overwrite = array() ) {
 
-	$device_size = '';
-	if ( ! empty( $overwrite['device_type'] ) ) {
-		if ( $overwrite['device_type'] == 'Tablet' ) {
-			$device_size = '-md';
-		} elseif ( $overwrite['device_type'] == 'Desktop' ) {
-			$device_size = '-lg';
-		}
-	}
 	$options = array(
 		''     => __( 'Default', 'ayecode-connect' ),
 		'auto' => __( 'auto', 'ayecode-connect' ),
@@ -871,6 +915,12 @@ function sd_get_col_input( $type = 'col', $overwrite = array() ) {
 
 	$input = wp_parse_args( $overwrite, $defaults );
 
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$input['block_component'] = __FUNCTION__;
+	}
+
 	return $input;
 }
 
@@ -884,14 +934,6 @@ function sd_get_col_input( $type = 'col', $overwrite = array() ) {
  */
 function sd_get_row_cols_input( $type = 'row_cols', $overwrite = array() ) {
 
-	$device_size = '';
-	if ( ! empty( $overwrite['device_type'] ) ) {
-		if ( $overwrite['device_type'] == 'Tablet' ) {
-			$device_size = '-md';
-		} elseif ( $overwrite['device_type'] == 'Desktop' ) {
-			$device_size = '-lg';
-		}
-	}
 	$options = array(
 		''  => __( 'auto', 'ayecode-connect' ),
 		'1' => '1',
@@ -913,6 +955,12 @@ function sd_get_row_cols_input( $type = 'row_cols', $overwrite = array() ) {
 	);
 
 	$input = wp_parse_args( $overwrite, $defaults );
+
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$input['block_component'] = __FUNCTION__;
+	}
 
 	return $input;
 }
@@ -937,8 +985,8 @@ function sd_get_text_align_input( $type = 'text_align', $overwrite = array() ) {
 	}
 	$options = array(
 		''                                => __( 'Default', 'ayecode-connect' ),
-		'text' . $device_size . '-left'   => __( 'Left', 'ayecode-connect' ),
-		'text' . $device_size . '-right'  => __( 'Right', 'ayecode-connect' ),
+		'text' . $device_size . '-start'   => __( 'Start', 'ayecode-connect' ),
+		'text' . $device_size . '-end'  => __( 'End', 'ayecode-connect' ),
 		'text' . $device_size . '-center' => __( 'Center', 'ayecode-connect' ),
 	);
 
@@ -952,6 +1000,12 @@ function sd_get_text_align_input( $type = 'text_align', $overwrite = array() ) {
 	);
 
 	$input = wp_parse_args( $overwrite, $defaults );
+
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$input['block_component'] = __FUNCTION__ . $device_size;
+	}
 
 	return $input;
 }
@@ -998,6 +1052,12 @@ function sd_get_display_input( $type = 'display', $overwrite = array() ) {
 
 	$input = wp_parse_args( $overwrite, $defaults );
 
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$input['block_component'] = __FUNCTION__ . $device_size;
+	}
+
 	return $input;
 }
 
@@ -1020,6 +1080,12 @@ function sd_get_text_justify_input( $type = 'text_justify', $overwrite = array()
 	);
 
 	$input = wp_parse_args( $overwrite, $defaults );
+
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$input['block_component'] = __FUNCTION__;
+	}
 
 	return $input;
 }
@@ -1219,6 +1285,12 @@ function sd_get_container_class_input( $type = 'container', $overwrite = array()
 
 	$input = wp_parse_args( $overwrite, $defaults );
 
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$input['block_component'] = __FUNCTION__;
+	}
+
 	return $input;
 }
 
@@ -1255,6 +1327,12 @@ function sd_get_position_class_input( $type = 'position', $overwrite = array() )
 
 	$input = wp_parse_args( $overwrite, $defaults );
 
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$input['block_component'] = __FUNCTION__;
+	}
+
 	return $input;
 }
 
@@ -1290,6 +1368,12 @@ function sd_get_absolute_position_input( $type = 'absolute_position', $overwrite
 	);
 
 	$input = wp_parse_args( $overwrite, $defaults );
+
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$input['block_component'] = __FUNCTION__;
+	}
 
 	return $input;
 }
@@ -1334,6 +1418,12 @@ function sd_get_sticky_offset_input( $type = 'top', $overwrite = array() ) {
 	}
 
 	$input = wp_parse_args( $overwrite, $defaults );
+
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$input['block_component'] = $type ? __FUNCTION__ . '_'.$type : __FUNCTION__;
+	}
 
 	return $input;
 }
@@ -1401,6 +1491,13 @@ function sd_get_font_size_input( $type = 'font_size', $overwrite = array(), $has
 
 	$input = wp_parse_args( $overwrite, $defaults );
 
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$function_name = $has_custom ? '_has_custom' : '';
+		$input['block_component'] = __FUNCTION__ . $function_name;
+	}
+
 	return $input;
 }
 
@@ -1434,6 +1531,13 @@ function sd_get_font_custom_size_input( $type = 'font_size_custom', $overwrite =
 
 	$input = wp_parse_args( $overwrite, $defaults );
 
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$function_name = $parent_type ? '_'.$parent_type : '';
+		$input['block_component'] = __FUNCTION__ . $function_name;
+	}
+
 	return $input;
 }
 
@@ -1462,6 +1566,12 @@ function sd_get_font_line_height_input( $type = 'font_line_height', $overwrite =
 	);
 
 	$input = wp_parse_args( $overwrite, $defaults );
+
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$input['block_component'] = __FUNCTION__;
+	}
 
 	return $input;
 }
@@ -1526,6 +1636,12 @@ function sd_get_font_weight_input( $type = 'font_weight', $overwrite = array() )
 
 	$input = wp_parse_args( $overwrite, $defaults );
 
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$input['block_component'] = __FUNCTION__;
+	}
+
 	return $input;
 }
 
@@ -1557,6 +1673,12 @@ function sd_get_font_case_input( $type = 'font_weight', $overwrite = array() ) {
 
 	$input = wp_parse_args( $overwrite, $defaults );
 
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$input['block_component'] = __FUNCTION__;
+	}
+
 	return $input;
 }
 
@@ -1587,6 +1709,12 @@ function sd_get_font_italic_input( $type = 'font_italic', $overwrite = array() )
 
 	$input = wp_parse_args( $overwrite, $defaults );
 
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$input['block_component'] = __FUNCTION__;
+	}
+
 	return $input;
 }
 
@@ -1610,6 +1738,12 @@ function sd_get_anchor_input( $type = 'anchor', $overwrite = array() ) {
 	);
 
 	$input = wp_parse_args( $overwrite, $defaults );
+
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$input['block_component'] = __FUNCTION__;
+	}
 
 	return $input;
 }
@@ -1635,6 +1769,12 @@ function sd_get_class_input( $type = 'css_class', $overwrite = array() ) {
 
 	$input = wp_parse_args( $overwrite, $defaults );
 
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$input['block_component'] = __FUNCTION__;
+	}
+
 	return $input;
 }
 
@@ -1658,6 +1798,12 @@ function sd_get_custom_name_input( $type = 'metadata_name', $overwrite = array()
 	);
 
 	$input = wp_parse_args( $overwrite, $defaults );
+
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$input['block_component'] = __FUNCTION__;
+	}
 
 	return $input;
 }
@@ -1693,6 +1839,12 @@ function sd_get_hover_animations_input( $type = 'hover_animations', $overwrite =
 	);
 
 	$input = wp_parse_args( $overwrite, $defaults );
+
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$input['block_component'] = __FUNCTION__;
+	}
 
 	return $input;
 }
@@ -1731,6 +1883,12 @@ function sd_get_hover_icon_animation_input( $type = 'hover_icon_animation', $ove
 
 	$input = wp_parse_args( $overwrite, $defaults );
 
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$input['block_component'] = __FUNCTION__;
+	}
+
 	return $input;
 }
 
@@ -1765,6 +1923,12 @@ function sd_get_flex_align_items_input( $type = 'align-items', $overwrite = arra
 	);
 
 	$input = wp_parse_args( $overwrite, $defaults );
+
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$input['block_component'] = __FUNCTION__ . $device_size;
+	}
 
 	return $input;
 }
@@ -1818,6 +1982,12 @@ function sd_get_flex_justify_content_input( $type = 'flex_justify_content', $ove
 	);
 
 	$input = wp_parse_args( $overwrite, $defaults );
+
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$input['block_component'] = __FUNCTION__ . $device_size;
+	}
 
 	return $input;
 }
@@ -1873,6 +2043,12 @@ function sd_get_flex_align_self_input( $type = 'flex_align_self', $overwrite = a
 
 	$input = wp_parse_args( $overwrite, $defaults );
 
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$input['block_component'] = __FUNCTION__ . $device_size;
+	}
+
 	return $input;
 }
 
@@ -1926,6 +2102,12 @@ function sd_get_flex_order_input( $type = 'flex_order', $overwrite = array() ) {
 	);
 
 	$input = wp_parse_args( $overwrite, $defaults );
+
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$input['block_component'] = __FUNCTION__ . $device_size;
+	}
 
 	return $input;
 }
@@ -1995,6 +2177,12 @@ function sd_get_flex_wrap_input( $type = 'flex_wrap', $overwrite = array() ) {
 
 	$input = wp_parse_args( $overwrite, $defaults );
 
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$input['block_component'] = __FUNCTION__ . $device_size;
+	}
+
 	return $input;
 }
 
@@ -2043,6 +2231,12 @@ function sd_get_float_input( $type = 'float', $overwrite = array() ) {
 
 	$input = wp_parse_args( $overwrite, $defaults );
 
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$input['block_component'] = __FUNCTION__ . $device_size;
+	}
+
 	return $input;
 }
 
@@ -2072,6 +2266,12 @@ function sd_get_zindex_input( $type = 'zindex', $overwrite = array() ) {
 	);
 
 	$input = wp_parse_args( $overwrite, $defaults );
+
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$input['block_component'] = __FUNCTION__;
+	}
 
 	return $input;
 }
@@ -2103,6 +2303,12 @@ function sd_get_overflow_input( $type = 'overflow', $overwrite = array() ) {
 
 	$input = wp_parse_args( $overwrite, $defaults );
 
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$input['block_component'] = __FUNCTION__;
+	}
+
 	return $input;
 }
 
@@ -2125,6 +2331,12 @@ function sd_get_max_height_input( $type = 'max_height', $overwrite = array() ) {
 	);
 
 	$input = wp_parse_args( $overwrite, $defaults );
+
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$input['block_component'] = __FUNCTION__;
+	}
 
 	return $input;
 }
@@ -2153,6 +2365,12 @@ function sd_get_scrollbars_input( $type = 'scrollbars', $overwrite = array() ) {
 
 	$input = wp_parse_args( $overwrite, $defaults );
 
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$input['block_component'] = __FUNCTION__;
+	}
+
 	return $input;
 }
 
@@ -2174,6 +2392,12 @@ function sd_get_new_window_input( $type = 'target', $overwrite = array() ) {
 
 	$input = wp_parse_args( $overwrite, $defaults );
 
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$input['block_component'] = __FUNCTION__;
+	}
+
 	return $input;
 }
 
@@ -2194,6 +2418,12 @@ function sd_get_nofollow_input( $type = 'nofollow', $overwrite = array() ) {
 	);
 
 	$input = wp_parse_args( $overwrite, $defaults );
+
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$input['block_component'] = __FUNCTION__;
+	}
 
 	return $input;
 }
@@ -2236,6 +2466,12 @@ function sd_get_width_input( $type = 'width', $overwrite = array() ) {
 
 	$input = wp_parse_args( $overwrite, $defaults );
 
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$input['block_component'] = __FUNCTION__ . $device_size;
+	}
+
 	return $input;
 }
 
@@ -2277,6 +2513,12 @@ function sd_get_height_input( $type = 'height', $overwrite = array() ) {
 
 	$input = wp_parse_args( $overwrite, $defaults );
 
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$input['block_component'] = __FUNCTION__ . $device_size;
+	}
+
 	return $input;
 }
 
@@ -2299,6 +2541,12 @@ function sd_get_attributes_input( $type = 'attributes', $overwrite = array() ) {
 	);
 
 	$input = wp_parse_args( $overwrite, $defaults );
+
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$input['block_component'] = __FUNCTION__;
+	}
 
 	return $input;
 }
@@ -3051,6 +3299,12 @@ function sd_get_visibility_conditions_input( $type = 'visibility_conditions', $o
 	);
 
 	$input = wp_parse_args( $overwrite, $defaults );
+
+	// set as block_component
+	unset($overwrite['device_type']);
+	if ( empty( $overwrite ) ) {
+		$input['block_component'] = __FUNCTION__;
+	}
 
 	return $input;
 }
@@ -3868,6 +4122,16 @@ if(!function_exists('sd_blocks_render_blocks')){
 		}elseif(! empty($parsed_block['attrs']['sd_shortcode'])){
 
 			$shortcode = sd_build_shortcode($parsed_block['attrs']['sd_shortcode'], $parsed_block['attrs']);
+
+//			if ( $shortcode === 'bs_alert' ) {
+//				print_r( ( $parsed_block ) );exit;
+//			}
+
+			// maybe replace dynamic data for non-dynamic blocks  @todo check if this can be abused
+			if(!empty($block_content)){
+				$block_content = sd_replace_variables( $block_content );
+			}
+
 			$has_warp = false;
 			if($block_content && strpos(trim($block_content), '<div class="wp-block-') === 0 ){
 				$parts = explode('></', $block_content);

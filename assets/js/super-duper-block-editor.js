@@ -783,7 +783,7 @@ window.sdBlockInputComponents = window.sdBlockInputComponents || {};
 			supports: { html: false, ...(blockOptions.supports || {}), },
 			__experimentalLabel: (attributes) => {
 				const visibilityHtml = attributes && attributes.visibility_conditions ? ' \uD83D\uDC41' : '';
-				if (attributes?.metadata?.name) return attributes.metadata.name + visibilityHtml;
+				if (attributes?.metadata_name) return attributes.metadata_name + visibilityHtml;
 				if (blockOptions['block-label']) {
 					let Tpl = blockOptions['block-label'];
 					const resolvePlaceholders = (str) => str.replace(/%([a-zA-Z0-9_]+)%/g, (match, attrName) => attributes[attrName] || '');
@@ -887,14 +887,35 @@ window.sdBlockInputComponents = window.sdBlockInputComponents || {};
 				const isInitialMount = useRef(true);
 
 				useEffect(() => {
-					if (!attributes.sd_shortcode || !attributes.styleid) {
-						const newAttrs = {};
-						if (!attributes.sd_shortcode) {
-							newAttrs.sd_shortcode = config.base_id;
-							if (blockOptions['nested-block']) newAttrs.sd_shortcode_close = config.base_id;
+					const newAttrs = {};
+
+					// ✅ Reset if missing OR starts with "["
+					if (
+						!attributes.sd_shortcode ||
+						(attributes.sd_shortcode && attributes.sd_shortcode.startsWith('['))
+					) {
+						newAttrs.sd_shortcode = config.base_id;
+
+						if (blockOptions['nested-block']) {
+							newAttrs.sd_shortcode_close = config.base_id;
 						}
-						if (!attributes.styleid) newAttrs.styleid = 'block-' + (Math.random() + 1).toString(36).substring(2);
-						if (Object.keys(newAttrs).length > 0) setAttributes(newAttrs);
+					}
+
+					if (
+						!attributes.sd_shortcode_close ||
+						(attributes.sd_shortcode_close && attributes.sd_shortcode_close.startsWith('['))
+					) {
+						if (blockOptions['nested-block']) {
+							newAttrs.sd_shortcode_close = config.base_id;
+						}
+					}
+
+					if (!attributes.styleid) {
+						newAttrs.styleid = 'block-' + (Math.random() + 1).toString(36).substring(2);
+					}
+
+					if (Object.keys(newAttrs).length > 0) {
+						setAttributes(newAttrs);
 					}
 					const wantsAjaxPreview = blockOptions['ajaxPreviewInEditComponent'] === true;
 					const hasEditComponent = !!blockOptions['editComponent'];
@@ -973,8 +994,17 @@ window.sdBlockInputComponents = window.sdBlockInputComponents || {};
 
 				const groupedArgs = useMemo(() => {
 					const groups = {};
+					const slugify = (str) => {
+						if (!str) return 'general';
+						return String(str)
+							.toLowerCase()
+							.replace(/\s+/g, '-') // Replace spaces with -
+							.replace(/[^a-z0-9-]/g, ''); // Remove all non-alphanumeric chars except dashes
+					};
+
 					hydratedArgsConfig.forEach(arg => {
-						const group = arg.group || 'General';
+						// Slugify the group name to create a consistent key
+						const group = slugify(arg.group || 'General');
 						if (!groups[group]) groups[group] = [];
 						groups[group].push(arg);
 					});
@@ -1015,14 +1045,37 @@ window.sdBlockInputComponents = window.sdBlockInputComponents || {};
 				};
 
 				const inspectorPanels = useMemo(() => {
+					// Define the exact same helper function here to ensure consistency
+					const slugify = (str) => {
+						if (!str) return 'general';
+						return String(str).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+					};
+
 					if (blockOptions.block_group_tabs && Object.keys(blockOptions.block_group_tabs).length) {
 						const tabs = Object.values(blockOptions.block_group_tabs).map(tabInfo => ({ name: tabInfo.tab.key, title: tabInfo.tab.title, className: tabInfo.tab.class + ' text-center flex-fill d-flex justify-content-center ', groups: tabInfo.groups }));
 						return el('div', {className: 'bsui'},
 							el('hr', {className: 'm-0'}), el(TabPanel, { className: "sd-inspector-tabs", activeClass: "is-active", tabs: tabs, initialTabName: activeTab, onSelect: setActiveTab,
 								children: (tab) => el(Fragment, {},
-									tab.groups.map(groupName => {
-										if (!groupedArgs[groupName]) return null;
-										return el(PanelBody, { title: groupName, initialOpen: true, key: `${tab.name}-${groupName}`}, renderGroupControls(groupName));
+									(tab.groups || []).map(group => {
+										let groupId, groupTitle;
+
+										if (typeof group === 'object' && group !== null && group.id) {
+											// New style: The ID is the key, which should already be a slug.
+											groupId = group.id;
+											groupTitle = group.title;
+										} else {
+											// Old style: Slugify the string to get the key, use the original for the title.
+											groupId = slugify(group);
+											groupTitle = group;
+										}
+
+										if (!groupedArgs[groupId]) return null;
+
+										return el(PanelBody, {
+											title: groupTitle,
+											initialOpen: true,
+											key: `${tab.name}-${groupId}`
+										}, renderGroupControls(groupId));
 									})
 								)
 							}));
