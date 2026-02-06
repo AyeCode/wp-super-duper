@@ -198,11 +198,46 @@ trait WP_Super_Duper_Output_Handler {
 	public function output_title( $args, $instance = array() ) {
 		$output = '';
 		if ( ! empty( $instance['title'] ) ) {
+			/** This filter is documented in wp-includes/widgets/class-wp-widget-pages.php */
 			$title  = apply_filters( 'widget_title', $instance['title'], $instance, $this->id_base );
-			$before_title = isset( $args['before_title'] ) ? $args['before_title'] : '';
-			$after_title  = isset( $args['after_title'] ) ? $args['after_title'] : '';
-			$output = $before_title . $title . $after_title;
+
+			if ( empty( $instance['widget_title_tag'] ) ) {
+				if ( ! isset( $args['before_title'] ) ) {
+					$args['before_title'] = '';
+				}
+
+				if ( ! isset( $args['after_title'] ) ) {
+					$args['after_title'] = '';
+				}
+
+				$output = $args['before_title'] . $title . $args['after_title'];
+			} else {
+				$tag 			= esc_attr( $instance['widget_title_tag'] );
+				$allowed_tags 	= array( 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'span', 'div', 'p' );
+				$title_tag      = in_array( $tag, $allowed_tags, true ) ? esc_attr( $tag ) : 'h2';
+
+				// classes
+				$title_classes = array();
+				$title_classes[] = !empty( $instance['widget_title_size_class'] ) ? sanitize_html_class( $instance['widget_title_size_class'] ) : '';
+				$title_classes[] = !empty( $instance['widget_title_align_class'] ) ? sanitize_html_class( $instance['widget_title_align_class'] ) : '';
+				$title_classes[] = !empty( $instance['widget_title_color_class'] ) ? "text-".sanitize_html_class( $instance['widget_title_color_class'] ) : '';
+				$title_classes[] = !empty( $instance['widget_title_border_class'] ) ? sanitize_html_class( $instance['widget_title_border_class'] ) : '';
+				$title_classes[] = !empty( $instance['widget_title_border_color_class'] ) ? "border-".sanitize_html_class( $instance['widget_title_border_color_class'] ) : '';
+				$title_classes[] = !empty( $instance['widget_title_mt_class'] ) ? "mt-".absint( $instance['widget_title_mt_class'] ) : '';
+				$title_classes[] = !empty( $instance['widget_title_mr_class'] ) ? "mr-".absint( $instance['widget_title_mr_class'] ) : '';
+				$title_classes[] = !empty( $instance['widget_title_mb_class'] ) ? "mb-".absint( $instance['widget_title_mb_class'] ) : '';
+				$title_classes[] = !empty( $instance['widget_title_ml_class'] ) ? "ml-".absint( $instance['widget_title_ml_class'] ) : '';
+				$title_classes[] = !empty( $instance['widget_title_pt_class'] ) ? "pt-".absint( $instance['widget_title_pt_class'] ) : '';
+				$title_classes[] = !empty( $instance['widget_title_pr_class'] ) ? "pr-".absint( $instance['widget_title_pr_class'] ) : '';
+				$title_classes[] = !empty( $instance['widget_title_pb_class'] ) ? "pb-".absint( $instance['widget_title_pb_class'] ) : '';
+				$title_classes[] = !empty( $instance['widget_title_pl_class'] ) ? "pl-".absint( $instance['widget_title_pl_class'] ) : '';
+
+				$class = !empty( $title_classes ) ? implode(" ",$title_classes) : '';
+				$output = "<$title_tag class='$class' >$title</$title_tag>";
+			}
+
 		}
+
 		return $output;
 	}
 

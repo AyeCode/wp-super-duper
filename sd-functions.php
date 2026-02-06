@@ -126,6 +126,13 @@ function sd_get_margin_input( $type = 'mt', $overwrite = array(), $include_negat
 
 	$input = wp_parse_args( $overwrite, $defaults );
 
+	// row key fix
+	$group_key =  sanitize_title_with_dashes( $input['group'] );// === 'wrapper-styles'
+//	echo '###'.$group_key .'###'.$overwrite['group']."\n\n";
+	if( $group_key !== 'wrapper-styles' ){
+		$input['row']['key'] = $group_key;
+	}
+
 	// set as block_component
 	unset($overwrite['device_type']);
 	if ( empty( $overwrite ) && $include_negatives) {
@@ -2549,6 +2556,220 @@ function sd_get_attributes_input( $type = 'attributes', $overwrite = array() ) {
 	}
 
 	return $input;
+}
+
+/**
+ * A helper function for title tag inputs.
+ *
+ * @param string $type
+ * @param array $overwrite
+ *
+ * @return array
+ */
+function sd_get_title_tag_input( $overwrite = array() ){
+
+	$defaults = array(
+		'title' => __('Title HTML tag', 'geodirectory'),
+		'desc' => __('Set the HTML tag for the title.', 'geodirectory'),
+		'type' => 'select',
+		'options'   =>  array(
+			"" => __("Default (theme widget default)","geodirectory"),
+			"h1" => "h1",
+			"h2" => "h2",
+			"h3" => "h3",
+			"h4" => "h4",
+			"h5" => "h5",
+			"h6" => "h6",
+		),
+		'default'  => '',
+		'desc_tip' => true,
+		'advanced' => false,
+		'group'     => 'title',
+	);
+
+
+	$input = wp_parse_args( $overwrite, $defaults );
+
+
+	return $input;
+}
+
+/**
+ * Get title input arguments for widgets/blocks.
+ *
+ * Provides a reusable set of title configuration inputs including tag selection,
+ * styling options (size, alignment, color), borders, margins, and padding.
+ *
+ * @since 3.0.0
+ *
+ * @return array Array of title input arguments.
+ */
+function sd_get_title_inputs(): array {
+	$arguments = array();
+
+	$arguments['widget_title_tag'] = sd_get_title_tag_input();
+	$arguments['widget_title_size_class'] = sd_get_font_size_input(
+		'font_size',
+		array(
+			'element_require' => '[%widget_title_tag%]!=""',
+			'group'     => 'title',
+			'row'             => array(
+				'key'  => 'title-attr',
+				'open' => true,
+			),
+		)
+	);
+	$arguments['widget_title_align_class'] = sd_get_text_align_input(
+		'text_align',
+		array(
+			'element_require' => '[%widget_title_tag%]!=""',
+			'group'     => 'title',
+			'row'             => array(
+				'key' => 'title-attr',
+			),
+		)
+	);
+	$arguments['widget_title_color_class'] = sd_get_text_color_input(
+		'text_color',
+		array(
+			'element_require' => '[%widget_title_tag%]!=""',
+			'group'     => 'title',
+			'row'             => array(
+				'key'   => 'title-attr',
+				'close' => true,
+			),
+		)
+	);
+
+	// Border
+	$arguments['widget_title_border_class'] = sd_get_border_input(
+		'type',
+		array(
+			'group'           => 'title',
+			'element_require' => '[%widget_title_tag%]!=""',
+			'row'             => array(
+				'key'  => 'title-border',
+				'open' => true,
+			),
+		)
+	);
+	$arguments['widget_title_border_color_class'] = sd_get_border_input(
+		'border',
+		array(
+			'group'           => 'title',
+			'element_require' => '[%widget_title_tag%]!=""',
+			'row'             => array(
+				'key'   => 'title-border',
+				'close' => true,
+			),
+		)
+	);
+
+	// Margins
+	$arguments['widget_title_mt_class'] = sd_get_margin_input(
+		'mt',
+		array(
+			'group'           => 'title',
+			'element_require' => '[%widget_title_tag%]!=""',
+			'icon'            => 'box-top',
+			'row'             => array(
+				'title'           => __( 'Margins', 'geodirectory' ),
+				'desc_tip'        => true,
+				'key'             => 'title-margins',
+				'open'            => true,
+				'class'           => 'text-center',
+				'element_require' => '[%widget_title_tag%]!=""',
+			),
+		)
+	);
+	$arguments['widget_title_mr_class'] = sd_get_margin_input(
+		'mr',
+		array(
+			'group'           => 'title',
+			'element_require' => '[%widget_title_tag%]!=""',
+			'icon'            => 'box-right',
+			'row'             => array(
+				'key' => 'title-margins',
+			),
+		)
+	);
+	$arguments['widget_title_mb_class'] = sd_get_margin_input(
+		'mb',
+		array(
+			'group'           => 'title',
+			'element_require' => '[%widget_title_tag%]!=""',
+			'icon'            => 'box-bottom',
+			'row'             => array(
+				'key' => 'title-margins',
+			),
+		)
+	);
+	$arguments['widget_title_ml_class'] = sd_get_margin_input(
+		'ml',
+		array(
+			'group'           => 'title',
+			'element_require' => '[%widget_title_tag%]!=""',
+			'icon'            => 'box-left',
+			'row'             => array(
+				'key'   => 'title-margins',
+				'close' => true,
+			),
+		)
+	);
+
+	// Padding
+	$arguments['widget_title_pt_class'] = sd_get_padding_input(
+		'pt',
+		array(
+			'group'           => 'title',
+			'element_require' => '[%widget_title_tag%]!=""',
+			'icon'            => 'box-top',
+			'row'             => array(
+				'title'           => __( 'Padding', 'geodirectory' ),
+				'desc_tip'        => true,
+				'key'             => 'title-padding',
+				'open'            => true,
+				'class'           => 'text-center',
+				'element_require' => '[%widget_title_tag%]!=""',
+			),
+		)
+	);
+	$arguments['widget_title_pr_class'] = sd_get_padding_input(
+		'pr',
+		array(
+			'group'           => 'title',
+			'element_require' => '[%widget_title_tag%]!=""',
+			'icon'            => 'box-right',
+			'row'             => array(
+				'key' => 'title-padding',
+			),
+		)
+	);
+	$arguments['widget_title_pb_class'] = sd_get_padding_input(
+		'pb',
+		array(
+			'group'           => 'title',
+			'element_require' => '[%widget_title_tag%]!=""',
+			'icon'            => 'box-bottom',
+			'row'             => array(
+				'key' => 'title-padding',
+			),
+		)
+	);
+	$arguments['widget_title_pl_class'] = sd_get_padding_input(
+		'pl',
+		array(
+			'group'           => 'title',
+			'element_require' => '[%widget_title_tag%]!=""',
+			'icon'            => 'box-left',
+			'row'             => array(
+				'key'   => 'title-padding',
+				'close' => true,
+			),
+		)
+	);
+
+	return $arguments;
 }
 
 /**

@@ -190,6 +190,18 @@ trait WP_Super_Duper_Gutenberg_Block {
                     if(!empty($arg['device_type'])){
                         $new_args['device_type'] = $arg['device_type'];
                     }
+                    // mabe set the row data
+                    if(!empty($arg['row'])){
+                        $new_args['row'] = $arg['row'];
+                    }
+                    // mabe set the row data
+                    if(!empty($arg['group'])){
+                        $new_args['group'] = $arg['group'];
+                    }
+                    // mabe set the row data
+                    if(!empty($arg['element_require'])){
+                        $new_args['element_require'] = $arg['element_require'];
+                    }
                     $arguments[$key] = $new_args;
                 }
             }

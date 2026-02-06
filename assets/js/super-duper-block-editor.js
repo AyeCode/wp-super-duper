@@ -28,6 +28,10 @@ window.sdBlockInputComponents = window.sdBlockInputComponents || {};
 		element: null,
 		name: null,
 	};
+
+	// CSS class constants
+	const HELP_CLASS = 'components-base-control__help fs-xs text-muted mt-n2';
+
 	const { createElement: el, useState, useEffect, Fragment, useRef, useMemo } = element;
 	const { __ } = i18n;
 	const { registerBlockType, createBlock } = blocks;
@@ -175,27 +179,37 @@ window.sdBlockInputComponents = window.sdBlockInputComponents || {};
 
 	function renderInlineControl(config, props) {
 		const { attributes, setAttributes } = props;
-		const { type, name, options, default: defaultValue, icon, title } = config;
+		const { type, name, options, default: defaultValue, icon, title, help, desc } = config;
 		const value = attributes[name] !== undefined ? attributes[name] : defaultValue;
+		const controlHelp = help || desc;
+
+		// SVG icons that can be used for any input type
+		const svgIcons = {
+			'box-top': `<svg title="${title}" width="20px" height="20px" viewBox="0 0 20 20"><rect x="5.518" y="2.186" width="8.964" height="2.482" fill="#272B2F"></rect><rect x="2.714" y="5.492" width="1.048" height="9.017" fill="#555D66"></rect><rect x="16.265" y="5.498" width="1.023" height="9.003" fill="#555D66"></rect><rect x="5.487" y="16.261" width="9.026" height="1.037" fill="#555D66"></rect></svg>`,
+			'box-right': `<svg title="${title}" width="20px" height="20px" viewBox="0 0 20 20"><rect x="15.244" y="5.498" width="2.518" height="9.003" fill="#272B2F"></rect><rect x="2.714" y="5.492" width="1.046" height="9.017" fill="#555D66"></rect><rect x="5.518" y="2.719" width="8.964" height="0.954" fill="#555D66"></rect><rect x="5.487" y="16.308" width="9.026" height="0.99" fill="#555D66"></rect></svg>`,
+			'box-bottom': `<svg title="${title}" width="20px" height="20px" viewBox="0 0 20 20"><rect x="5.487" y="15.28" width="9.026" height="2.499" fill="#272B2F"></rect><rect x="2.714" y="5.492" width="1" height="9.017" fill="#555D66"></rect><rect x="16.261" y="5.498" width="1.027" height="9.003" fill="#555D66"></rect><rect x="5.518" y="2.719" width="8.964" height="0.968" fill="#555D66"></rect></svg>`,
+			'box-left': `<svg title="${title}" width="20px" height="20px" viewBox="0 0 20 20"><rect x="2.202" y="5.492" width="2.503" height="9.017" fill="#272B2F"></rect><rect x="16.276" y="5.498" width="1.012" height="9.003" fill="#555D66"></rect><rect x="5.518" y="2.719" width="8.964" height="0.966" fill="#555D66"></rect><rect x="5.487" y="16.303" width="9.026" height="0.995" fill="#555D66"></rect></svg>`,
+		};
+		const customIcon = icon && svgIcons[icon] ? el('span', { dangerouslySetInnerHTML: { __html: svgIcons[icon] } }) : null;
+
+		// Only show label text if there's no icon
+		const labelText = !customIcon && title ? title : null;
+
 		switch (type) {
 			case 'select':
 				let selectOptions = [];
 				if (options && typeof options === 'object') {
 					selectOptions = Object.keys(options).map(key => ({ label: options[key], value: key }));
 				}
-				const svgIcons = {
-					'box-top': `<svg title="${title}" width="20px" height="20px" viewBox="0 0 20 20"><rect x="5.518" y="2.186" width="8.964" height="2.482" fill="#272B2F"></rect><rect x="2.714" y="5.492" width="1.048" height="9.017" fill="#555D66"></rect><rect x="16.265" y="5.498" width="1.023" height="9.003" fill="#555D66"></rect><rect x="5.487" y="16.261" width="9.026" height="1.037" fill="#555D66"></rect></svg>`,
-					'box-right': `<svg title="${title}" width="20px" height="20px" viewBox="0 0 20 20"><rect x="15.244" y="5.498" width="2.518" height="9.003" fill="#272B2F"></rect><rect x="2.714" y="5.492" width="1.046" height="9.017" fill="#555D66"></rect><rect x="5.518" y="2.719" width="8.964" height="0.954" fill="#555D66"></rect><rect x="5.487" y="16.308" width="9.026" height="0.99" fill="#555D66"></rect></svg>`,
-					'box-bottom': `<svg title="${title}" width="20px" height="20px" viewBox="0 0 20 20"><rect x="5.487" y="15.28" width="9.026" height="2.499" fill="#272B2F"></rect><rect x="2.714" y="5.492" width="1" height="9.017" fill="#555D66"></rect><rect x="16.261" y="5.498" width="1.027" height="9.003" fill="#555D66"></rect><rect x="5.518" y="2.719" width="8.964" height="0.968" fill="#555D66"></rect></svg>`,
-					'box-left': `<svg title="${title}" width="20px" height="20px" viewBox="0 0 20 20"><rect x="2.202" y="5.492" width="2.503" height="9.017" fill="#272B2F"></rect><rect x="16.276" y="5.498" width="1.012" height="9.003" fill="#555D66"></rect><rect x="5.518" y="2.719" width="8.964" height="0.966" fill="#555D66"></rect><rect x="5.487" y="16.303" width="9.026" height="0.995" fill="#555D66"></rect></svg>`,
-				};
-				const customIcon = icon && svgIcons[icon] ? el('span', { dangerouslySetInnerHTML: { __html: svgIcons[icon] } }) : null;
-				return el('div', { key: name, className: 'sd-inline-control', style: { textAlign: 'center', display: 'flex', flexDirection: 'column', flex: 1 } },
+				return el('div', { key: name, className: 'sd-inline-control', style: {  display: 'flex', flexDirection: 'column', flex: 1 } },
 					customIcon,
-					el(SelectControl, { value: String(value || ''), options: selectOptions, onChange: (val) => setAttributes({ [name]: val }) })
+					el(SelectControl, { label: labelText, help: controlHelp, value: String(value || ''), options: selectOptions, onChange: (val) => setAttributes({ [name]: val }) })
 				);
 			default:
-				return el(TextControl, { key: name, value: value || '', type: type, onChange: (val) => setAttributes({ [name]: val }) });
+				return el('div', { key: name, className: 'sd-inline-control', style: {  display: 'flex', flexDirection: 'column', flex: 1 } },
+					customIcon,
+					el(TextControl, { label: labelText, help: controlHelp, key: name, value: value || '', type: type, onChange: (val) => setAttributes({ [name]: val }) })
+				);
 		}
 	}
 
@@ -283,7 +297,7 @@ window.sdBlockInputComponents = window.sdBlockInputComponents || {};
 						}),
 						dynamicDataButton
 					),
-					controlHelp && el('p', { className: 'components-base-control__help', dangerouslySetInnerHTML: { __html: controlHelp } })
+					controlHelp && el('p', { className: HELP_CLASS, dangerouslySetInnerHTML: { __html: controlHelp } })
 				);
 			}
 
@@ -359,7 +373,7 @@ window.sdBlockInputComponents = window.sdBlockInputComponents || {};
 							...rest,
 							...inputEventHandlers
 						}),
-						controlHelp && el('p', { className: 'components-base-control__help', dangerouslySetInnerHTML: { __html: controlHelp } })
+						controlHelp && el('p', { className: HELP_CLASS, dangerouslySetInnerHTML: { __html: controlHelp } })
 					);
 				}
 				else {
@@ -388,19 +402,19 @@ window.sdBlockInputComponents = window.sdBlockInputComponents || {};
 						);
 						return el(BaseControl, { label: labelWithIcon, id: name, key: name },
 							controlElement,
-							controlHelp && el('p', { className: 'components-base-control__help', dangerouslySetInnerHTML: { __html: controlHelp } })
+							controlHelp && el('p', { className: HELP_CLASS, dangerouslySetInnerHTML: { __html: controlHelp } })
 						);
 					}
 					return el(BaseControl, { label: labelWithIcon, id: name, key: name },
 						textInputElement,
-						controlHelp && el('p', { className: 'components-base-control__help', dangerouslySetInnerHTML: { __html: controlHelp } })
+						controlHelp && el('p', { className: HELP_CLASS, dangerouslySetInnerHTML: { __html: controlHelp } })
 					);
 				}
 			}
 			case 'range':
 				return el(BaseControl, { key: name, label: labelWithIcon, id: name },
 					el(RangeControl, { value: value !== undefined ? Number(value) : undefined, onChange: (val) => setAttributes({ [name]: String(val) }), min: rest.custom_attributes?.min, max: rest.custom_attributes?.max, ...rest }),
-					controlHelp && el('p', { className: 'components-base-control__help', dangerouslySetInnerHTML: { __html: controlHelp } })
+					controlHelp && el('p', { className: HELP_CLASS, dangerouslySetInnerHTML: { __html: controlHelp } })
 				);
 			case 'image':
 				const idName = rest.id_attribute || `${name}_id`;
@@ -589,18 +603,18 @@ window.sdBlockInputComponents = window.sdBlockInputComponents || {};
 						multiple: isMultiple,
 						...rest
 					}),
-					controlHelp && el('p', { className: 'components-base-control__help', dangerouslySetInnerHTML: { __html: controlHelp } })
+					controlHelp && el('p', { className: HELP_CLASS, dangerouslySetInnerHTML: { __html: controlHelp } })
 				);
 			case 'checkbox':
 				return el(Fragment, { key: name },
 					el(ToggleControl, { label: labelWithIcon, checked: !!value, onChange: (isChecked) => setAttributes({ [name]: isChecked }), ...rest }),
-					controlHelp && el('p', { className: 'components-base-control__help', style: { marginTop: '-8px' } , dangerouslySetInnerHTML: { __html: controlHelp } })
+					controlHelp && el('p', { className: HELP_CLASS, style: { marginTop: '-8px' } , dangerouslySetInnerHTML: { __html: controlHelp } })
 				);
 			case 'color':
 				return el(Fragment, { key: name },
 					el('p', { className: 'components-base-control__label' }, labelWithIcon),
 					el(ColorPicker, { color: value, onChangeComplete: (color) => { const newColor = color.rgb.a < 1 ? `rgba(${color.rgb.r},${color.rgb.g},${color.rgb.b},${color.rgb.a})` : color.hex; setAttributes({ [name]: newColor }); }, disableAlpha: rest.disable_alpha || false }),
-					controlHelp && el('p', { className: 'components-base-control__help' }, controlHelp)
+					controlHelp && el('p', { className: HELP_CLASS }, controlHelp)
 				);
 			case 'gradient':
 				const safeValue = value || null;
@@ -647,7 +661,7 @@ window.sdBlockInputComponents = window.sdBlockInputComponents || {};
 								slug: 'cool-to-warm-spectrum',
 							}],
 					}),
-					controlHelp && el('p', { className: 'components-base-control__help', dangerouslySetInnerHTML: { __html: controlHelp } })
+					controlHelp && el('p', { className: HELP_CLASS, dangerouslySetInnerHTML: { __html: controlHelp } })
 				);
 
 			case 'notice':
@@ -694,7 +708,7 @@ window.sdBlockInputComponents = window.sdBlockInputComponents || {};
 
 			if (arg.type === 'checkbox' || arg.type === 'toggle') {
 				attrType = 'boolean';
-				attrDefault = !!attrDefault;
+				attrDefault = attrDefault === true || attrDefault === '1' || attrDefault === 'true';
 			} else if (arg.type === 'number') {
 				attrType = 'number';
 				attrDefault = attrDefault !== '' ? Number(attrDefault) : undefined;
@@ -1021,17 +1035,32 @@ window.sdBlockInputComponents = window.sdBlockInputComponents || {};
 							if (renderedRows[arg.row.key]) return;
 							const rowKey = arg.row.key;
 							const rowTitle = arg.row.title;
+							const rowClass = arg.row.class || '';
 							const rowElements = groupArgs
-								.filter(rowArg => rowArg.row && rowArg.row.key === rowKey && rowArg.device_type === deviceType)
+								.filter(rowArg => {
+									if (!rowArg.row || rowArg.row.key !== rowKey) return false;
+									if (rowArg.device_type && rowArg.device_type !== deviceType) return false;
+									if (rowArg.element_require && !evaluateRequirement(rowArg.element_require, attributes)) return false;
+									return true;
+								})
 								.map(rowArg => renderInlineControl(rowArg, props));
 							if (rowElements.length > 0) {
+								const hasDeviceType = groupArgs.some(rowArg => rowArg.row && rowArg.row.key === rowKey && rowArg.device_type);
+								const labelParts = [el('span', {}, rowTitle)];
+								if (hasDeviceType) {
+									labelParts.push(el(DeviceSwitcherIcon, { isInlineRow: true }));
+								}
+								const labelContent = hasDeviceType
+									? el('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } }, ...labelParts)
+									: rowTitle;
+								const rowClassName = rowClass ? `sd-control-row ${rowClass}` : 'sd-control-row';
 								elements.push(
-									el(BaseControl, { key: rowKey, label: el('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } }, el('span', {}, rowTitle), el(DeviceSwitcherIcon, { isInlineRow: true })) },
-										el('div', { className: 'sd-control-row', style: { display: 'flex', gap: '8px', alignItems: 'flex-end' } }, rowElements)
+									el(BaseControl, { key: rowKey, label: labelContent },
+										el('div', { className: rowClassName, style: { display: 'flex', gap: '8px', alignItems: 'flex-end' } }, rowElements)
 									)
 								);
+								renderedRows[rowKey] = true;
 							}
-							renderedRows[rowKey] = true;
 						}  else if (arg.template) {
 							const component = window.sdBlockInputComponents && window.sdBlockInputComponents[arg.template];
 							if (component && typeof component.renderer === 'function') {
