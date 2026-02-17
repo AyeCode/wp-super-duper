@@ -710,12 +710,12 @@ window.sdBlockInputComponents = window.sdBlockInputComponents || {};
 				attrType = 'boolean';
 				attrDefault = attrDefault === true || attrDefault === '1' || attrDefault === 'true';
 			} else if (arg.type === 'number') {
-				attrType = 'number';
-				attrDefault = attrDefault !== '' ? Number(attrDefault) : undefined;
+				attrType = 'string';
+				attrDefault = attrDefault !== '' && attrDefault !== undefined ? String(attrDefault) : '';
 			} else if (arg.type === 'hidden') {
 				if (arg.hidden_type === 'number') {
-					attrType = 'number';
-					attrDefault = arg.default !== undefined ? Number(arg.default) : undefined;
+					attrType = 'string';
+					attrDefault = arg.default !== undefined && arg.default !== '' ? String(arg.default) : '';
 				} else if (arg.hidden_type === 'object') {
 					attrType = 'object';
 					attrDefault = arg.default || {};

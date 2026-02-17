@@ -106,9 +106,6 @@ trait WP_Super_Duper_Gutenberg_Block {
         $arguments = $this->get_arguments();
         $arguments = self::parse_block_components( $arguments );
 
-//		print_r($arguments);exit;
-
-
         $config = [
                 'name'        => $block_name,
                 'base_id'     => $this->id_base,
@@ -203,6 +200,9 @@ trait WP_Super_Duper_Gutenberg_Block {
                         $new_args['element_require'] = $arg['element_require'];
                     }
                     $arguments[$key] = $new_args;
+                }else{
+                    // just make sure the name is set from the key
+                    $arguments[$key]['name'] = $arg['name'] ?? $key;
                 }
             }
         }
