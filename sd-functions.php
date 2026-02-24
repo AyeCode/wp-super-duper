@@ -1098,130 +1098,155 @@ function sd_get_text_justify_input( $type = 'text_justify', $overwrite = array()
 }
 
 /**
- * Get the AUI colors.
+ * Modern approach: Accepts an array of types to include.
+ * Returns an array grouped by category for use in Select2 or WP Block controls.
  *
- * @param $include_branding
- * @param $include_outlines
- * @param $outline_button_only_text
+ * Usage: sd_get_aui_colors( ['core', 'subtle', 'outline'] );
+ *
+ * @param array $types   Array of types to include: 'core', 'subtle', 'emphasis', 'outline'.
+ * @param bool  $flatten If true, returns a flat array (key => label) instead of optgroups.
  *
  * @return array
  */
+function sd_get_aui_colors( $types = array(), $flatten = false ) {
+	// Default to core colors if empty
+	if ( empty( $types ) ) {
+		$types = array( 'core' );
+	}
+
+	$grouped_colors = array();
+
+	// 1. Core Colors (Standard Backgrounds)
+	if ( in_array( 'core', $types ) ) {
+		$grouped_colors[ __( 'Standard Colors', 'ayecode-connect' ) ] = array(
+			'primary'        => __( 'Primary', 'ayecode-connect' ),
+			'secondary'      => __( 'Secondary', 'ayecode-connect' ),
+			'success'        => __( 'Success', 'ayecode-connect' ),
+			'danger'         => __( 'Danger', 'ayecode-connect' ),
+			'warning'        => __( 'Warning', 'ayecode-connect' ),
+			'info'           => __( 'Info', 'ayecode-connect' ),
+			'light'          => __( 'Light', 'ayecode-connect' ),
+			'dark'           => __( 'Dark', 'ayecode-connect' ),
+			'black'          => __( 'Black', 'ayecode-connect' ),
+			'white'          => __( 'White', 'ayecode-connect' ),
+
+		);
+	}
+
+	// 2. Subtle Colors (Replaces Translucent)
+	if ( in_array( 'subtle', $types ) ) {
+		$grouped_colors[ __( 'Subtle Colors - adapts to dark mode', 'ayecode-connect' ) ] = array(
+			'primary-subtle'   => __( 'Primary Subtle', 'ayecode-connect' ),
+			'secondary-subtle' => __( 'Secondary Subtle', 'ayecode-connect' ),
+			'success-subtle'   => __( 'Success Subtle', 'ayecode-connect' ),
+			'danger-subtle'    => __( 'Danger Subtle', 'ayecode-connect' ),
+			'warning-subtle'   => __( 'Warning Subtle', 'ayecode-connect' ),
+			'info-subtle'      => __( 'Info Subtle', 'ayecode-connect' ),
+			'light-subtle'     => __( 'Light Subtle', 'ayecode-connect' ),
+			'dark-subtle'      => __( 'Dark Subtle', 'ayecode-connect' ),
+			'body-secondary' => __( 'Body Secondary', 'ayecode-connect' ),
+			'body-tertiary'  => __( 'Body Tertiary', 'ayecode-connect' ),
+			'body'           => __( 'Body', 'ayecode-connect' ),
+		);
+	}
+
+	// 3. Emphasis (Text Colors)
+	if ( in_array( 'emphasis', $types ) ) {
+		$grouped_colors[ __( 'Emphasis - adapts to dark mode', 'ayecode-connect' ) ] = array(
+			'primary-emphasis'   => __( 'Primary Emphasis', 'ayecode-connect' ),
+			'secondary-emphasis' => __( 'Secondary Emphasis', 'ayecode-connect' ),
+			'success-emphasis'   => __( 'Success Emphasis', 'ayecode-connect' ),
+			'danger-emphasis'    => __( 'Danger Emphasis', 'ayecode-connect' ),
+			'warning-emphasis'   => __( 'Warning Emphasis', 'ayecode-connect' ),
+			'info-emphasis'      => __( 'Info Emphasis', 'ayecode-connect' ),
+			'light-emphasis'     => __( 'Light Emphasis', 'ayecode-connect' ),
+			'dark-emphasis'      => __( 'Dark Emphasis', 'ayecode-connect' ),
+			'body-secondary' => __( 'Body Secondary', 'ayecode-connect' ),
+			'body-tertiary'  => __( 'Body Tertiary', 'ayecode-connect' ),
+			'body'           => __( 'Body', 'ayecode-connect' ),
+		);
+	}
+
+	// 4. Outlines
+	if ( in_array( 'outline', $types ) ) {
+		// Check if we need the button-only suffix (Legacy support)
+		$btn_suffix = in_array( 'outline_btn_text', $types );
+
+		$group_label = __( 'Outlines', 'ayecode-connect' );
+		if ( $btn_suffix ) {
+			// If button text is requested, we use slightly different labels
+			$grouped_colors[ $group_label ] = array(
+				'outline-primary'   => __( 'Primary outline (button only)', 'ayecode-connect' ),
+				'outline-secondary' => __( 'Secondary outline (button only)', 'ayecode-connect' ),
+				'outline-success'   => __( 'Success outline (button only)', 'ayecode-connect' ),
+				'outline-danger'    => __( 'Danger outline (button only)', 'ayecode-connect' ),
+				'outline-warning'   => __( 'Warning outline (button only)', 'ayecode-connect' ),
+				'outline-info'      => __( 'Info outline (button only)', 'ayecode-connect' ),
+				'outline-light'     => __( 'Light outline (button only)', 'ayecode-connect' ),
+				'outline-dark'      => __( 'Dark outline (button only)', 'ayecode-connect' ),
+				'outline-white'     => __( 'White outline (button only)', 'ayecode-connect' ),
+			);
+		} else {
+			$grouped_colors[ $group_label ] = array(
+				'outline-primary'   => __( 'Primary outline', 'ayecode-connect' ),
+				'outline-secondary' => __( 'Secondary outline', 'ayecode-connect' ),
+				'outline-success'   => __( 'Success outline', 'ayecode-connect' ),
+				'outline-danger'    => __( 'Danger outline', 'ayecode-connect' ),
+				'outline-warning'   => __( 'Warning outline', 'ayecode-connect' ),
+				'outline-info'      => __( 'Info outline', 'ayecode-connect' ),
+				'outline-light'     => __( 'Light outline', 'ayecode-connect' ),
+				'outline-dark'      => __( 'Dark outline', 'ayecode-connect' ),
+				'outline-white'     => __( 'White outline', 'ayecode-connect' ),
+			);
+		}
+	}
+
+	// Flatten logic if requested (for legacy wrapper or specific UI needs)
+	if ( $flatten ) {
+		$flat_colors = array();
+		foreach ( $grouped_colors as $group ) {
+			foreach ( $group as $key => $label ) {
+				$flat_colors[ $key ] = $label;
+			}
+		}
+		return apply_filters( 'sd_get_aui_colors_flat', $flat_colors, $types );
+	}
+
+	return apply_filters( 'sd_get_aui_colors', $grouped_colors, $types );
+}
+
+/**
+ * LEGACY WRAPPER
+ * Keeps the old function signature alive but routes logic to the new one.
+ * Always returns a flat array to maintain backward compatibility.
+ * @deprecated 5.3.0 Use sd_get_aui_colors() instead
+ */
 function sd_aui_colors( $include_branding = false, $include_outlines = false, $outline_button_only_text = false, $include_translucent = false, $include_subtle = false, $include_emphasis = false ) {
-	global $aui_ver;
 
-	$theme_colors = array();
+	// Map the old booleans to the new 'types' array
+	$types = array( 'core' );
 
-	$theme_colors['primary']   = __( 'Primary', 'ayecode-connect' );
-	$theme_colors['secondary'] = __( 'Secondary', 'ayecode-connect' );
-	$theme_colors['success']   = __( 'Success', 'ayecode-connect' );
-	$theme_colors['danger']    = __( 'Danger', 'ayecode-connect' );
-	$theme_colors['warning']   = __( 'Warning', 'ayecode-connect' );
-	$theme_colors['info']      = __( 'Info', 'ayecode-connect' );
-	$theme_colors['light']     = __( 'Light', 'ayecode-connect' );
-	$theme_colors['dark']      = __( 'Dark', 'ayecode-connect' );
-	$theme_colors['black']     = __( 'Black', 'ayecode-connect' );
-	$theme_colors['white']     = __( 'White', 'ayecode-connect' );
-
-	if ( $aui_ver < 5.3 ) {
-		// we remove these in 5.3 as custom ones can easily be added
-		$theme_colors['purple']    = __( 'Purple', 'ayecode-connect' );
-		$theme_colors['salmon']    = __( 'Salmon', 'ayecode-connect' );
-		$theme_colors['cyan']      = __( 'Cyan', 'ayecode-connect' );
-		$theme_colors['gray']      = __( 'Gray', 'ayecode-connect' );
-		$theme_colors['muted']     = __( 'Muted', 'ayecode-connect' );
-		$theme_colors['gray-dark'] = __( 'Gray dark', 'ayecode-connect' );
-		$theme_colors['indigo']    = __( 'Indigo', 'ayecode-connect' );
-		$theme_colors['orange']    = __( 'Orange', 'ayecode-connect' );
-	}else{
-		$theme_colors['body-secondary']      = __( 'Body Secondary', 'ayecode-connect' );
-		$theme_colors['body-tertiary']      = __( 'Body Tertiary', 'ayecode-connect' );
-	}
-
-	$theme_colors['body']      = __( 'Body', 'ayecode-connect' );
-
-
-
-	// for bg and borders
-	if ( $include_subtle && $aui_ver > 5 ) {
-		$theme_colors['primary-subtle']   = __( 'Primary Subtle', 'ayecode-connect' );
-		$theme_colors['secondary-subtle'] = __( 'Secondary Subtle', 'ayecode-connect' );
-		$theme_colors['success-subtle']   = __( 'Success Subtle', 'ayecode-connect' );
-		$theme_colors['danger-subtle']    = __( 'Danger Subtle', 'ayecode-connect' );
-		$theme_colors['warning-subtle']   = __( 'Warning Subtle', 'ayecode-connect' );
-		$theme_colors['info-subtle']      = __( 'Info Subtle', 'ayecode-connect' );
-		$theme_colors['light-subtle']     = __( 'Light Subtle', 'ayecode-connect' );
-		$theme_colors['dark-subtle']      = __( 'Dark Subtle', 'ayecode-connect' );
-	}
-
-	// for texts
-	if ($include_emphasis) {
-		$theme_colors['primary-emphasis']   = __( 'Primary Emphasis', 'ayecode-connect' );
-		$theme_colors['secondary-emphasis'] = __( 'Secondary Emphasis', 'ayecode-connect' );
-		$theme_colors['success-emphasis']   = __( 'Success Emphasis', 'ayecode-connect' );
-		$theme_colors['danger-emphasis']    = __( 'Danger Emphasis', 'ayecode-connect' );
-		$theme_colors['warning-emphasis']   = __( 'Warning Emphasis', 'ayecode-connect' );
-		$theme_colors['info-emphasis']      = __( 'Info Emphasis', 'ayecode-connect' );
-		$theme_colors['light-emphasis']     = __( 'Light Emphasis', 'ayecode-connect' );
-		$theme_colors['dark-emphasis']      = __( 'Dark Emphasis', 'ayecode-connect' );
-		$theme_colors['purple-emphasis']    = __( 'Purple Emphasis', 'ayecode-connect' );
-		$theme_colors['salmon-emphasis']    = __( 'Salmon Emphasis', 'ayecode-connect' );
-		$theme_colors['cyan-emphasis']      = __( 'Cyan Emphasis', 'ayecode-connect' );
-		$theme_colors['gray-emphasis']      = __( 'Gray Emphasis', 'ayecode-connect' );
-		$theme_colors['muted-emphasis']     = __( 'Muted Emphasis', 'ayecode-connect' );
-		$theme_colors['gray-dark-emphasis'] = __( 'Gray dark Emphasis', 'ayecode-connect' );
-		$theme_colors['indigo-emphasis']    = __( 'Indigo Emphasis', 'ayecode-connect' );
-		$theme_colors['orange-emphasis']    = __( 'Orange Emphasis', 'ayecode-connect' );
-	}
+	// Branding is dropped in >= 5.3, so we ignore $include_branding
 
 	if ( $include_outlines ) {
-		$button_only                       = $outline_button_only_text ? ' ' . __( '(button only)', 'ayecode-connect' ) : '';
-		$theme_colors['outline-primary']   = __( 'Primary outline', 'ayecode-connect' ) . $button_only;
-		$theme_colors['outline-secondary'] = __( 'Secondary outline', 'ayecode-connect' ) . $button_only;
-		$theme_colors['outline-success']   = __( 'Success outline', 'ayecode-connect' ) . $button_only;
-		$theme_colors['outline-danger']    = __( 'Danger outline', 'ayecode-connect' ) . $button_only;
-		$theme_colors['outline-warning']   = __( 'Warning outline', 'ayecode-connect' ) . $button_only;
-		$theme_colors['outline-info']      = __( 'Info outline', 'ayecode-connect' ) . $button_only;
-		$theme_colors['outline-light']     = __( 'Light outline', 'ayecode-connect' ) . $button_only;
-		$theme_colors['outline-dark']      = __( 'Dark outline', 'ayecode-connect' ) . $button_only;
-		$theme_colors['outline-white']     = __( 'White outline', 'ayecode-connect' ) . $button_only;
-
-		if ( $aui_ver <= 5 ) {
-			$theme_colors['outline-purple']    = __( 'Purple outline', 'ayecode-connect' ) . $button_only;
-			$theme_colors['outline-salmon']    = __( 'Salmon outline', 'ayecode-connect' ) . $button_only;
-			$theme_colors['outline-cyan']      = __( 'Cyan outline', 'ayecode-connect' ) . $button_only;
-			$theme_colors['outline-gray']      = __( 'Gray outline', 'ayecode-connect' ) . $button_only;
-			$theme_colors['outline-gray-dark'] = __( 'Gray dark outline', 'ayecode-connect' ) . $button_only;
-			$theme_colors['outline-indigo']    = __( 'Indigo outline', 'ayecode-connect' ) . $button_only;
-			$theme_colors['outline-orange']    = __( 'Orange outline', 'ayecode-connect' ) . $button_only;
-		}
-
+		$types[] = 'outline';
 	}
 
-	if ( $include_branding && $aui_ver <= 5) {
-		$theme_colors = $theme_colors + sd_aui_branding_colors();
+	if ( $outline_button_only_text ) {
+		$types[] = 'outline_btn_text';
 	}
 
-	if ( $include_translucent && $aui_ver <= 5) {
-		$button_only                           = $outline_button_only_text ? ' ' . __( '(button only)', 'ayecode-connect' ) : '';
-		$theme_colors['translucent-primary']   = __( 'Primary translucent', 'ayecode-connect' ) . $button_only;
-		$theme_colors['translucent-secondary'] = __( 'Secondary translucent', 'ayecode-connect' ) . $button_only;
-		$theme_colors['translucent-success']   = __( 'Success translucent', 'ayecode-connect' ) . $button_only;
-		$theme_colors['translucent-danger']    = __( 'Danger translucent', 'ayecode-connect' ) . $button_only;
-		$theme_colors['translucent-warning']   = __( 'Warning translucent', 'ayecode-connect' ) . $button_only;
-		$theme_colors['translucent-info']      = __( 'Info translucent', 'ayecode-connect' ) . $button_only;
-		$theme_colors['translucent-light']     = __( 'Light translucent', 'ayecode-connect' ) . $button_only;
-		$theme_colors['translucent-dark']      = __( 'Dark translucent', 'ayecode-connect' ) . $button_only;
-		$theme_colors['translucent-white']     = __( 'White translucent', 'ayecode-connect' ) . $button_only;
-		$theme_colors['translucent-purple']    = __( 'Purple translucent', 'ayecode-connect' ) . $button_only;
-		$theme_colors['translucent-salmon']    = __( 'Salmon translucent', 'ayecode-connect' ) . $button_only;
-		$theme_colors['translucent-cyan']      = __( 'Cyan translucent', 'ayecode-connect' ) . $button_only;
-		$theme_colors['translucent-gray']      = __( 'Gray translucent', 'ayecode-connect' ) . $button_only;
-		$theme_colors['translucent-gray-dark'] = __( 'Gray dark translucent', 'ayecode-connect' ) . $button_only;
-		$theme_colors['translucent-indigo']    = __( 'Indigo translucent', 'ayecode-connect' ) . $button_only;
-		$theme_colors['translucent-orange']    = __( 'Orange translucent', 'ayecode-connect' ) . $button_only;
+	// Map both old translucent and new subtle to the 'subtle' group
+	if ( $include_subtle || $include_translucent ) {
+		$types[] = 'subtle';
 	}
 
-	return apply_filters( 'sd_aui_colors', $theme_colors, $include_outlines, $include_branding );
+	if ( $include_emphasis ) {
+		$types[] = 'emphasis';
+	}
+
+	// Important: Pass true for $flatten because the old function returned a flat array
+	return sd_get_aui_colors( $types, true );
 }
 
 /**
@@ -3516,7 +3541,7 @@ function sd_get_visibility_conditions_input( $type = 'visibility_conditions', $o
 		'button_title' => __( 'Set Block Visibility', 'ayecode-connect' ),
 		'default'      => '',
 		'desc_tip'     => true,
-		'group'        => __( 'Visibility Conditions', 'ayecode-connect' ),
+		'group'        => 'visibility-conditions',//__( 'Visibility Conditions', 'ayecode-connect' ),
 	);
 
 	$input = wp_parse_args( $overwrite, $defaults );

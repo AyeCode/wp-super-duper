@@ -198,12 +198,44 @@ window.sdBlockInputComponents = window.sdBlockInputComponents || {};
 		switch (type) {
 			case 'select':
 				let selectOptions = [];
+				let hasOptgroups = false;
+				let selectChildren = null;
+
 				if (options && typeof options === 'object') {
-					selectOptions = Object.keys(options).map(key => ({ label: options[key], value: key }));
+					// Check if any option value is an object (optgroup) - PHP arrays become objects in JS
+					hasOptgroups = Object.keys(options).some(key =>
+						typeof options[key] === 'object' && options[key] !== null && !Array.isArray(options[key])
+					);
+
+					if (hasOptgroups) {
+						// Build children with optgroups for SelectControl
+						selectChildren = Object.keys(options).map((key, index) => {
+							if (typeof options[key] === 'object' && options[key] !== null && !Array.isArray(options[key])) {
+								// This is an optgroup
+								const optgroupChildren = Object.keys(options[key]).map((subKey, subIndex) =>
+									el('option', { key: `${index}-${subIndex}`, value: subKey }, options[key][subKey])
+								);
+								return el('optgroup', { key: index, label: key }, optgroupChildren);
+							} else {
+								// Regular option
+								return el('option', { key: index, value: key }, options[key]);
+							}
+						});
+					} else {
+						// Regular flat options
+						selectOptions = Object.keys(options).map(key => ({ label: options[key], value: key }));
+					}
 				}
+
 				return el('div', { key: name, className: 'sd-inline-control', style: {  display: 'flex', flexDirection: 'column', flex: 1 } },
 					customIcon,
-					el(SelectControl, { label: labelText, help: controlHelp, value: String(value || ''), options: selectOptions, onChange: (val) => setAttributes({ [name]: val }) })
+					el(SelectControl, {
+						label: labelText,
+						help: controlHelp,
+						value: String(value || ''),
+						options: hasOptgroups ? undefined : selectOptions,
+						onChange: (val) => setAttributes({ [name]: val })
+					}, selectChildren)
 				);
 			default:
 				return el('div', { key: name, className: 'sd-inline-control', style: {  display: 'flex', flexDirection: 'column', flex: 1 } },
@@ -589,20 +621,45 @@ window.sdBlockInputComponents = window.sdBlockInputComponents || {};
 
 			case 'select':
 				let selectOptions = [];
-				if (options && typeof options === 'object') {
-					selectOptions = Object.keys(options).map(key => ({ label: options[key], value: key }));
-				}
+				let hasOptgroups = false;
+				let selectChildren = null;
 				const isMultiple = rest.multiple || false;
 				const controlValue = value !== undefined && value !== null ? value : (isMultiple ? [] : '');
+
+				if (options && typeof options === 'object') {
+					// Check if any option value is an object (optgroup) - PHP arrays become objects in JS
+					hasOptgroups = Object.keys(options).some(key =>
+						typeof options[key] === 'object' && options[key] !== null && !Array.isArray(options[key])
+					);
+
+					if (hasOptgroups) {
+						// Build children with optgroups for SelectControl
+						selectChildren = Object.keys(options).map((key, index) => {
+							if (typeof options[key] === 'object' && options[key] !== null && !Array.isArray(options[key])) {
+								// This is an optgroup
+								const optgroupChildren = Object.keys(options[key]).map((subKey, subIndex) =>
+									el('option', { key: `${index}-${subIndex}`, value: subKey }, options[key][subKey])
+								);
+								return el('optgroup', { key: index, label: key }, optgroupChildren);
+							} else {
+								// Regular option
+								return el('option', { key: index, value: key }, options[key]);
+							}
+						});
+					} else {
+						// Regular flat options
+						selectOptions = Object.keys(options).map(key => ({ label: options[key], value: key }));
+					}
+				}
 
 				return el(BaseControl, { key: name, label: labelWithIcon, id: name },
 					el(SelectControl, {
 						value: controlValue,
-						options: selectOptions,
+						options: hasOptgroups ? undefined : selectOptions,
 						onChange: (val) => setAttributes({ [name]: val }),
 						multiple: isMultiple,
 						...rest
-					}),
+					}, selectChildren),
 					controlHelp && el('p', { className: HELP_CLASS, dangerouslySetInnerHTML: { __html: controlHelp } })
 				);
 			case 'checkbox':

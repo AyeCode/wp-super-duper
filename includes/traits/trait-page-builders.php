@@ -92,6 +92,23 @@ trait WP_Super_Duper_Page_Builders {
 					$param['value'] = array( '0' => __( "No", 'ayecode-connect' ), '1' => __( "Yes", 'ayecode-connect' ) );
 				} elseif ( $param['type'] == 'select' || $param['type'] == 'multiple_select' ) {
 					$param['value'] = isset( $val['options'] ) ? $val['options'] : array();
+
+					// Flatten optgroups for page builders (they typically don't support optgroups)
+					if ( ! empty( $param['value'] ) ) {
+						$flattened = array();
+						foreach ( $param['value'] as $opt_key => $opt_value ) {
+							if ( is_array( $opt_value ) ) {
+								// This is an optgroup - flatten it
+								foreach ( $opt_value as $sub_key => $sub_value ) {
+									$flattened[ $sub_key ] = $sub_value;
+								}
+							} else {
+								// Regular option
+								$flattened[ $opt_key ] = $opt_value;
+							}
+						}
+						$param['value'] = $flattened;
+					}
 				} else {
 					$param['value'] = isset( $val['default'] ) ? $val['default'] : '';
 				}

@@ -111,12 +111,27 @@ trait WP_Super_Duper_Widget_Form {
 					<?php
 					if ( ! empty( $args['options'] ) ) {
 						foreach ( $args['options'] as $val => $label ) {
-							if ( $multiple ) {
-								$selected = in_array( (string)$val, $current_value, true ) ? 'selected="selected"' : '';
+							// Check if this is an optgroup (value is an array)
+							if ( is_array( $label ) ) {
+								echo '<optgroup label="' . esc_attr( $val ) . '">';
+								foreach ( $label as $sub_val => $sub_label ) {
+									if ( $multiple ) {
+										$selected = in_array( (string)$sub_val, $current_value, true ) ? 'selected="selected"' : '';
+									} else {
+										$selected = selected( $current_value, $sub_val, false );
+									}
+									echo "<option value='" . esc_attr($sub_val) . "' " . $selected . ">" . esc_html($sub_label) . "</option>";
+								}
+								echo '</optgroup>';
 							} else {
-								$selected = selected( $current_value, $val, false );
+								// Regular option (backward compatibility)
+								if ( $multiple ) {
+									$selected = in_array( (string)$val, $current_value, true ) ? 'selected="selected"' : '';
+								} else {
+									$selected = selected( $current_value, $val, false );
+								}
+								echo "<option value='" . esc_attr($val) . "' " . $selected . ">" . esc_html($label) . "</option>";
 							}
-							echo "<option value='" . esc_attr($val) . "' " . $selected . ">" . esc_html($label) . "</option>";
 						}
 					}
 					?>
