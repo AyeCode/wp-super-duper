@@ -18,7 +18,7 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 	/**
 	 * The single version definition for the framework.
 	 */
-	define( 'SUPER_DUPER_VER', '3.0.0-beta' );
+	define( 'SUPER_DUPER_VER', '3.0.1-beta' );
 
 	/**
 	 * The path to the includes directory for easier file loading.
@@ -31,6 +31,7 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 	 * The order is important: helpers and utilities first, then the
 	 * more complex traits that might depend on them.
 	 */
+	require_once SUPER_DUPER_INCLUDES_PATH . 'functions.php';
 	require_once SUPER_DUPER_INCLUDES_PATH . 'helpers.php';
 	require_once SUPER_DUPER_INCLUDES_PATH . 'traits/trait-utilities.php';
 	require_once SUPER_DUPER_INCLUDES_PATH . 'traits/trait-page-builders.php';
