@@ -734,10 +734,14 @@ JS;
                         if ( $new_args['element'] == 'InnerBlocks' ) {
                             echo "\n el( InnerBlocks, {";
                         } elseif ( $new_args['element'] == 'innerBlocksProps' ) {
-                            $element = isset( $new_args['inner_element'] ) ? esc_attr( $new_args['inner_element'] ) : 'div';
+                            if ( isset( $new_args['if_inner_element'] ) ) {
+                                $element = $new_args['if_inner_element'];
+                            } else {
+                                $element = isset( $new_args['inner_element'] ) ? "'" . esc_attr( $new_args['inner_element'] ) . "'" : "'div'";
+                            }
                             //  echo "\n el( 'section', wp.blockEditor.useInnerBlocksProps( blockProps, {";
 //                                echo $save ? "\n el( '$element', wp.blockEditor.useInnerBlocksProps.save( " : "\n el( '$element', wp.blockEditor.useInnerBlocksProps( ";
-                            echo $save ? "\n el( '$element', wp.blockEditor.useInnerBlocksProps.save( " : "\n el( '$element', wp.blockEditor.useInnerBlocksProps( ";
+                            echo $save ? "\n el( $element, wp.blockEditor.useInnerBlocksProps.save( " : "\n el( $element, wp.blockEditor.useInnerBlocksProps( ";
                             echo $save ? "wp.blockEditor.useBlockProps.save( {" : "wp.blockEditor.useBlockProps( {";
                             echo ! empty( $new_args['blockProps'] ) ? $this->block_element( $new_args['blockProps'], $save ) : '';
 

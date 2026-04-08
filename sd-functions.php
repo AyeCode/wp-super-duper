@@ -514,7 +514,8 @@ function sd_get_background_inputs( $type = 'bg', $overwrite = array(), $overwrit
 				'type'            => 'gradient',
 				'title'           => __( 'Custom gradient', 'ayecode-connect' ),
 				'placeholder'     => '',
-				'default'         => 'linear-gradient(135deg,rgba(6,147,227,1) 0%,rgb(155,81,224) 100%)',
+				'default'         => '',
+//				'default'         => 'linear-gradient(135deg,rgba(6,147,227,1) 0%,rgb(155,81,224) 100%)',
 				'desc_tip'        => true,
 				'group'           => __( 'Background', 'ayecode-connect' ),
 				'element_require' => '[%' . $type . '%]=="custom-gradient"',
@@ -2610,6 +2611,42 @@ function sd_get_title_tag_input( $overwrite = array() ){
 		'desc_tip' => true,
 		'advanced' => false,
 		'group'     => 'title',
+	);
+
+
+	$input = wp_parse_args( $overwrite, $defaults );
+
+
+	return $input;
+}
+
+/**
+ * A helper function for title tag inputs.
+ *
+ * @param string $type
+ * @param array $overwrite
+ *
+ * @return array
+ */
+function sd_get_html_tag_input( $overwrite = array() ){
+
+	$defaults = array(
+		'title' => __('HTML Element', 'geodirectory'),
+		'desc' => __('The <div> element should only be used if the block is a design element with no semantic meaning.', 'geodirectory'),
+		'type' => 'select',
+		'options'   =>  array(
+			"" => __("Default (<div>)","geodirectory"),
+			"header" => "<header>",
+			"main" => "<main>",
+			"section" => "<section>",
+			"article" => "<article>",
+			"aside" => "<aside>",
+			"footer" => "<footer>",
+		),
+		'default'  => '',
+		'desc_tip' => true,
+		'advanced' => false,
+		'group'     => 'advanced',
 	);
 
 

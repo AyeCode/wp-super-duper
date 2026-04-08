@@ -16,6 +16,8 @@ window.sdBlockEditComponents = window.sdBlockEditComponents || {};
 window.sdBlockSaveComponents = window.sdBlockSaveComponents || {};
 window.sdBlockInputComponents = window.sdBlockInputComponents || {};
 
+// Global cache for dependent field options to prevent duplicate API calls
+window.sdDependentFieldCache = window.sdDependentFieldCache || {};
 
 (function(wp) { // MODIFICATION: Removed jQuery ($) from the function parameters.
 	if (!wp || !wp.blocks || !wp.element || !wp.blockEditor || !wp.components) {
@@ -37,6 +39,133 @@ window.sdBlockInputComponents = window.sdBlockInputComponents || {};
 	const { registerBlockType, createBlock } = blocks;
 	const { InspectorControls, BlockControls, RichText, useBlockProps, MediaUpload, MediaUploadCheck, InnerBlocks } = blockEditor;
 	const { PanelBody, TabPanel, TextControl, InputControl, TextareaControl, SelectControl, RangeControl, CheckboxControl, ToggleControl, Button, ColorPicker, Notice, BaseControl, ResponsiveWrapper, ToolbarGroup, ToolbarButton, FocalPointPicker, GradientPicker } = components;
+
+	/**
+	 * Utility Functions for Dependent Fields
+	 */
+
+	/**
+	 * Resolves a path template by replacing {field} placeholders with actual attribute values
+	 * @param {string} template - The path template with placeholders (e.g., '/wp/v2/{post_type}/categories')
+	 * @param {Object} attributes - The block attributes
+	 * @returns {string} - The resolved path
+	 */
+	const resolvePath = (template, attributes) => {
+		if (!template || typeof template !== 'string') {
+			return template;
+		}
+		return template.replace(/\{(\w+)\}/g, (match, fieldName) => {
+			const value = attributes[fieldName];
+			return value !== undefined && value !== null ? value : '';
+		});
+	};
+
+	/**
+	 * Maps REST API response data to select options format
+	 * @param {Array} data - The API response data
+	 * @param {string} format - The mapping format ('default', 'custom')
+	 * @returns {Array} - Array of {label, value} objects
+	 */
+	const mapRestResponse = (data, format = 'default') => {
+		if (!Array.isArray(data)) {
+			return [];
+		}
+
+		if (format === 'default') {
+			// Handle WordPress REST API standard formats
+			return data.map(item => {
+				// For taxonomies (categories, tags, etc.)
+				if (item.name && item.id) {
+					return { label: item.name, value: item.id };
+				}
+				// For posts with rendered title
+				if (item.title && item.title.rendered) {
+					return { label: item.title.rendered, value: item.id };
+				}
+				// Fallback
+				return { label: item.name || item.title || item.id, value: item.id };
+			});
+		}
+
+		return data;
+	};
+
+	/**
+	 * Fetches dependent field options based on configuration
+	 * @param {Object} config - The depends_on configuration
+	 * @param {*} parentValue - The value of the parent field
+	 * @param {Object} attributes - All block attributes
+	 * @param {Function} setOptions - State setter for options
+	 * @param {Function} setLoading - State setter for loading status
+	 * @returns {Promise} - Resolves when fetch is complete
+	 */
+	const fetchDependentOptions = async (config, parentValue, attributes, setOptions, setLoading) => {
+		if (!config || !config.fetch_type) {
+			return;
+		}
+
+		// If parent value is empty, clear options
+		if (!parentValue || parentValue === '' || parentValue === '0') {
+			setOptions([]);
+			return;
+		}
+
+		const { fetch_type, rest_path, cache_key, map_response, default_option } = config;
+
+		if (fetch_type === 'rest' && rest_path) {
+			const resolvedPath = resolvePath(rest_path, attributes);
+			const cacheKey = cache_key ? `${cache_key}:${parentValue}` : `rest:${resolvedPath}`;
+			const fetchingKey = `__fetching__${cacheKey}`;
+
+			// Check cache first
+			if (window.sdDependentFieldCache[cacheKey]) {
+				setOptions(window.sdDependentFieldCache[cacheKey]);
+				setLoading(false);
+				return;
+			}
+
+			// Check if already fetching (prevents race condition double-fetch)
+			if (window.sdDependentFieldCache[fetchingKey]) {
+				return;
+			}
+
+			// Mark as fetching
+			window.sdDependentFieldCache[fetchingKey] = true;
+
+			// Set loading state
+			setLoading(true);
+
+			try {
+				// Fetch from REST API
+				const response = await wp.apiFetch({ path: resolvedPath });
+
+				// Map response to options format
+				const mappedOptions = mapRestResponse(response, map_response || 'default');
+
+				// Add default option if configured
+				const finalOptions = default_option
+					? [default_option, ...mappedOptions]
+					: mappedOptions;
+
+				// Cache the result
+				window.sdDependentFieldCache[cacheKey] = finalOptions;
+
+				// Clear fetching flag
+				delete window.sdDependentFieldCache[fetchingKey];
+
+				// Update state
+				setOptions(finalOptions);
+			} catch (error) {
+				console.error('Super Duper: Error fetching dependent field options:', error);
+				setOptions([{ label: 'Error loading options', value: '' }]);
+
+				// Clear fetching flag on error too
+				delete window.sdDependentFieldCache[fetchingKey];
+			} finally {
+				setLoading(false);
+			}
+		}
+	};
 
 	const DeviceSwitcherIcon = ({ isInlineRow }) => {
 		const [isPopoverVisible, setPopoverVisible] = useState(false);
@@ -245,7 +374,7 @@ window.sdBlockInputComponents = window.sdBlockInputComponents || {};
 		}
 	}
 
-	function renderControl(config, props, deviceType) {
+	function renderControl(config, props, deviceType, dependentFieldOptions = {}, dependentFieldLoading = {}) {
 		if (config.device_type && config.device_type !== deviceType) {
 			return null;
 		}
@@ -626,30 +755,82 @@ window.sdBlockInputComponents = window.sdBlockInputComponents || {};
 				const isMultiple = rest.multiple || false;
 				const controlValue = value !== undefined && value !== null ? value : (isMultiple ? [] : '');
 
-				if (options && typeof options === 'object') {
-					// Check if any option value is an object (optgroup) - PHP arrays become objects in JS
-					hasOptgroups = Object.keys(options).some(key =>
-						typeof options[key] === 'object' && options[key] !== null && !Array.isArray(options[key])
-					);
+				// Check if this field is dependent on another field
+				const isDependentField = config.depends_on && config.depends_on.attribute;
+				const isLoadingDependentOptions = isDependentField && dependentFieldLoading[name];
+				let dynamicOptions = isDependentField ? dependentFieldOptions[name] : undefined;
 
-					if (hasOptgroups) {
-						// Build children with optgroups for SelectControl
-						selectChildren = Object.keys(options).map((key, index) => {
-							if (typeof options[key] === 'object' && options[key] !== null && !Array.isArray(options[key])) {
-								// This is an optgroup
-								const optgroupChildren = Object.keys(options[key]).map((subKey, subIndex) =>
-									el('option', { key: `${index}-${subIndex}`, value: subKey }, options[key][subKey])
-								);
-								return el('optgroup', { key: index, label: key }, optgroupChildren);
-							} else {
-								// Regular option
-								return el('option', { key: index, value: key }, options[key]);
-							}
-						});
-					} else {
-						// Regular flat options
-						selectOptions = Object.keys(options).map(key => ({ label: options[key], value: key }));
+				// If state is empty but cache has data, use cache directly
+				if (isDependentField && !dynamicOptions && config.depends_on) {
+					const parentValue = attributes[config.depends_on.attribute];
+					if (parentValue && parentValue !== '' && parentValue !== '0') {
+						const { rest_path, cache_key } = config.depends_on;
+						const resolvedPath = resolvePath(rest_path, attributes);
+						const cacheKey = cache_key ? `${cache_key}:${parentValue}` : `rest:${resolvedPath}`;
+
+						if (window.sdDependentFieldCache[cacheKey]) {
+							dynamicOptions = window.sdDependentFieldCache[cacheKey];
+						}
 					}
+				}
+
+				// Use dynamic options if available, otherwise fall back to static options
+				const optionsToUse = isDependentField && dynamicOptions ? dynamicOptions : options;
+
+				if (optionsToUse && typeof optionsToUse === 'object') {
+					// Check if it's an array (from API) or object (from PHP config)
+					if (Array.isArray(optionsToUse)) {
+						// Already in correct format from API
+						selectOptions = optionsToUse;
+					} else {
+						// Check if any option value is an object (optgroup) - PHP arrays become objects in JS
+						hasOptgroups = Object.keys(optionsToUse).some(key =>
+							typeof optionsToUse[key] === 'object' && optionsToUse[key] !== null && !Array.isArray(optionsToUse[key])
+						);
+
+						if (hasOptgroups) {
+							// Build children with optgroups for SelectControl
+							selectChildren = Object.keys(optionsToUse).map((key, index) => {
+								if (typeof optionsToUse[key] === 'object' && optionsToUse[key] !== null && !Array.isArray(optionsToUse[key])) {
+									// This is an optgroup
+									const optgroupChildren = Object.keys(optionsToUse[key]).map((subKey, subIndex) =>
+										el('option', { key: `${index}-${subIndex}`, value: subKey }, optionsToUse[key][subKey])
+									);
+									return el('optgroup', { key: index, label: key }, optgroupChildren);
+								} else {
+									// Regular option
+									return el('option', { key: index, value: key }, optionsToUse[key]);
+								}
+							});
+						} else {
+							// Regular flat options
+							selectOptions = Object.keys(optionsToUse).map(key => ({ label: optionsToUse[key], value: key }));
+						}
+					}
+				}
+
+				// Handle dependent field states
+				if (isDependentField) {
+					const parentAttribute = config.depends_on.attribute;
+					const parentValue = attributes[parentAttribute];
+
+					// If parent is empty, show placeholder
+					if (!parentValue || parentValue === '' || parentValue === '0') {
+						selectOptions = [{ label: `Please select ${parentAttribute} first`, value: '' }];
+					}
+					// If loading, show loading state
+					else if (isLoadingDependentOptions) {
+						selectOptions = [{ label: 'Loading options...', value: '' }];
+					}
+					// If options haven't been fetched yet (undefined), show loading
+					else if (dynamicOptions === undefined) {
+						selectOptions = [{ label: 'Loading options...', value: '' }];
+					}
+					// If options were fetched but empty array, show no options message
+					else if (Array.isArray(dynamicOptions) && dynamicOptions.length === 0) {
+						selectOptions = [{ label: 'No options available', value: '' }];
+					}
+					// If we got here, dynamicOptions should have been used above at line 748
 				}
 
 				return el(BaseControl, { key: name, label: labelWithIcon, id: name },
@@ -658,6 +839,11 @@ window.sdBlockInputComponents = window.sdBlockInputComponents || {};
 						options: hasOptgroups ? undefined : selectOptions,
 						onChange: (val) => setAttributes({ [name]: val }),
 						multiple: isMultiple,
+						disabled: isDependentField && (
+							isLoadingDependentOptions ||
+							dynamicOptions === undefined ||
+							(Array.isArray(dynamicOptions) && dynamicOptions.length === 0)
+						),
 						...rest
 					}, selectChildren),
 					controlHelp && el('p', { className: HELP_CLASS, dangerouslySetInnerHTML: { __html: controlHelp } })
@@ -875,8 +1061,8 @@ window.sdBlockInputComponents = window.sdBlockInputComponents || {};
 				const { clientId } = props;
 
 				// ✅ Best Practice: Use the useSelect hook
-				const { parentBlocks, childBlocks } = wp.data.useSelect( ( select ) => {
-					const { getBlockParents, getBlocksByClientId, getBlocks } = select( 'core/block-editor' );
+				const { parentBlocks, childBlocks, isSelected } = wp.data.useSelect( ( select ) => {
+					const { getBlockParents, getBlocksByClientId, getBlocks, isBlockSelected } = select( 'core/block-editor' );
 
 					const parentClientIds = getBlockParents( clientId );
 
@@ -885,6 +1071,8 @@ window.sdBlockInputComponents = window.sdBlockInputComponents || {};
 						parentBlocks: getBlocksByClientId( parentClientIds ),
 						// Gets an array of the direct child block objects
 						childBlocks: getBlocks( clientId ),
+						// Check if this block is currently selected
+						isSelected: isBlockSelected( clientId ),
 					};
 				}, [ clientId ] ); // The dependency array ensures this only re-runs when needed
 
@@ -897,6 +1085,35 @@ window.sdBlockInputComponents = window.sdBlockInputComponents || {};
 				const [isVisibilityModalOpen, setVisibilityModalOpen] = useState(false);
 				const [isDynamicDataModalOpen, setDynamicDataModalOpen] = useState(false);
 				const [previewHtml, setPreviewHtml] = useState(attributes.content || 'Loading preview...');
+				const [dependentFieldOptions, setDependentFieldOptions] = useState({});
+				const [dependentFieldLoading, setDependentFieldLoading] = useState({});
+
+				// Initialize dependent field options from cache on mount
+				useEffect(() => {
+					const dependentFields = hydratedArgsConfig.filter(arg => arg.depends_on && arg.depends_on.attribute);
+
+					if (dependentFields.length === 0) return;
+
+					const initialOptions = {};
+					dependentFields.forEach(field => {
+						const { depends_on, name } = field;
+						const parentValue = attributes[depends_on.attribute];
+
+						if (parentValue && parentValue !== '' && parentValue !== '0') {
+							const { rest_path, cache_key } = depends_on;
+							const resolvedPath = resolvePath(rest_path, attributes);
+							const cacheKey = cache_key ? `${cache_key}:${parentValue}` : `rest:${resolvedPath}`;
+
+							if (window.sdDependentFieldCache[cacheKey]) {
+								initialOptions[name] = window.sdDependentFieldCache[cacheKey];
+							}
+						}
+					});
+
+					if (Object.keys(initialOptions).length > 0) {
+						setDependentFieldOptions(initialOptions);
+					}
+				}, []); // Run once on mount
 
 				if (blockOptions.editHook && typeof window.sdBlockFunctions[blockOptions.editHook] === 'function') {
 					const HookToUse = window.sdBlockFunctions[blockOptions.editHook];
@@ -1063,6 +1280,64 @@ window.sdBlockInputComponents = window.sdBlockInputComponents || {};
 					return () => clearTimeout(handler);
 				}, [JSON.stringify(watchedAttributes)]);
 
+				// Dependent fields management - fetch when needed (block selected or initial load with parent value)
+				useEffect(() => {
+					// Find all fields with depends_on configuration
+					const dependentFields = hydratedArgsConfig.filter(arg => arg.depends_on && arg.depends_on.attribute);
+
+					// If no dependent fields, skip
+					if (dependentFields.length === 0) {
+						return;
+					}
+
+					dependentFields.forEach(field => {
+						const { depends_on, name } = field;
+						const parentAttributeName = depends_on.attribute;
+						const parentValue = attributes[parentAttributeName];
+
+						// Create setters for this specific field
+						const setOptions = (options) => {
+							setDependentFieldOptions(prev => ({
+								...prev,
+								[name]: options
+							}));
+						};
+
+						const setLoading = (loading) => {
+							setDependentFieldLoading(prev => ({
+								...prev,
+								[name]: loading
+							}));
+						};
+
+						// Check if we need to fetch
+						const parentHasValue = parentValue && parentValue !== '' && parentValue !== '0';
+
+						if (!parentHasValue) {
+							// Parent is empty, clear options
+							if (dependentFieldOptions[name]) {
+								setOptions([]);
+							}
+							return;
+						}
+
+						// Build cache key to check if data already exists globally
+						const { rest_path, cache_key } = depends_on;
+						const resolvedPath = resolvePath(rest_path, attributes);
+						const cacheKey = cache_key ? `${cache_key}:${parentValue}` : `rest:${resolvedPath}`;
+
+						// Only fetch if cache doesn't have this data yet
+						// This prevents duplicate API calls across multiple block instances
+						if (!window.sdDependentFieldCache[cacheKey]) {
+							fetchDependentOptions(depends_on, parentValue, attributes, setOptions, setLoading);
+						} else {
+							// Cache hit - update state with cached options
+							setOptions(window.sdDependentFieldCache[cacheKey]);
+							setLoading(false);
+						}
+					});
+				}, [isSelected, JSON.stringify(hydratedArgsConfig.filter(a => a.depends_on).map(a => ({ name: a.name, parent: attributes[a.depends_on.attribute] })))]);
+
 				const groupedArgs = useMemo(() => {
 					const groups = {};
 					const slugify = (str) => {
@@ -1124,7 +1399,7 @@ window.sdBlockInputComponents = window.sdBlockInputComponents || {};
 								elements.push(component.renderer(propsWithModal, arg, deviceType));
 							}
 						} else if (!arg.row) {
-							elements.push(renderControl(arg, propsWithModal, deviceType));
+							elements.push(renderControl(arg, propsWithModal, deviceType, dependentFieldOptions, dependentFieldLoading));
 						}
 					});
 					return elements;
