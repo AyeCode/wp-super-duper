@@ -9,7 +9,7 @@ if ( ! defined('SUPER_DUPER_VER' ) ) {
 	/**
 	 * The single version definition for the framework.
 	 */
-	define( 'SUPER_DUPER_VER', '3.0.2-beta' );
+	define( 'SUPER_DUPER_VER', '3.0.3-beta' );
 
 	/**
 	 * The plugin URL definition for the framework.
