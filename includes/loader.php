@@ -16,11 +16,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 if ( ! class_exists( 'WP_Super_Duper' ) ) {
 
 	/**
-	 * The single version definition for the framework.
-	 */
-	define( 'SUPER_DUPER_VER', '3.0.1-beta' );
-
-	/**
 	 * The path to the includes directory for easier file loading.
 	 */
 	define( 'SUPER_DUPER_INCLUDES_PATH', __DIR__ . '/' );
