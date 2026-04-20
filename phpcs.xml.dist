@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<ruleset name="AyeCode Package Coding Standards">
+    <description>WordPress coding standards for AyeCode v3 Composer packages.</description>
+
+    <rule ref="WordPress-Extra" />
+
+    <!-- Scan all PHP files in the project tree -->
+    <arg name="extensions" value="php"/>
+    <file>.</file>
+
+    <!-- Show progress and sniff codes in all reports -->
+    <arg value="ps"/>
+
+    <!-- Directories that are not our code -->
+    <exclude-pattern>*/node_modules/*</exclude-pattern>
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/tests/*</exclude-pattern>
+    <exclude-pattern>*/assets/*</exclude-pattern>
+
+    <!--
+        Overridable templates are view files consumed by host plugins.
+        They are intentionally loose HTML/PHP and should not be sniffed.
+    -->
+    <exclude-pattern>*/templates/*</exclude-pattern>
+
+    <!-- Catch-all index files contain no real logic -->
+    <exclude-pattern>*/index.php</exclude-pattern>
+
+    <!-- Suppress "no code found" warnings -->
+    <rule ref="Internal.NoCodeFound">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+
+    <!--
+        All package classes are PSR-4 (PascalCase filenames in src/).
+        The main package entry file also does not follow WP filename conventions.
+        Disable WP filename rules for the entire package.
+    -->
+    <rule ref="WordPress.Files.FileName.InvalidClassFileName">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="WordPress.Files.FileName.NotHyphenatedLowercase">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+
+    <!-- Minimum supported versions -->
+    <config name="minimum_supported_wp_version" value="5.0" />
+    <config name="testVersion" value="7.4-" />
+
+    <!-- All AyeCode packages share the "ayecode-connect" text domain. -->
+    <rule ref="WordPress.WP.I18n">
+        <properties>
+            <property name="text_domain" type="array" value="ayecode-connect" />
+        </properties>
+    </rule>
+
+</ruleset>

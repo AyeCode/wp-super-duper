@@ -1,0 +1,27 @@
+# AyeCode V3 Unified Editor Configuration
+# strictly enforces baseline formatting before the AI or Linter steps in
+
+root = true
+
+# WordPress Coding Standards baseline
+[*]
+charset = utf-8
+end_of_line = lf
+indent_size = 4
+tab_width = 4
+indent_style = tab
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# WP readme.txt and Markdown rely on trailing spaces for line breaks
+[*.{txt,md}]
+trim_trailing_whitespace = false
+
+# YAML strictly forbids tabs.
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2
+
+# Composer and standard JSON configuration
+[*.json]
+indent_style = space
