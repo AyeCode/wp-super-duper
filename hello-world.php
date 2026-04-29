@@ -10,8 +10,33 @@ class SD_Hello_World extends WP_Super_Duper {
 	 */
 	public function __construct() {
 
+		/*
+		 * MODERN APPROACH — use set_arguments() instead of an 'arguments' key in $options.
+		 *
+		 * Remove (or leave empty) the 'arguments' key below and add a set_arguments() method:
+		 *
+		 *   public function set_arguments(): array {
+		 *       return ( new \AyeCode\SuperDuper\Builder\BlockArguments() )
+		 *           ->add_field( 'after_text', [
+		 *               'title'       => __( 'Text after hello:', 'ayecode-connect' ),
+		 *               'desc'        => __( 'This is the text that will appear after `Hello:`.', 'ayecode-connect' ),
+		 *               'type'        => 'text',
+		 *               'placeholder' => 'World',
+		 *               'desc_tip'    => true,
+		 *               'default'     => 'World',
+		 *               'advanced'    => false,
+		 *           ] )
+		 *           ->add_margins()
+		 *           ->add_padding()
+		 *           ->add_visibility_conditions()
+		 *           ->get();
+		 *   }
+		 *
+		 * CLASSIC APPROACH — pass an 'arguments' array in the constructor options (below).
+		 */
+
 		$options = array(
-			'textdomain'     => 'super-duper',
+			'textdomain'     => 'ayecode-connect',
 			// textdomain of the plugin/theme (used to prefix the Gutenberg block)
 			'block-icon'     => 'fas fa-globe-americas',
 			// Dash icon name for the block: https://developer.wordpress.org/resource/dashicons/#arrow-right

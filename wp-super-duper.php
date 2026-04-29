@@ -1,23 +1,29 @@
 <?php
+/**
+ * Plugin Name: WP Super Duper
+ * Plugin URI: https://ayecode.io/
+ * Description: A WordPress framework to build a widget, shortcode and Gutenberg block all from a single class.
+ * Version: 3.0.4-beta
+ * Author: AyeCode Ltd
+ * Author URI: https://ayecode.io/
+ * License: GPL-3.0-or-later
+ * License URI: https://www.gnu.org/licenses/gpl-3.0.txt
+ * Text Domain: ayecode-connect
+ * Requires at least: 5.0
+ * Requires PHP: 7.4
+ *
+ * @package WP_Super_Duper
+ */
 
-// if this file is called directly, abort.
-if( ! defined( 'ABSPATH' ) ) exit;
-
-// Only load if not loaded already.
-if ( ! defined('SUPER_DUPER_VER' ) ) {
-
-	/**
-	 * The single version definition for the framework.
-	 */
-	define( 'SUPER_DUPER_VER', '3.0.3-beta' );
-
-	/**
-	 * The plugin URL definition for the framework.
-	 */
-	define( 'SUPER_DUPER_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
-
-	// include the loader
-	include_once( dirname( __FILE__ ) . "/includes/loader.php" );
+// Exit if accessed directly.
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
 }
 
+// When bumping the version, update it in:
+// 1. The Plugin Name header above.
+// 2. package-loader.php ($this_version)
+// 3. composer.json
 
+// Boot the package loader so the framework works as a standalone plugin.
+require_once __DIR__ . '/package-loader.php';

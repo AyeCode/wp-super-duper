@@ -17,6 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Adds an inline style to the main editor stylesheet.
  */
 function super_duper_inline_editor_styles() {
+	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Assets\\BlockEditorAssets::inline_editor_styles' );
 
 	echo "
     <style>

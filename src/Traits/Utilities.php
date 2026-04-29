@@ -1,4 +1,6 @@
 <?php
+
+namespace AyeCode\SuperDuper\Traits;
 /**
  * WP Super Duper Utilities Trait
  *
@@ -12,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-trait WP_Super_Duper_Utilities {
+trait Utilities {
 
 	/**
 	 * Output the version in the header as a meta tag.
@@ -69,10 +71,10 @@ trait WP_Super_Duper_Utilities {
 	 * @return array The arguments with dynamic data replaced.
 	 */
 	public function render_dynamic_fields( $args ) {
-		if ( ! sd_is_preview() && ! empty( $this->dynamic_fields ) ) {
+		if ( ! \AyeCode\SuperDuper\Utils::is_preview() && ! empty( $this->dynamic_fields ) ) {
 			foreach ( $this->dynamic_fields as $key => $val ) {
 				if ( isset( $args[ $key ] ) ) {
-					$args[ $key ] = function_exists('sd_replace_variables') ? sd_replace_variables( $args[ $key ] ) : $args[ $key ];
+					$args[ $key ] = \AyeCode\SuperDuper\Utils::replace_variables( $args[ $key ] );
 				}
 			}
 		}
@@ -137,10 +139,14 @@ trait WP_Super_Duper_Utilities {
 	/**
 	 * Generate and enqueue inline styles scoped to the unique instance class.
 	 *
-	 * Uses wp_add_inline_style() instead of raw <style> tags. Returns an empty
-	 * string for backward compatibility with callers that appended the return value.
+	 * Uses wp_add_inline_style() instead of raw <style> tags. If the standard
+	 * block-editor handle is not registered (frontend/widget context), falls back
+	 * to a lightweight registered no-src handle.
 	 *
-	 * @param array $rules An array of CSS rules.
+	 * Returns an empty string; callers that previously appended the return value
+	 * to widget HTML output will see no change in behaviour.
+	 *
+	 * @param array $rules An array of CSS rules (selector suffix → declarations).
 	 * @return string Always empty — styles are enqueued, not returned.
 	 */
 	public function get_instance_style( $rules = array() ) {
@@ -156,10 +162,13 @@ trait WP_Super_Duper_Utilities {
 			$css .= ".sdel-{$instance_hash} {$rule}";
 		}
 
+		// Prefer the block-editor handle when in an editor context.
 		$handle = wp_style_is( 'super-duper-universal-block-editor', 'registered' )
 			? 'super-duper-universal-block-editor'
 			: 'sd-instance-styles';
 
+		// Register a no-src handle for frontend contexts where the block-editor
+		// stylesheet isn't present (widgets, classic editor, page builders).
 		if ( ! wp_style_is( $handle, 'registered' ) ) {
 			wp_register_style( $handle, false, array(), false, false );
 		}

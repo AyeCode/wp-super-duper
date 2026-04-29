@@ -1,6 +1,6 @@
 {
   "name": "ayecode/wp-super-duper",
-  "version": "3.0.3-beta",
+  "version": "3.0.5-beta",
   "type": "library",
   "description": "Lets you create a widget, block and shortcode all from the one file.",
   "keywords": ["WordPress","super duper","wp"],
@@ -19,7 +19,7 @@
   },
   "autoload": {
     "files": [
-      "wp-super-duper.php"
+      "package-loader.php"
     ]
   }
 }

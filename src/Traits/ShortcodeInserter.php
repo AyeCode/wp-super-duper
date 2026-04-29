@@ -1,4 +1,6 @@
 <?php
+
+namespace AyeCode\SuperDuper\Traits;
 /**
  * WP Super Duper Shortcode Inserter Trait
  *
@@ -13,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-trait WP_Super_Duper_Shortcode_Inserter {
+trait ShortcodeInserter {
 
 	/**
 	 * Get the shortcode builder picker HTML via AJAX.
@@ -168,6 +170,8 @@ trait WP_Super_Duper_Shortcode_Inserter {
 		</style>
 		<?php
 		if ( class_exists( 'SiteOrigin_Panels' ) ) {
+			// Use wp_add_inline_script() — hooked at wp_footer priority 10,
+			// before wp_print_footer_scripts() fires at priority 20.
 			wp_add_inline_script( 'jquery', self::siteorigin_js() );
 		}
 		?>
@@ -232,6 +236,7 @@ trait WP_Super_Duper_Shortcode_Inserter {
                     const settingsDiv = jQuery('#TB_ajaxContent .sd-shortcode-settings');
 
                     if ( response && response.success && response.data ) {
+                        // JSON response: inject html, css, js separately (no raw <style>/<script> tags)
                         settingsDiv.html(response.data.html || '');
 
                         if ( response.data.css ) {
@@ -247,6 +252,7 @@ trait WP_Super_Duper_Shortcode_Inserter {
                             document.head.appendChild(script);
                         }
                     } else {
+                        // Legacy plain-HTML fallback (should not occur after this update)
                         settingsDiv.html(response);
                     }
 

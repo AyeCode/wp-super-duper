@@ -1,4 +1,6 @@
 <?php
+
+namespace AyeCode\SuperDuper\Traits;
 /**
  * WP Super Duper Output Handler Trait
  *
@@ -13,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-trait WP_Super_Duper_Output_Handler {
+trait OutputHandler {
 
 	/**
 	 * Register the parent shortcode and its AJAX handler for block previews.
@@ -41,7 +43,7 @@ trait WP_Super_Duper_Output_Handler {
 		}
 
 		if ( isset( $_POST['shortcode'] ) && $_POST['shortcode'] ) {
-			$is_preview = sd_is_preview();
+			$is_preview = \AyeCode\SuperDuper\Utils::is_preview();
 			$shortcode_name   = sanitize_title_with_dashes( wp_unslash( $_POST['shortcode'] ) );
 			$attributes_array = isset( $_POST['attributes'] ) && is_array( $_POST['attributes'] ) ? wp_unslash( $_POST['attributes'] ) : array();
 			$attributes       = '';
@@ -52,7 +54,7 @@ trait WP_Super_Duper_Output_Handler {
 						$value = implode( ",", $value );
 					}
 					if ( ! empty( $value ) || $value === '0' ) { // Allow '0' as a value
-						$value = $is_preview ? sd_encode_shortcodes( $value ) : $value;
+						$value = $is_preview ? \AyeCode\SuperDuper\Utils::encode_shortcodes( $value ) : $value;
 						$attributes .= " " . esc_attr( sanitize_key( $key ) ) . "='" . esc_attr( $value ) . "'";
 					}
 				}
@@ -62,7 +64,7 @@ trait WP_Super_Duper_Output_Handler {
 			$content = do_shortcode( $shortcode );
 
 			if ( ! empty( $content ) && $is_preview ) {
-				$content = sd_decode_shortcodes( $content );
+				$content = \AyeCode\SuperDuper\Utils::decode_shortcodes( $content );
 			}
 
 			echo $content;
@@ -80,13 +82,13 @@ trait WP_Super_Duper_Output_Handler {
 	public function shortcode_output( $args = array(), $content = '' ) {
 		$_instance = $args;
 		$args = $this->argument_values( $args );
-		$args = sd_string_to_bool( $args );
+		$args = \AyeCode\SuperDuper\Utils::string_to_bool( $args );
 
 		if ( ! empty( $content ) ) {
 			$args['html'] = $content;
 		}
 
-		if ( ! sd_is_preview() ) {
+		if ( ! \AyeCode\SuperDuper\Utils::is_preview() ) {
 			$args = apply_filters( 'wp_super_duper_widget_display_callback', $args, $this, $_instance );
 			if ( ! is_array( $args ) ) {
 				return $args;
@@ -117,7 +119,7 @@ trait WP_Super_Duper_Output_Handler {
 			$output .= $main_content;
 		}
 
-		if ( sd_is_preview() && empty($output) ) {
+		if ( \AyeCode\SuperDuper\Utils::is_preview() && empty($output) ) {
 			$output = $this->preview_placeholder_text( "{{" . $this->base_id . "}}" );
 		}
 
@@ -133,7 +135,7 @@ trait WP_Super_Duper_Output_Handler {
 	public function widget( $args, $instance ) {
 		$args = is_array( $args ) ? $args : array();
 		$argument_values = $this->argument_values( $instance );
-		$argument_values = sd_string_to_bool( $argument_values );
+		$argument_values = \AyeCode\SuperDuper\Utils::string_to_bool( $argument_values );
 		$output = $this->output( $argument_values, $args );
 		$no_wrap = isset( $argument_values['no_wrap'] ) && $argument_values['no_wrap'];
 
@@ -165,7 +167,7 @@ trait WP_Super_Duper_Output_Handler {
 			$after_widget = apply_filters( 'wp_super_duper_after_widget_' . $this->base_id, $after_widget, $args, $instance, $this );
 			echo $after_widget;
 
-		} elseif ( sd_is_preview() && empty($output) ) {
+		} elseif ( \AyeCode\SuperDuper\Utils::is_preview() && empty($output) ) {
 			echo $this->preview_placeholder_text( "{{" . $this->base_id . "}}" );
 		} elseif ( $output && $no_wrap ) {
 			echo $output;

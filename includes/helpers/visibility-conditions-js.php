@@ -16,6 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Outputs the JavaScript for the VisibilityConditionsModal React component.
  */
 function sd_get_visibility_conditions_script() {
+	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Assets\\BlockEditorAssets::visibility_conditions_script' );
     // --- START: Data Configuration ---
 
     // Rule Options
@@ -130,7 +131,7 @@ function sd_get_visibility_conditions_script() {
 
                     const fetchPages = apiFetch({ path: '/wp/v2/pages?per_page=100&orderby=title&order=asc&_fields=id,title' });
                     const fetchTemplateParts = apiFetch({ path: '/wp/v2/template-parts?per_page=100&orderby=title&order=asc&_fields=slug,title' });
-                    const fetchGdFields = apiFetch({ path: '/geodir/v2/fields?per_page=100' });
+                    const fetchGdFields = apiFetch({ path: '/geodir/v3/fields?per_page=100' });
 
                     Promise.all([fetchPages, fetchTemplateParts, fetchGdFields])
                         .then(([pages, templateParts, gdFields]) => {
@@ -204,12 +205,12 @@ function sd_get_visibility_conditions_script() {
                 const renderActionControls = (actionState, setActionState) => {
                     return el(Fragment, null,
                         el('select', { className: 'form-select', style: { maxWidth: 'unset' }, value: actionState.type || 'show', onChange: e => setActionState({ type: e.target.value }) },
-                        <?php echo json_encode($output_options); ?>.map(opt => el('option', { key: opt.value, value: opt.value }, opt.label))
+                        <?php echo wp_json_encode($output_options); ?>.map(opt => el('option', { key: opt.value, value: opt.value }, opt.label))
                     ),
                     actionState.type === 'message' && el('div', { className: 'row g-2 mt-1' },
                         el('div', { className: 'col-12' },
                             el('select', { className: 'form-select', style: { maxWidth: 'unset' }, value: actionState.message_type || '', onChange: e => setActionState({ ...actionState, message_type: e.target.value }) },
-                            <?php echo json_encode($message_type_options); ?>.map(opt => el('option', { key: opt.value, value: opt.value }, opt.label))
+                            <?php echo wp_json_encode($message_type_options); ?>.map(opt => el('option', { key: opt.value, value: opt.value }, opt.label))
                         )
                     ),
                         el('div', { className: 'col-12' },
@@ -246,13 +247,13 @@ function sd_get_visibility_conditions_script() {
                                             el('div', { className: 'input-group mb-3' },
                                                 el('span', { className: 'input-group-text' }, 'Rule:'),
                                                 el('select', { className: 'form-select', style: { maxWidth: 'unset' }, value: rule.type || '', onChange: e => handleRuleTypeChange(rule.id, e.target.value) },
-                                                <?php echo json_encode($rule_options); ?>.map(o => el('option', { key: o.value, value: o.value }, o.label))
+                                                <?php echo wp_json_encode($rule_options); ?>.map(o => el('option', { key: o.value, value: o.value }, o.label))
                                             )
                                         ),
                                         rule.type === 'user_roles' && el(Fragment, null,
                                             el('label', { className: 'form-label mb-2' }, 'Select User Roles:'),
                                             el('div', { className: 'row' },
-                                            <?php echo json_encode($user_roles_options); ?>.map(role => el('div', { className: 'col-sm-6', key: role.key },
+                                            <?php echo wp_json_encode($user_roles_options); ?>.map(role => el('div', { className: 'col-sm-6', key: role.key },
                                                 el('div', { className: 'form-check form-switch mb-2' },
                                                     el('input', { className: 'form-check-input', type: 'checkbox', role: 'switch', checked: (rule.user_roles || '').includes(role.key), onChange: e => handleUserRoleChange(rule.id, role.key, e.target.checked), id: `check-${rule.id}-${role.key}` }),
                                                     el('label', { className: 'form-check-label', htmlFor: `check-${rule.id}-${role.key}` }, role.label)
@@ -268,7 +269,7 @@ function sd_get_visibility_conditions_script() {
                                         ),
                                         el('div', { className: 'col-md-6' },
                                             el('select', { className: 'form-select', style: { maxWidth: 'unset' }, value: rule.condition || '', onChange: e => updateRule(rule.id, { condition: e.target.value }) },
-                                            <?php echo json_encode($gd_condition_options); ?>.map(o => el('option', { key: o.value, value: o.value }, o.label))
+                                            <?php echo wp_json_encode($gd_condition_options); ?>.map(o => el('option', { key: o.value, value: o.value }, o.label))
                                         )
                                     ),
                                     // Conditionally render the search input

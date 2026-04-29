@@ -130,7 +130,7 @@ Located in `assets/js/super-duper-block-editor.js`:
 
 ### PHP Configuration
 
-Configuration is passed through `includes/traits/trait-gutenberg-block.php` without modification. The `depends_on` array is automatically serialized and passed to JavaScript in the block registration.
+Configuration is passed through `src/Traits/GutenbergBlock.php` without modification. The `depends_on` array is automatically serialized and passed to JavaScript in the block registration.
 
 ## Examples
 

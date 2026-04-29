@@ -19,7 +19,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  * registration, but is needed on the editor screen.
  */
 function sd_get_block_editor_global_js() {
-    global $sd_is_js_functions_loaded, $wp_version, $aui_bs5;
+	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Assets\\BlockEditorAssets::block_editor_global_js' );
+    global $sd_is_js_functions_loaded, $wp_version;
 
     ob_start();
     ?>
@@ -318,27 +319,13 @@ function sd_get_block_editor_global_js() {
 
             $classes = [];
 
-            <?php
-            if($aui_bs5){
-            ?>
-            $aui_bs5 = true;
+
             $p_ml = 'ms-';
             $p_mr = 'me-';
 
             $p_pl = 'ps-';
             $p_pr = 'pe-';
-            <?php
-            }else{
-            ?>
-            $aui_bs5 = false;
-            $p_ml = 'ml-';
-            $p_mr = 'mr-';
 
-            $p_pl = 'pl-';
-            $p_pr = 'pr-';
-            <?php
-            }
-            ?>
 
             // margins
             if ($args['mt'] !== undefined && $args['mt'] !== '') {
@@ -552,7 +539,7 @@ function sd_get_block_editor_global_js() {
             } else if ($args['border'] !== undefined && ($args['border'] == 'none' || $args['border'] === '0')) {
                 $classes.push("border-0");
             } else if ($args['border'] !== undefined) {
-                if ($aui_bs5 && $args['border_type'] !== undefined) {
+                if ( $args['border_type'] !== undefined) {
                     $args['border_type'] = $args['border_type'].replace('-left', '-start').replace('-right', '-end');
                 }
                 $border_class = 'border';
@@ -622,27 +609,24 @@ function sd_get_block_editor_global_js() {
                 $classes.push('text-justify');
             } else {
                 if ($args['text_align'] !== undefined && $args['text_align'] !== '') {
-                    if ($aui_bs5) {
-                        $args['text_align'] = $args['text_align'].replace('-left', '-start').replace('-right', '-end');
-                    }
+					$args['text_align'] = $args['text_align'].replace('-left', '-start').replace('-right', '-end');
+
                     $classes.push($args['text_align']);
                     $text_align = $args['text_align'];
                 } else {
                     $text_align = null;
                 }
                 if ($args['text_align_md'] !== undefined && $args['text_align_md'] !== '') {
-                    if ($aui_bs5) {
-                        $args['text_align_md'] = $args['text_align_md'].replace('-left', '-start').replace('-right', '-end');
-                    }
+					$args['text_align_md'] = $args['text_align_md'].replace('-left', '-start').replace('-right', '-end');
+
                     $classes.push($args['text_align_md']);
                     $text_align_md = $args['text_align_md'];
                 } else {
                     $text_align_md = null;
                 }
                 if ($args['text_align_lg'] !== undefined && $args['text_align_lg'] !== '') {
-                    if ($aui_bs5) {
-                        $args['text_align_lg'] = $args['text_align_lg'].replace('-left', '-start').replace('-right', '-end');
-                    }
+					$args['text_align_lg'] = $args['text_align_lg'].replace('-left', '-start').replace('-right', '-end');
+
                     if ($text_align == null && $text_align_md == null) {
                         $classes.push($args['text_align_lg'].replace("-lg", ""));
                     } else {
@@ -761,7 +745,7 @@ function sd_get_block_editor_global_js() {
         }
 
         function sd_get_class_build_keys() {
-            return <?php echo json_encode( sd_get_class_build_keys() );?>;
+            return <?php echo wp_json_encode( sd_get_class_build_keys() );?>;
         }
 
         <?php

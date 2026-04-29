@@ -4,6 +4,40 @@
 
 This document outlines all configuration options available when creating a WP Super Duper widget/block/shortcode.
 
+## Modern API: `set_arguments()` and `BlockArguments`
+
+Version 3 introduces a fluent builder as the recommended way to define fields. Instead of (or alongside) the `arguments` key in `$options`, implement `set_arguments()` in your class:
+
+```php
+class My_Widget extends WP_Super_Duper {
+
+    public function __construct() {
+        parent::__construct( array(
+            'base_id'    => 'my_widget',
+            'name'       => __( 'My Widget', 'ayecode-connect' ),
+            'class_name' => __CLASS__,
+            // No 'arguments' key needed when using set_arguments()
+        ) );
+    }
+
+    public function set_arguments(): array {
+        return ( new \AyeCode\SuperDuper\Builder\BlockArguments() )
+            ->add_field( 'title', array(
+                'title'   => __( 'Title', 'ayecode-connect' ),
+                'type'    => 'text',
+                'default' => '',
+            ) )
+            ->add_margins()
+            ->add_border_group()
+            ->add_visibility_conditions()
+            ->add_class_and_anchor()
+            ->get();
+    }
+}
+```
+
+`set_arguments()` is called by the `Initializer` trait and its result is merged after any `arguments` key already in `$options` (taking precedence on conflicts). See [Builder Pattern](builder-pattern.md) for the full method reference.
+
 ## Constructor Options Array
 
 Pass these options to `parent::__construct()`:
@@ -70,6 +104,7 @@ Each field in the `arguments` array follows this structure:
 | `default` | mixed | No | Default value |
 | `desc_tip` | boolean | No | Show description as tooltip |
 | `advanced` | boolean | No | Mark as advanced option |
+| `group` | string | No | Slug ID of the panel/tab this field belongs to (e.g. `'wrapper-styles'`, `'typography'`, `'advanced'`). Standard slugs are defined by the `Fields\*` classes; custom values create a new panel automatically |
 
 ### Field Types
 

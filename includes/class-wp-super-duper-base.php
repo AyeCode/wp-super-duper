@@ -64,4 +64,35 @@ class WP_Super_Duper {
 	public function _register() {
 		// This version does not register as a widget.
 	}
+
+	/**
+	 * Fallback for WP_Widget::get_field_id().
+	 *
+	 * WP_Widget::get_field_id() is used by the WP_Super_Duper_Widget_Form trait
+	 * when rendering form inputs. Since this class does not extend WP_Widget, we
+	 * provide a compatible implementation so the shortcode inserter can render
+	 * widget settings forms without a fatal error.
+	 *
+	 * @param string $field_name The field (argument) name.
+	 * @return string
+	 */
+	public function get_field_id( $field_name ) {
+		$field_name = ltrim( str_replace( array( '[]', '[', ']' ), array( '', '-', '' ), $field_name ), '-' );
+		return 'widget-' . $this->id_base . '--' . $field_name;
+	}
+
+	/**
+	 * Fallback for WP_Widget::get_field_name().
+	 *
+	 * The shortcode inserter JS (sd_build_shortcode) expects single-bracket field
+	 * names: widget-{id_base}[{field_name}]. WP_Widget::get_field_name() returns
+	 * two levels (widget-{id}[{number}][{name}]) which the shortcode builder cannot
+	 * parse. This override returns the single-bracket format the JS expects.
+	 *
+	 * @param string $field_name The field (argument) name.
+	 * @return string
+	 */
+	public function get_field_name( $field_name ) {
+		return 'widget-' . $this->id_base . '[' . $field_name . ']';
+	}
 }
