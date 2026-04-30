@@ -2,6 +2,8 @@
 
 namespace AyeCode\SuperDuper\Fields;
 
+use AyeCode\SuperDuper\Utils;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -9,51 +11,25 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Static factory methods for shape-divider-related field definitions.
  *
+ * Note: element_require conditional expression generation has moved to
+ * Utils::element_require() and should be called from there.
+ *
  * @version 3.0.4-beta
  */
 final class ShapeFields {
 
 	/**
-	 * Build the element_require expression for a shape-divider key.
+	 * Return all shape-divider field definitions keyed by argument name.
 	 *
-	 * Equivalent to the former sd_get_element_require_string() global function.
-	 *
-	 * @param array  $args Array of shape => supported-keys pairs.
-	 * @param string $key  The feature key to check (e.g. 'flip', 'invert').
-	 * @param string $type The field-prefix used in the require expression (e.g. 'sd').
-	 * @return string
-	 */
-	public static function element_require_string( $args, $key, $type ) {
-		$output   = '';
-		$requires = array();
-
-		if ( ! empty( $args ) ) {
-			foreach ( $args as $t => $k ) {
-				if ( in_array( $key, $k ) ) {
-					$requires[] = '[%' . $type . '%]=="' . $t . '"';
-				}
-			}
-
-			if ( ! empty( $requires ) ) {
-				$output = '(' . implode( ' || ', $requires ) . ')';
-			}
-		}
-
-		return $output;
-	}
-
-	/**
-	 * Build a full set of shape-divider field definitions.
-	 *
-	 * @param string $type             Base field key (default 'sd').
-	 * @param array  $overwrite        Overrides for the main shape select.
-	 * @param array  $overwrite_color  Overrides for position/colour fields.
-	 * @param array  $overwrite_gradient Overrides for the width range.
-	 * @param array  $overwrite_image  Unused; retained for signature compatibility.
+	 * @param string     $prefix            Base field key (default 'sd' → 'sd', 'sd_position', …).
+	 * @param array      $overwrite         Overrides for the main shape select.
+	 * @param array|bool $overwrite_color   Overrides for position/color fields. false = keep defaults.
+	 * @param array|bool $overwrite_width   Overrides for the width range field.
+	 * @param array|bool $overwrite_image   Unused; retained for signature compatibility.
 	 * @return array<string, array>
 	 */
-	public static function divider_inputs( $type = 'sd', $overwrite = array(), $overwrite_color = array(), $overwrite_gradient = array(), $overwrite_image = array() ) {
-		$options = array(
+	public static function divider_group( string $prefix = 'sd', array $overwrite = [], $overwrite_color = [], $overwrite_width = [], $overwrite_image = [] ): array {
+		$options = [
 			''                      => __( 'None', 'ayecode-connect' ),
 			'mountains'             => __( 'Mountains', 'ayecode-connect' ),
 			'drops'                 => __( 'Drops', 'ayecode-connect' ),
@@ -73,153 +49,148 @@ final class ShapeFields {
 			'arrow'                 => __( 'Arrow', 'ayecode-connect' ),
 			'split'                 => __( 'Split', 'ayecode-connect' ),
 			'book'                  => __( 'Book', 'ayecode-connect' ),
+		];
+
+		$not_empty_er = '[%' . $prefix . '%]!=""';
+
+		$fields = [];
+
+		$fields[ $prefix ] = wp_parse_args(
+			$overwrite,
+			[
+				'type'     => 'select',
+				'title'    => __( 'Type', 'ayecode-connect' ),
+				'options'  => $options,
+				'default'  => '',
+				'desc_tip' => true,
+				'group'    => 'shape-divider',
+			]
 		);
 
-		$defaults = array(
-			'type'     => 'select',
-			'title'    => __( 'Type', 'ayecode-connect' ),
-			'options'  => $options,
-			'default'  => '',
-			'desc_tip' => true,
-			'group'    => 'shape-divider',
-		);
-
-		$input[ $type ] = wp_parse_args( $overwrite, $defaults );
-
-		$input[ $type . '_notice' ] = array(
+		$fields[ $prefix . '_notice' ] = [
 			'type'            => 'notice',
 			'desc'            => __( 'Parent element must be position `relative`', 'ayecode-connect' ),
 			'status'          => 'warning',
 			'group'           => 'shape-divider',
-			'element_require' => '[%' . $type . '%]!=""',
-		);
+			'element_require' => $not_empty_er,
+		];
 
-		$input[ $type . '_position' ] = wp_parse_args(
-			$overwrite_color,
-			array(
+		$fields[ $prefix . '_position' ] = wp_parse_args(
+			$overwrite_color !== false ? (array) $overwrite_color : [],
+			[
 				'type'            => 'select',
 				'title'           => __( 'Position', 'ayecode-connect' ),
-				'options'         => array(
+				'options'         => [
 					'top'    => __( 'Top', 'ayecode-connect' ),
 					'bottom' => __( 'Bottom', 'ayecode-connect' ),
-				),
+				],
 				'desc_tip'        => true,
 				'group'           => 'shape-divider',
-				'element_require' => '[%' . $type . '%]!=""',
-			)
+				'element_require' => $not_empty_er,
+			]
 		);
 
-		$color_options = array(
-			               ''            => __( 'None', 'ayecode-connect' ),
-			               'transparent' => __( 'Transparent', 'ayecode-connect' ),
-		               ) + \AyeCode\SuperDuper\Fields\ColorFields::aui_colors( false, false, false, false, true )
-		               + array(
-			               'custom-color' => __( 'Custom Color', 'ayecode-connect' ),
-		               );
+		$color_options = [ '' => __( 'None', 'ayecode-connect' ), 'transparent' => __( 'Transparent', 'ayecode-connect' ) ]
+			+ sd_aui_colors( false, false, false, false, true )
+			+ [ 'custom-color' => __( 'Custom Color', 'ayecode-connect' ) ];
 
-		$input[ $type . '_color' ] = wp_parse_args(
-			$overwrite_color,
-			array(
+		$fields[ $prefix . '_color' ] = wp_parse_args(
+			$overwrite_color !== false ? (array) $overwrite_color : [],
+			[
 				'type'            => 'select',
 				'title'           => __( 'Color', 'ayecode-connect' ),
 				'options'         => $color_options,
 				'desc_tip'        => true,
 				'group'           => 'shape-divider',
-				'element_require' => '[%' . $type . '%]!=""',
-			)
+				'element_require' => $not_empty_er,
+			]
 		);
 
-		$input[ $type . '_custom_color' ] = wp_parse_args(
-			$overwrite_color,
-			array(
+		$fields[ $prefix . '_custom_color' ] = wp_parse_args(
+			$overwrite_color !== false ? (array) $overwrite_color : [],
+			[
 				'type'            => 'color',
 				'title'           => __( 'Custom color', 'ayecode-connect' ),
 				'placeholder'     => '',
 				'default'         => '#0073aa',
 				'desc_tip'        => true,
 				'group'           => 'shape-divider',
-				'element_require' => '[%' . $type . '_color%]=="custom-color" && [%' . $type . '%]!=""',
-			)
+				'element_require' => '[%' . $prefix . '_color%]=="custom-color" && [%' . $prefix . '%]!=""',
+			]
 		);
 
-		$input[ $type . '_width' ] = wp_parse_args(
-			$overwrite_gradient,
-			array(
+		$fields[ $prefix . '_width' ] = wp_parse_args(
+			$overwrite_width !== false ? (array) $overwrite_width : [],
+			[
 				'type'              => 'range',
 				'title'             => __( 'Width', 'ayecode-connect' ),
 				'placeholder'       => '',
 				'default'           => '200',
 				'desc_tip'          => true,
-				'custom_attributes' => array(
-					'min' => 100,
-					'max' => 300,
-				),
+				'custom_attributes' => [ 'min' => 100, 'max' => 300 ],
 				'group'             => 'shape-divider',
-				'element_require'   => '[%' . $type . '%]!=""',
-			)
+				'element_require'   => $not_empty_er,
+			]
 		);
 
-		$input[ $type . '_height' ] = array(
+		$fields[ $prefix . '_height' ] = [
 			'type'              => 'range',
 			'title'             => __( 'Height', 'ayecode-connect' ),
 			'default'           => '100',
 			'desc_tip'          => true,
-			'custom_attributes' => array(
-				'min' => 0,
-				'max' => 500,
-			),
+			'custom_attributes' => [ 'min' => 0, 'max' => 500 ],
 			'group'             => 'shape-divider',
-			'element_require'   => '[%' . $type . '%]!=""',
-		);
+			'element_require'   => $not_empty_er,
+		];
 
-		$requires = array(
-			'mountains'             => array( 'flip' ),
-			'drops'                 => array( 'flip', 'invert' ),
-			'clouds'                => array( 'flip', 'invert' ),
-			'zigzag'                => array(),
-			'pyramids'              => array( 'flip', 'invert' ),
-			'triangle'              => array( 'invert' ),
-			'triangle-asymmetrical' => array( 'flip', 'invert' ),
-			'tilt'                  => array( 'flip' ),
-			'opacity-tilt'          => array( 'flip' ),
-			'opacity-fan'           => array(),
-			'curve'                 => array( 'invert' ),
-			'curve-asymmetrical'    => array( 'flip', 'invert' ),
-			'waves'                 => array( 'flip', 'invert' ),
-			'wave-brush'            => array( 'flip' ),
-			'waves-pattern'         => array( 'flip' ),
-			'arrow'                 => array( 'invert' ),
-			'split'                 => array( 'invert' ),
-			'book'                  => array( 'invert' ),
-		);
+		$requires = [
+			'mountains'             => [ 'flip' ],
+			'drops'                 => [ 'flip', 'invert' ],
+			'clouds'                => [ 'flip', 'invert' ],
+			'zigzag'                => [],
+			'pyramids'              => [ 'flip', 'invert' ],
+			'triangle'              => [ 'invert' ],
+			'triangle-asymmetrical' => [ 'flip', 'invert' ],
+			'tilt'                  => [ 'flip' ],
+			'opacity-tilt'          => [ 'flip' ],
+			'opacity-fan'           => [],
+			'curve'                 => [ 'invert' ],
+			'curve-asymmetrical'    => [ 'flip', 'invert' ],
+			'waves'                 => [ 'flip', 'invert' ],
+			'wave-brush'            => [ 'flip' ],
+			'waves-pattern'         => [ 'flip' ],
+			'arrow'                 => [ 'invert' ],
+			'split'                 => [ 'invert' ],
+			'book'                  => [ 'invert' ],
+		];
 
-		$input[ $type . '_flip' ] = array(
+		$fields[ $prefix . '_flip' ] = [
 			'type'            => 'checkbox',
 			'title'           => __( 'Flip', 'ayecode-connect' ),
 			'default'         => '',
 			'desc_tip'        => true,
 			'group'           => 'shape-divider',
-			'element_require' => self::element_require_string( $requires, 'flip', 'sd' ),
-		);
+			'element_require' => Utils::element_require( $requires, 'flip', $prefix ),
+		];
 
-		$input[ $type . '_invert' ] = array(
+		$fields[ $prefix . '_invert' ] = [
 			'type'            => 'checkbox',
 			'title'           => __( 'Invert', 'ayecode-connect' ),
 			'default'         => '',
 			'desc_tip'        => true,
 			'group'           => 'shape-divider',
-			'element_require' => self::element_require_string( $requires, 'invert', 'sd' ),
-		);
+			'element_require' => Utils::element_require( $requires, 'invert', $prefix ),
+		];
 
-		$input[ $type . '_btf' ] = array(
+		$fields[ $prefix . '_btf' ] = [
 			'type'            => 'checkbox',
 			'title'           => __( 'Bring to front', 'ayecode-connect' ),
 			'default'         => '',
 			'desc_tip'        => true,
 			'group'           => 'shape-divider',
-			'element_require' => '[%' . $type . '%]!=""',
-		);
+			'element_require' => $not_empty_er,
+		];
 
-		return $input;
+		return $fields;
 	}
 }

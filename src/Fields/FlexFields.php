@@ -9,50 +9,50 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Static factory methods for flex / float layout field definitions.
  *
+ * Single-field methods take only $overwrite = [].
+ * Group methods take $prefix = 'default_key' and $overwrite = [].
+ *
  * @version 3.0.4-beta
  */
 final class FlexFields {
 
+	// -------------------------------------------------------------------------
+	// Single-field methods
+	// -------------------------------------------------------------------------
+
 	/**
-	 * Build a flex align-items field definition (single breakpoint).
+	 * Flex align-items select field (single breakpoint).
 	 *
-	 * @param string $type      The base field key (default 'align-items').
-	 * @param array  $overwrite Field config overrides (use 'device_type' for responsive variants).
+	 * Pass 'device_type' => 'Tablet' or 'Desktop' in $overwrite for responsive variants.
+	 *
+	 * @param array $overwrite Field config overrides.
 	 * @return array
 	 */
-	public static function align_items_input( $type = 'align-items', $overwrite = array() ) {
-		$device_size = '';
-		if ( ! empty( $overwrite['device_type'] ) ) {
-			if ( $overwrite['device_type'] == 'Tablet' ) {
-				$device_size = '-md';
-			} elseif ( $overwrite['device_type'] == 'Desktop' ) {
-				$device_size = '-lg';
-			}
-		}
-		$options = array(
-			''                                         => __( 'Default', 'ayecode-connect' ),
-			'align-items' . $device_size . '-start'    => 'align-items-start',
-			'align-items' . $device_size . '-end'      => 'align-items-end',
-			'align-items' . $device_size . '-center'   => 'align-items-center',
-			'align-items' . $device_size . '-baseline' => 'align-items-baseline',
-			'align-items' . $device_size . '-stretch'  => 'align-items-stretch',
-		);
+	public static function align_items( array $overwrite = [] ): array {
+		$device_size = self::_device_size( $overwrite );
 
-		$defaults = array(
+		$defaults = [
 			'type'            => 'select',
 			'title'           => __( 'Vertical Align Items', 'ayecode-connect' ),
-			'options'         => $options,
+			'options'         => [
+				''                                         => __( 'Default', 'ayecode-connect' ),
+				'align-items' . $device_size . '-start'    => 'align-items-start',
+				'align-items' . $device_size . '-end'      => 'align-items-end',
+				'align-items' . $device_size . '-center'   => 'align-items-center',
+				'align-items' . $device_size . '-baseline' => 'align-items-baseline',
+				'align-items' . $device_size . '-stretch'  => 'align-items-stretch',
+			],
 			'default'         => '',
 			'desc_tip'        => true,
 			'group'           => 'wrapper-styles',
 			'element_require' => ' ( ( [%container%]=="row" ) || ( [%display%]=="d-flex" || [%display_md%]=="d-md-flex" || [%display_lg%]=="d-lg-flex" ) ) ',
-		);
+		];
 
 		$input = wp_parse_args( $overwrite, $defaults );
 
-		// set as block_component
-		unset( $overwrite['device_type'] );
-		if ( empty( $overwrite ) ) {
+		$clean = $overwrite;
+		unset( $clean['device_type'] );
+		if ( empty( $clean ) ) {
 			$input['block_component'] = 'sd_get_flex_align_items_input' . $device_size;
 		}
 
@@ -60,70 +60,38 @@ final class FlexFields {
 	}
 
 	/**
-	 * Build a responsive group (mobile/tablet/desktop) of flex align-items fields.
+	 * Flex justify-content select field (single breakpoint).
 	 *
-	 * @param string $type      The base field key (default 'flex_align_items').
-	 * @param array  $overwrite Field config overrides passed to each breakpoint.
-	 * @return array<string, array>
-	 */
-	public static function align_items_group( $type = 'flex_align_items', $overwrite = array() ) {
-		$inputs = array();
-		$sizes  = array(
-			''    => 'Mobile',
-			'_md' => 'Tablet',
-			'_lg' => 'Desktop',
-		);
-
-		if ( $overwrite !== false ) {
-			foreach ( $sizes as $ds => $dt ) {
-				$overwrite['device_type'] = $dt;
-				$inputs[ $type . $ds ]    = self::align_items_input( $type, $overwrite );
-			}
-		}
-
-		return $inputs;
-	}
-
-	/**
-	 * Build a flex justify-content field definition (single breakpoint).
+	 * Pass 'device_type' => 'Tablet' or 'Desktop' in $overwrite for responsive variants.
 	 *
-	 * @param string $type      The base field key (default 'flex_justify_content').
-	 * @param array  $overwrite Field config overrides (use 'device_type' for responsive variants).
+	 * @param array $overwrite Field config overrides.
 	 * @return array
 	 */
-	public static function justify_content_input( $type = 'flex_justify_content', $overwrite = array() ) {
-		$device_size = '';
-		if ( ! empty( $overwrite['device_type'] ) ) {
-			if ( $overwrite['device_type'] == 'Tablet' ) {
-				$device_size = '-md';
-			} elseif ( $overwrite['device_type'] == 'Desktop' ) {
-				$device_size = '-lg';
-			}
-		}
-		$options = array(
-			''                                            => __( 'Default', 'ayecode-connect' ),
-			'justify-content' . $device_size . '-start'   => 'justify-content-start',
-			'justify-content' . $device_size . '-end'     => 'justify-content-end',
-			'justify-content' . $device_size . '-center'  => 'justify-content-center',
-			'justify-content' . $device_size . '-between' => 'justify-content-between',
-			'justify-content' . $device_size . '-stretch' => 'justify-content-around',
-		);
+	public static function justify_content( array $overwrite = [] ): array {
+		$device_size = self::_device_size( $overwrite );
 
-		$defaults = array(
+		$defaults = [
 			'type'            => 'select',
 			'title'           => __( 'Justify content', 'ayecode-connect' ),
-			'options'         => $options,
+			'options'         => [
+				''                                            => __( 'Default', 'ayecode-connect' ),
+				'justify-content' . $device_size . '-start'   => 'justify-content-start',
+				'justify-content' . $device_size . '-end'     => 'justify-content-end',
+				'justify-content' . $device_size . '-center'  => 'justify-content-center',
+				'justify-content' . $device_size . '-between' => 'justify-content-between',
+				'justify-content' . $device_size . '-stretch' => 'justify-content-around',
+			],
 			'default'         => '',
 			'desc_tip'        => true,
 			'group'           => 'wrapper-styles',
 			'element_require' => '( ( [%container%]=="row" ) || ( [%display%]=="d-flex" || [%display_md%]=="d-md-flex" || [%display_lg%]=="d-lg-flex" ) ) ',
-		);
+		];
 
 		$input = wp_parse_args( $overwrite, $defaults );
 
-		// set as block_component
-		unset( $overwrite['device_type'] );
-		if ( empty( $overwrite ) ) {
+		$clean = $overwrite;
+		unset( $clean['device_type'] );
+		if ( empty( $clean ) ) {
 			$input['block_component'] = 'sd_get_flex_justify_content_input' . $device_size;
 		}
 
@@ -131,70 +99,38 @@ final class FlexFields {
 	}
 
 	/**
-	 * Build a responsive group of flex justify-content fields.
+	 * Flex align-self select field (single breakpoint).
 	 *
-	 * @param string $type      The base field key (default 'flex_justify_content').
-	 * @param array  $overwrite Field config overrides passed to each breakpoint.
-	 * @return array<string, array>
-	 */
-	public static function justify_content_group( $type = 'flex_justify_content', $overwrite = array() ) {
-		$inputs = array();
-		$sizes  = array(
-			''    => 'Mobile',
-			'_md' => 'Tablet',
-			'_lg' => 'Desktop',
-		);
-
-		if ( $overwrite !== false ) {
-			foreach ( $sizes as $ds => $dt ) {
-				$overwrite['device_type'] = $dt;
-				$inputs[ $type . $ds ]    = self::justify_content_input( $type, $overwrite );
-			}
-		}
-
-		return $inputs;
-	}
-
-	/**
-	 * Build a flex align-self field definition (single breakpoint).
+	 * Pass 'device_type' => 'Tablet' or 'Desktop' in $overwrite for responsive variants.
 	 *
-	 * @param string $type      The base field key (default 'flex_align_self').
-	 * @param array  $overwrite Field config overrides (use 'device_type' for responsive variants).
+	 * @param array $overwrite Field config overrides.
 	 * @return array
 	 */
-	public static function align_self_input( $type = 'flex_align_self', $overwrite = array() ) {
-		$device_size = '';
-		if ( ! empty( $overwrite['device_type'] ) ) {
-			if ( $overwrite['device_type'] == 'Tablet' ) {
-				$device_size = '-md';
-			} elseif ( $overwrite['device_type'] == 'Desktop' ) {
-				$device_size = '-lg';
-			}
-		}
-		$options = array(
-			''                                         => __( 'Default', 'ayecode-connect' ),
-			'align-items' . $device_size . '-start'    => 'align-items-start',
-			'align-items' . $device_size . '-end'      => 'align-items-end',
-			'align-items' . $device_size . '-center'   => 'align-items-center',
-			'align-items' . $device_size . '-baseline' => 'align-items-baseline',
-			'align-items' . $device_size . '-stretch'  => 'align-items-stretch',
-		);
+	public static function align_self( array $overwrite = [] ): array {
+		$device_size = self::_device_size( $overwrite );
 
-		$defaults = array(
+		$defaults = [
 			'type'            => 'select',
 			'title'           => __( 'Align Self', 'ayecode-connect' ),
-			'options'         => $options,
+			'options'         => [
+				''                                         => __( 'Default', 'ayecode-connect' ),
+				'align-items' . $device_size . '-start'    => 'align-items-start',
+				'align-items' . $device_size . '-end'      => 'align-items-end',
+				'align-items' . $device_size . '-center'   => 'align-items-center',
+				'align-items' . $device_size . '-baseline' => 'align-items-baseline',
+				'align-items' . $device_size . '-stretch'  => 'align-items-stretch',
+			],
 			'default'         => '',
 			'desc_tip'        => true,
 			'group'           => 'wrapper-styles',
 			'element_require' => ' [%container%]=="col" ',
-		);
+		];
 
 		$input = wp_parse_args( $overwrite, $defaults );
 
-		// set as block_component
-		unset( $overwrite['device_type'] );
-		if ( empty( $overwrite ) ) {
+		$clean = $overwrite;
+		unset( $clean['device_type'] );
+		if ( empty( $clean ) ) {
 			$input['block_component'] = 'sd_get_flex_align_self_input' . $device_size;
 		}
 
@@ -202,58 +138,22 @@ final class FlexFields {
 	}
 
 	/**
-	 * Build a responsive group of flex align-self fields.
+	 * Flex order select field (single breakpoint).
 	 *
-	 * @param string $type      The base field key (default 'flex_align_self').
-	 * @param array  $overwrite Field config overrides passed to each breakpoint.
-	 * @return array<string, array>
-	 */
-	public static function align_self_group( $type = 'flex_align_self', $overwrite = array() ) {
-		$inputs = array();
-		$sizes  = array(
-			''    => 'Mobile',
-			'_md' => 'Tablet',
-			'_lg' => 'Desktop',
-		);
-
-		if ( $overwrite !== false ) {
-			foreach ( $sizes as $ds => $dt ) {
-				$overwrite['device_type'] = $dt;
-				$inputs[ $type . $ds ]    = self::align_self_input( $type, $overwrite );
-			}
-		}
-
-		return $inputs;
-	}
-
-	/**
-	 * Build a flex order field definition (single breakpoint).
+	 * Pass 'device_type' => 'Tablet' or 'Desktop' in $overwrite for responsive variants.
 	 *
-	 * @param string $type      The base field key (default 'flex_order').
-	 * @param array  $overwrite Field config overrides (use 'device_type' for responsive variants).
+	 * @param array $overwrite Field config overrides.
 	 * @return array
 	 */
-	public static function order_input( $type = 'flex_order', $overwrite = array() ) {
-		$device_size = '';
-		if ( ! empty( $overwrite['device_type'] ) ) {
-			if ( $overwrite['device_type'] == 'Tablet' ) {
-				$device_size = '-md';
-			} elseif ( $overwrite['device_type'] == 'Desktop' ) {
-				$device_size = '-lg';
-			}
-		}
+	public static function order( array $overwrite = [] ): array {
+		$device_size = self::_device_size( $overwrite );
 
-		$options = array(
-			'' => __( 'Default', 'ayecode-connect' ),
-		);
-
-		$i = 0;
-		while ( $i <= 5 ) {
+		$options = [ '' => __( 'Default', 'ayecode-connect' ) ];
+		for ( $i = 0; $i <= 5; $i++ ) {
 			$options[ 'order' . $device_size . '-' . $i ] = $i;
-			$i++;
 		}
 
-		$defaults = array(
+		$defaults = [
 			'type'            => 'select',
 			'title'           => __( 'Flex Order', 'ayecode-connect' ),
 			'options'         => $options,
@@ -261,13 +161,13 @@ final class FlexFields {
 			'desc_tip'        => true,
 			'group'           => 'wrapper-styles',
 			'element_require' => ' [%container%]=="col" ',
-		);
+		];
 
 		$input = wp_parse_args( $overwrite, $defaults );
 
-		// set as block_component
-		unset( $overwrite['device_type'] );
-		if ( empty( $overwrite ) ) {
+		$clean = $overwrite;
+		unset( $clean['device_type'] );
+		if ( empty( $clean ) ) {
 			$input['block_component'] = 'sd_get_flex_order_input' . $device_size;
 		}
 
@@ -275,67 +175,35 @@ final class FlexFields {
 	}
 
 	/**
-	 * Build a responsive group of flex order fields.
+	 * Flex wrap select field (single breakpoint).
 	 *
-	 * @param string $type      The base field key (default 'flex_order').
-	 * @param array  $overwrite Field config overrides passed to each breakpoint.
-	 * @return array<string, array>
-	 */
-	public static function order_group( $type = 'flex_order', $overwrite = array() ) {
-		$inputs = array();
-		$sizes  = array(
-			''    => 'Mobile',
-			'_md' => 'Tablet',
-			'_lg' => 'Desktop',
-		);
-
-		if ( $overwrite !== false ) {
-			foreach ( $sizes as $ds => $dt ) {
-				$overwrite['device_type'] = $dt;
-				$inputs[ $type . $ds ]    = self::order_input( $type, $overwrite );
-			}
-		}
-
-		return $inputs;
-	}
-
-	/**
-	 * Build a flex-wrap field definition (single breakpoint).
+	 * Pass 'device_type' => 'Tablet' or 'Desktop' in $overwrite for responsive variants.
 	 *
-	 * @param string $type      The base field key (default 'flex_wrap').
-	 * @param array  $overwrite Field config overrides (use 'device_type' for responsive variants).
+	 * @param array $overwrite Field config overrides.
 	 * @return array
 	 */
-	public static function wrap_input( $type = 'flex_wrap', $overwrite = array() ) {
-		$device_size = '';
-		if ( ! empty( $overwrite['device_type'] ) ) {
-			if ( $overwrite['device_type'] == 'Tablet' ) {
-				$device_size = '-md';
-			} elseif ( $overwrite['device_type'] == 'Desktop' ) {
-				$device_size = '-lg';
-			}
-		}
-		$options = array(
-			''                                      => __( 'Default', 'ayecode-connect' ),
-			'flex' . $device_size . '-nowrap'       => 'nowrap',
-			'flex' . $device_size . '-wrap'         => 'wrap',
-			'flex' . $device_size . '-wrap-reverse' => 'wrap-reverse',
-		);
+	public static function flex_wrap( array $overwrite = [] ): array {
+		$device_size = self::_device_size( $overwrite );
 
-		$defaults = array(
+		$defaults = [
 			'type'     => 'select',
 			'title'    => __( 'Flex wrap', 'ayecode-connect' ),
-			'options'  => $options,
+			'options'  => [
+				''                                      => __( 'Default', 'ayecode-connect' ),
+				'flex' . $device_size . '-nowrap'       => 'nowrap',
+				'flex' . $device_size . '-wrap'         => 'wrap',
+				'flex' . $device_size . '-wrap-reverse' => 'wrap-reverse',
+			],
 			'default'  => '',
 			'desc_tip' => true,
 			'group'    => 'wrapper-styles',
-		);
+		];
 
 		$input = wp_parse_args( $overwrite, $defaults );
 
-		// set as block_component
-		unset( $overwrite['device_type'] );
-		if ( empty( $overwrite ) ) {
+		$clean = $overwrite;
+		unset( $clean['device_type'] );
+		if ( empty( $clean ) ) {
 			$input['block_component'] = 'sd_get_flex_wrap_input' . $device_size;
 		}
 
@@ -343,95 +211,147 @@ final class FlexFields {
 	}
 
 	/**
-	 * Build a responsive group of flex-wrap fields.
+	 * Float select field (single breakpoint).
 	 *
-	 * @param string $type      The base field key (default 'flex_wrap').
-	 * @param array  $overwrite Field config overrides passed to each breakpoint.
-	 * @return array<string, array>
-	 */
-	public static function wrap_group( $type = 'flex_wrap', $overwrite = array() ) {
-		$inputs = array();
-		$sizes  = array(
-			''    => 'Mobile',
-			'_md' => 'Tablet',
-			'_lg' => 'Desktop',
-		);
-
-		if ( $overwrite !== false ) {
-			foreach ( $sizes as $ds => $dt ) {
-				$overwrite['device_type'] = $dt;
-				$inputs[ $type . $ds ]    = self::wrap_input( $type, $overwrite );
-			}
-		}
-
-		return $inputs;
-	}
-
-	/**
-	 * Build a float field definition (single breakpoint).
+	 * Pass 'device_type' => 'Tablet' or 'Desktop' in $overwrite for responsive variants.
 	 *
-	 * @param string $type      The base field key (default 'float').
-	 * @param array  $overwrite Field config overrides (use 'device_type' for responsive variants).
+	 * @param array $overwrite Field config overrides.
 	 * @return array
 	 */
-	public static function float_input( $type = 'float', $overwrite = array() ) {
-		$device_size = '';
-		if ( ! empty( $overwrite['device_type'] ) ) {
-			if ( $overwrite['device_type'] == 'Tablet' ) {
-				$device_size = '-md';
-			} elseif ( $overwrite['device_type'] == 'Desktop' ) {
-				$device_size = '-lg';
-			}
-		}
-		$options = array(
-			''                                => __( 'Default', 'ayecode-connect' ),
-			'float' . $device_size . '-start' => 'left',
-			'float' . $device_size . '-end'   => 'right',
-			'float' . $device_size . '-none'  => 'none',
-		);
+	public static function float( array $overwrite = [] ): array {
+		$device_size = self::_device_size( $overwrite );
 
-		$defaults = array(
+		$defaults = [
 			'type'     => 'select',
 			'title'    => __( 'Float', 'ayecode-connect' ),
-			'options'  => $options,
+			'options'  => [
+				''                                => __( 'Default', 'ayecode-connect' ),
+				'float' . $device_size . '-start' => 'left',
+				'float' . $device_size . '-end'   => 'right',
+				'float' . $device_size . '-none'  => 'none',
+			],
 			'default'  => '',
 			'desc_tip' => true,
 			'group'    => 'wrapper-styles',
-		);
+		];
 
 		$input = wp_parse_args( $overwrite, $defaults );
 
-		// set as block_component
-		unset( $overwrite['device_type'] );
-		if ( empty( $overwrite ) ) {
+		$clean = $overwrite;
+		unset( $clean['device_type'] );
+		if ( empty( $clean ) ) {
 			$input['block_component'] = 'sd_get_float_input' . $device_size;
 		}
 
 		return $input;
 	}
 
+	// -------------------------------------------------------------------------
+	// Group methods (responsive mobile / tablet / desktop)
+	// -------------------------------------------------------------------------
+
 	/**
-	 * Build a responsive group of float fields.
+	 * Return responsive align-items fields keyed by argument name.
 	 *
-	 * @param string $type      The base field key (default 'float').
-	 * @param array  $overwrite Field config overrides passed to each breakpoint.
+	 * @param string $prefix   Base key (default 'flex_align_items' → 'flex_align_items', '_md', '_lg').
+	 * @param array  $overwrite Per-field overwrite config.
 	 * @return array<string, array>
 	 */
-	public static function float_group( $type = 'float', $overwrite = array() ) {
-		$inputs = array();
-		$sizes  = array(
-			''    => 'Mobile',
-			'_md' => 'Tablet',
-			'_lg' => 'Desktop',
-		);
+	public static function align_items_group( string $prefix = 'flex_align_items', array $overwrite = [] ): array {
+		return self::_responsive_group( [ self::class, 'align_items' ], $prefix, $overwrite );
+	}
 
-		if ( $overwrite !== false ) {
-			foreach ( $sizes as $ds => $dt ) {
-				$overwrite['device_type'] = $dt;
-				$inputs[ $type . $ds ]    = self::float_input( $type, $overwrite );
-			}
+	/**
+	 * Return responsive justify-content fields keyed by argument name.
+	 *
+	 * @param string $prefix   Base key (default 'flex_justify_content').
+	 * @param array  $overwrite Per-field overwrite config.
+	 * @return array<string, array>
+	 */
+	public static function justify_content_group( string $prefix = 'flex_justify_content', array $overwrite = [] ): array {
+		return self::_responsive_group( [ self::class, 'justify_content' ], $prefix, $overwrite );
+	}
+
+	/**
+	 * Return responsive align-self fields keyed by argument name.
+	 *
+	 * @param string $prefix   Base key (default 'flex_align_self').
+	 * @param array  $overwrite Per-field overwrite config.
+	 * @return array<string, array>
+	 */
+	public static function align_self_group( string $prefix = 'flex_align_self', array $overwrite = [] ): array {
+		return self::_responsive_group( [ self::class, 'align_self' ], $prefix, $overwrite );
+	}
+
+	/**
+	 * Return responsive order fields keyed by argument name.
+	 *
+	 * @param string $prefix   Base key (default 'flex_order').
+	 * @param array  $overwrite Per-field overwrite config.
+	 * @return array<string, array>
+	 */
+	public static function order_group( string $prefix = 'flex_order', array $overwrite = [] ): array {
+		return self::_responsive_group( [ self::class, 'order' ], $prefix, $overwrite );
+	}
+
+	/**
+	 * Return responsive flex-wrap fields keyed by argument name.
+	 *
+	 * @param string $prefix   Base key (default 'flex_wrap').
+	 * @param array  $overwrite Per-field overwrite config.
+	 * @return array<string, array>
+	 */
+	public static function flex_wrap_group( string $prefix = 'flex_wrap', array $overwrite = [] ): array {
+		return self::_responsive_group( [ self::class, 'flex_wrap' ], $prefix, $overwrite );
+	}
+
+	/**
+	 * Return responsive float fields keyed by argument name.
+	 *
+	 * @param string $prefix   Base key (default 'float').
+	 * @param array  $overwrite Per-field overwrite config.
+	 * @return array<string, array>
+	 */
+	public static function float_group( string $prefix = 'float', array $overwrite = [] ): array {
+		return self::_responsive_group( [ self::class, 'float' ], $prefix, $overwrite );
+	}
+
+	// -------------------------------------------------------------------------
+	// Private helpers
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Derive the CSS device-size suffix ('-md' / '-lg' / '') from device_type in $overwrite.
+	 *
+	 * @param array $overwrite Field config that may contain 'device_type'.
+	 * @return string '' | '-md' | '-lg'
+	 */
+	private static function _device_size( array $overwrite ): string {
+		if ( empty( $overwrite['device_type'] ) ) {
+			return '';
 		}
+		if ( 'Tablet' === $overwrite['device_type'] ) {
+			return '-md';
+		}
+		if ( 'Desktop' === $overwrite['device_type'] ) {
+			return '-lg';
+		}
+		return '';
+	}
 
-		return $inputs;
+	/**
+	 * Build three responsive fields (mobile / tablet / desktop) using a single-field callable.
+	 *
+	 * @param callable $factory   A single-field factory method (must accept $overwrite).
+	 * @param string   $prefix    Base key — mobile gets no suffix, tablet '_md', desktop '_lg'.
+	 * @param array    $overwrite Per-field base config (device_type is injected per breakpoint).
+	 * @return array<string, array>
+	 */
+	private static function _responsive_group( callable $factory, string $prefix, array $overwrite ): array {
+		return [
+			$prefix          => $factory( array_merge( $overwrite, [ 'device_type' => 'Mobile' ] ) ),
+			$prefix . '_md'  => $factory( array_merge( $overwrite, [ 'device_type' => 'Tablet' ] ) ),
+			$prefix . '_lg'  => $factory( array_merge( $overwrite, [ 'device_type' => 'Desktop' ] ) ),
+		];
 	}
 }

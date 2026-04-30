@@ -9,70 +9,76 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Static factory methods for typography-related field definitions.
  *
+ * Single-field methods take only $overwrite = [].
+ * Group methods take $prefix = '' / $prefix = 'key' and $overwrite = [].
+ *
  * @version 3.0.4-beta
  */
 final class TypographyFields {
 
+	// -------------------------------------------------------------------------
+	// Single-field methods
+	// -------------------------------------------------------------------------
+
 	/**
-	 * Build a font-size + custom-size field group.
+	 * Font size select field (no custom-size option).
 	 *
-	 * @param string     $type             The base field key (default 'font_size').
-	 * @param array      $overwrite        Overrides for the size select.
-	 * @param array|bool $overwrite_custom Overrides for the custom-size input; false to omit.
-	 * @return array<string, array>
+	 * Use font_size_group() to get the paired custom-size field.
+	 *
+	 * @param array $overwrite Field config overrides.
+	 * @return array
 	 */
-	public static function font_size_input_group( $type = 'font_size', $overwrite = array(), $overwrite_custom = array() ) {
-		$inputs = array();
-
-		if ( $overwrite !== false ) {
-			$inputs[ $type ] = self::font_size_input( $type, $overwrite, true );
-		}
-
-		if ( $overwrite_custom !== false ) {
-			$custom            = $type . '_custom';
-			$inputs[ $custom ] = self::font_custom_size_input( $custom, $overwrite_custom, $type );
-		}
-
-		return $inputs;
+	public static function font_size( array $overwrite = [] ): array {
+		return self::_font_size_field( false, $overwrite );
 	}
 
 	/**
-	 * Build a font-weight / appearance field definition.
+	 * Custom font size number input.
 	 *
-	 * @param string $type      The field key (default 'font_weight').
-	 * @param array  $overwrite Field config overrides.
+	 * When used standalone the element_require condition must be set via $overwrite.
+	 * Use font_size_group() for the auto-wired pair.
+	 *
+	 * @param array $overwrite Field config overrides.
 	 * @return array
 	 */
-	public static function font_weight_input( $type = 'font_weight', $overwrite = array() ) {
-		$options = array(
-			''                                => __( 'Inherit', 'ayecode-connect' ),
-			'font-weight-bold'                => 'bold',
-			'font-weight-bolder'              => 'bolder',
-			'font-weight-normal'              => 'normal',
-			'font-weight-light'               => 'light',
-			'font-weight-lighter'             => 'lighter',
-			'font-italic'                     => 'italic',
-			'font-weight-bold font-italic'    => 'bold italic',
-			'font-weight-bolder font-italic'  => 'bolder italic',
-			'font-weight-normal font-italic'  => 'normal italic',
-			'font-weight-light font-italic'   => 'light italic',
-			'font-weight-lighter font-italic' => 'lighter italic',
-		);
+	public static function font_size_custom( array $overwrite = [] ): array {
+		return self::_font_size_custom_field( '', $overwrite );
+	}
 
-		$defaults = array(
+	/**
+	 * Font weight / appearance select field.
+	 *
+	 * @param array $overwrite Field config overrides.
+	 * @return array
+	 */
+	public static function font_weight( array $overwrite = [] ): array {
+		$defaults = [
 			'type'     => 'select',
 			'title'    => __( 'Appearance', 'ayecode-connect' ),
-			'options'  => $options,
+			'options'  => [
+				''                                => __( 'Inherit', 'ayecode-connect' ),
+				'font-weight-bold'                => 'bold',
+				'font-weight-bolder'              => 'bolder',
+				'font-weight-normal'              => 'normal',
+				'font-weight-light'               => 'light',
+				'font-weight-lighter'             => 'lighter',
+				'font-italic'                     => 'italic',
+				'font-weight-bold font-italic'    => 'bold italic',
+				'font-weight-bolder font-italic'  => 'bolder italic',
+				'font-weight-normal font-italic'  => 'normal italic',
+				'font-weight-light font-italic'   => 'light italic',
+				'font-weight-lighter font-italic' => 'lighter italic',
+			],
 			'default'  => '',
 			'desc_tip' => true,
 			'group'    => 'typography',
-		);
+		];
 
 		$input = wp_parse_args( $overwrite, $defaults );
 
-		// set as block_component
-		unset( $overwrite['device_type'] );
-		if ( empty( $overwrite ) ) {
+		$clean = $overwrite;
+		unset( $clean['device_type'] );
+		if ( empty( $clean ) ) {
 			$input['block_component'] = 'sd_get_font_weight_input';
 		}
 
@@ -80,34 +86,31 @@ final class TypographyFields {
 	}
 
 	/**
-	 * Build a font-case (text-transform) field definition.
+	 * Letter case (text-transform) select field.
 	 *
-	 * @param string $type      The field key (default 'font_weight').
-	 * @param array  $overwrite Field config overrides.
+	 * @param array $overwrite Field config overrides.
 	 * @return array
 	 */
-	public static function font_case_input( $type = 'font_weight', $overwrite = array() ) {
-		$options = array(
-			''                => __( 'Default', 'ayecode-connect' ),
-			'text-lowercase'  => __( 'lowercase', 'ayecode-connect' ),
-			'text-uppercase'  => __( 'UPPERCASE', 'ayecode-connect' ),
-			'text-capitalize' => __( 'Capitalize', 'ayecode-connect' ),
-		);
-
-		$defaults = array(
+	public static function font_case( array $overwrite = [] ): array {
+		$defaults = [
 			'type'     => 'select',
 			'title'    => __( 'Letter case', 'ayecode-connect' ),
-			'options'  => $options,
+			'options'  => [
+				''                => __( 'Default', 'ayecode-connect' ),
+				'text-lowercase'  => __( 'lowercase', 'ayecode-connect' ),
+				'text-uppercase'  => __( 'UPPERCASE', 'ayecode-connect' ),
+				'text-capitalize' => __( 'Capitalize', 'ayecode-connect' ),
+			],
 			'default'  => '',
 			'desc_tip' => true,
 			'group'    => 'typography',
-		);
+		];
 
 		$input = wp_parse_args( $overwrite, $defaults );
 
-		// set as block_component
-		unset( $overwrite['device_type'] );
-		if ( empty( $overwrite ) ) {
+		$clean = $overwrite;
+		unset( $clean['device_type'] );
+		if ( empty( $clean ) ) {
 			$input['block_component'] = 'sd_get_font_case_input';
 		}
 
@@ -115,32 +118,29 @@ final class TypographyFields {
 	}
 
 	/**
-	 * Build a font-italic field definition.
+	 * Font italic select field.
 	 *
-	 * @param string $type      The field key (default 'font_italic').
-	 * @param array  $overwrite Field config overrides.
+	 * @param array $overwrite Field config overrides.
 	 * @return array
 	 */
-	public static function font_italic_input( $type = 'font_italic', $overwrite = array() ) {
-		$options = array(
-			''            => __( 'No', 'ayecode-connect' ),
-			'font-italic' => __( 'Yes', 'ayecode-connect' ),
-		);
-
-		$defaults = array(
+	public static function font_italic( array $overwrite = [] ): array {
+		$defaults = [
 			'type'     => 'select',
 			'title'    => __( 'Font italic', 'ayecode-connect' ),
-			'options'  => $options,
+			'options'  => [
+				''            => __( 'No', 'ayecode-connect' ),
+				'font-italic' => __( 'Yes', 'ayecode-connect' ),
+			],
 			'default'  => '',
 			'desc_tip' => true,
 			'group'    => 'typography',
-		);
+		];
 
 		$input = wp_parse_args( $overwrite, $defaults );
 
-		// set as block_component
-		unset( $overwrite['device_type'] );
-		if ( empty( $overwrite ) ) {
+		$clean = $overwrite;
+		unset( $clean['device_type'] );
+		if ( empty( $clean ) ) {
 			$input['block_component'] = 'sd_get_font_italic_input';
 		}
 
@@ -148,100 +148,31 @@ final class TypographyFields {
 	}
 
 	/**
-	 * Build a text-align field definition.
+	 * Line height number input.
 	 *
-	 * @param string $type      The field key (default 'text_align').
-	 * @param array  $overwrite Field config overrides (use 'device_type' for responsive variants).
+	 * @param array $overwrite Field config overrides.
 	 * @return array
 	 */
-	public static function text_align_input( $type = 'text_align', $overwrite = array() ) {
-		$device_size = '';
-		if ( ! empty( $overwrite['device_type'] ) ) {
-			if ( $overwrite['device_type'] == 'Tablet' ) {
-				$device_size = '-md';
-			} elseif ( $overwrite['device_type'] == 'Desktop' ) {
-				$device_size = '-lg';
-			}
-		}
-		$options = array(
-			''                                  => __( 'Default', 'ayecode-connect' ),
-			'text' . $device_size . '-start'    => __( 'Start', 'ayecode-connect' ),
-			'text' . $device_size . '-end'      => __( 'End', 'ayecode-connect' ),
-			'text' . $device_size . '-center'   => __( 'Center', 'ayecode-connect' ),
-		);
-
-		$defaults = array(
-			'type'     => 'select',
-			'title'    => __( 'Text align', 'ayecode-connect' ),
-			'options'  => $options,
-			'default'  => '',
-			'desc_tip' => true,
-			'group'    => 'typography',
-		);
-
-		$input = wp_parse_args( $overwrite, $defaults );
-
-		// set as block_component
-		unset( $overwrite['device_type'] );
-		if ( empty( $overwrite ) ) {
-			$input['block_component'] = 'sd_get_text_align_input' . $device_size;
-		}
-
-		return $input;
-	}
-
-	/**
-	 * Build a responsive text-align field group (mobile, tablet, desktop).
-	 *
-	 * Returns three fields keyed as `text_align`, `text_align_md`, `text_align_lg`.
-	 *
-	 * @param string $type      The base field key (default 'text_align').
-	 * @param array  $overwrite Overrides applied to all three breakpoint fields.
-	 * @return array<string, array>
-	 */
-	public static function text_align_input_group( $type = 'text_align', $overwrite = array() ) {
-		$devices = array(
-			''    => 'Mobile',
-			'_md' => 'Tablet',
-			'_lg' => 'Desktop',
-		);
-
-		$inputs = array();
-		foreach ( $devices as $suffix => $device ) {
-			$key             = $type . $suffix;
-			$field_overwrite = $device ? array_merge( $overwrite, [ 'device_type' => $device ] ) : $overwrite;
-			$inputs[ $key ]  = self::text_align_input( $type, $field_overwrite );
-		}
-
-		return $inputs;
-	}
-
-	/**
-	 * Build a font-line-height field definition.
-	 *
-	 * @param string $type      The field key (default 'font_line_height').
-	 * @param array  $overwrite Field config overrides.
-	 * @return array
-	 */
-	public static function font_line_height_input( $type = 'font_line_height', $overwrite = array() ) {
-		$defaults = array(
+	public static function line_height( array $overwrite = [] ): array {
+		$defaults = [
 			'type'              => 'number',
 			'title'             => __( 'Font Line Height', 'ayecode-connect' ),
 			'default'           => '',
 			'placeholder'       => '1.75',
-			'custom_attributes' => array(
+			'custom_attributes' => [
 				'step' => '0.1',
 				'min'  => '0',
 				'max'  => '100',
-			),
+			],
 			'desc_tip'          => true,
 			'group'             => 'typography',
-		);
+		];
 
 		$input = wp_parse_args( $overwrite, $defaults );
 
-		unset( $overwrite['device_type'] );
-		if ( empty( $overwrite ) ) {
+		$clean = $overwrite;
+		unset( $clean['device_type'] );
+		if ( empty( $clean ) ) {
 			$input['block_component'] = 'sd_get_font_line_height_input';
 		}
 
@@ -249,25 +180,25 @@ final class TypographyFields {
 	}
 
 	/**
-	 * Build a text-justify (checkbox) field definition.
+	 * Text justify checkbox.
 	 *
-	 * @param string $type      The field key (default 'text_justify').
-	 * @param array  $overwrite Field config overrides.
+	 * @param array $overwrite Field config overrides.
 	 * @return array
 	 */
-	public static function text_justify_input( $type = 'text_justify', $overwrite = array() ) {
-		$defaults = array(
+	public static function text_justify( array $overwrite = [] ): array {
+		$defaults = [
 			'type'     => 'checkbox',
 			'title'    => __( 'Text justify', 'ayecode-connect' ),
 			'default'  => '',
 			'desc_tip' => true,
 			'group'    => 'typography',
-		);
+		];
 
 		$input = wp_parse_args( $overwrite, $defaults );
 
-		unset( $overwrite['device_type'] );
-		if ( empty( $overwrite ) ) {
+		$clean = $overwrite;
+		unset( $clean['device_type'] );
+		if ( empty( $clean ) ) {
 			$input['block_component'] = 'sd_get_text_justify_input';
 		}
 
@@ -275,132 +206,147 @@ final class TypographyFields {
 	}
 
 	/**
-	 * Build a text-color + custom-color field group.
+	 * Text align select field.
 	 *
-	 * @param string     $type             The base field key (default 'text_color').
-	 * @param array      $overwrite        Overrides for the color select.
-	 * @param array|bool $overwrite_custom Overrides for the custom color picker; false to omit.
-	 * @return array<string, array>
-	 */
-	public static function text_color_input_group( $type = 'text_color', $overwrite = array(), $overwrite_custom = array() ) {
-		$inputs = array();
-
-		if ( $overwrite !== false ) {
-			$inputs[ $type ] = self::text_color_input( $type, $overwrite, true );
-		}
-
-		if ( $overwrite_custom !== false ) {
-			$custom            = $type . '_custom';
-			$inputs[ $custom ] = self::custom_color_input( $custom, $overwrite_custom, $type );
-		}
-
-		return $inputs;
-	}
-
-	/**
-	 * Build a text-colour field definition.
+	 * Pass 'device_type' => 'Tablet' or 'Desktop' in $overwrite for responsive variants.
 	 *
-	 * @param string $type       The field key (default 'text_color').
-	 * @param array  $overwrite  Field config overrides.
-	 * @param bool   $has_custom Whether to include a "Custom color" option.
-	 * @param bool   $emphasis   Whether to include emphasis colour variants.
+	 * @param array $overwrite Field config overrides.
 	 * @return array
 	 */
-	public static function text_color_input( $type = 'text_color', $overwrite = array(), $has_custom = false, $emphasis = true ) {
-		$options = array(
-			           '' => __( 'None', 'ayecode-connect' ),
-		           ) + \AyeCode\SuperDuper\Fields\ColorFields::aui_colors( false, false, false, false, false, true );
-
-		if ( $has_custom ) {
-			$options['custom'] = __( 'Custom color', 'ayecode-connect' );
+	public static function text_align( array $overwrite = [] ): array {
+		$device_size = '';
+		if ( ! empty( $overwrite['device_type'] ) ) {
+			if ( 'Tablet' === $overwrite['device_type'] ) {
+				$device_size = '-md';
+			} elseif ( 'Desktop' === $overwrite['device_type'] ) {
+				$device_size = '-lg';
+			}
 		}
 
-		$defaults = array(
+		$defaults = [
 			'type'     => 'select',
-			'title'    => __( 'Text color', 'ayecode-connect' ),
-			'options'  => $options,
+			'title'    => __( 'Text align', 'ayecode-connect' ),
+			'options'  => [
+				''                                 => __( 'Default', 'ayecode-connect' ),
+				'text' . $device_size . '-start'  => __( 'Start', 'ayecode-connect' ),
+				'text' . $device_size . '-end'    => __( 'End', 'ayecode-connect' ),
+				'text' . $device_size . '-center' => __( 'Center', 'ayecode-connect' ),
+			],
 			'default'  => '',
 			'desc_tip' => true,
 			'group'    => 'typography',
-		);
+		];
 
 		$input = wp_parse_args( $overwrite, $defaults );
 
-		// set as block_component
-		unset( $overwrite['device_type'] );
-		if ( empty( $overwrite ) ) {
-			$function_name  = $has_custom ? '_has_custom' : '';
-			$function_name .= $emphasis ? '' : '_no_emphasis';
-			$input['block_component'] = 'sd_get_text_color_input' . $function_name;
+		$clean = $overwrite;
+		unset( $clean['device_type'] );
+		if ( empty( $clean ) ) {
+			$input['block_component'] = 'sd_get_text_align_input' . $device_size;
 		}
 
 		return $input;
 	}
 
 	/**
-	 * Build a custom colour-picker field definition.
+	 * Text color select field (no custom-color option).
 	 *
-	 * Typically paired with text_color_input() when $has_custom is true.
+	 * Use text_color_group() to get the paired custom-color picker.
 	 *
-	 * @param string $type        The field key (default 'color_custom').
-	 * @param array  $overwrite   Field config overrides.
-	 * @param string $parent_type When set, adds an element_require rule pointing at the parent.
+	 * @param array $overwrite Field config overrides.
 	 * @return array
 	 */
-	public static function custom_color_input( $type = 'color_custom', $overwrite = array(), $parent_type = '' ) {
-		$defaults = array(
-			'type'        => 'color',
-			'title'       => __( 'Custom color', 'ayecode-connect' ),
-			'default'     => '',
-			'placeholder' => '',
-			'desc_tip'    => true,
-			'group'       => 'typography',
-		);
-
-		if ( $parent_type ) {
-			$defaults['element_require'] = '[%' . $parent_type . '%]=="custom"';
-		}
-
-		$input = wp_parse_args( $overwrite, $defaults );
-
-		// set as block_component
-		unset( $overwrite['device_type'] );
-		if ( empty( $overwrite ) ) {
-			$function_name            = $parent_type ? '_' . $parent_type : '';
-			$input['block_component'] = 'sd_get_custom_color_input' . $function_name;
-		}
-
-		return $input;
+	public static function text_color( array $overwrite = [] ): array {
+		return self::_text_color_field( false, $overwrite );
 	}
 
 	/**
-	 * Build a font-size field definition.
+	 * Custom color picker field.
 	 *
-	 * @param string $type       The field key (default 'font_size').
-	 * @param array  $overwrite  Field config overrides.
-	 * @param bool   $has_custom Whether to include a "Custom size" option.
+	 * When used standalone, element_require must be set via $overwrite.
+	 * Use text_color_group() for the auto-wired pair.
+	 *
+	 * @param array $overwrite Field config overrides.
 	 * @return array
 	 */
-	public static function font_size_input( $type = 'font_size', $overwrite = array(), $has_custom = false ) {
+	public static function text_color_custom( array $overwrite = [] ): array {
+		return self::_custom_color_field( '', $overwrite );
+	}
 
-		$options[] = __( 'Inherit from parent', 'ayecode-connect' );
-		// responsive font sizes
-		$options['fs-base'] = 'fs-base (body default)';
-		$options['fs-6']    = 'fs-6';
-		$options['fs-5']    = 'fs-5';
-		$options['fs-4']    = 'fs-4';
-		$options['fs-3']    = 'fs-3';
-		$options['fs-2']    = 'fs-2';
-		$options['fs-1']    = 'fs-1';
+	// -------------------------------------------------------------------------
+	// Group methods
+	// -------------------------------------------------------------------------
 
-		// custom
-		$options['fs-lg']  = 'fs-lg';
-		$options['fs-sm']  = 'fs-sm';
-		$options['fs-xs']  = 'fs-xs';
-		$options['fs-xxs'] = 'fs-xxs';
+	/**
+	 * Return font size + custom size fields keyed by argument name.
+	 *
+	 * @param string $prefix   Base key used for both fields (default 'font_size' → 'font_size', 'font_size_custom').
+	 * @param array  $overwrite Per-field overwrite config.
+	 * @return array<string, array> [$prefix => [...], $prefix . '_custom' => [...]]
+	 */
+	public static function font_size_group( string $prefix = 'font_size', array $overwrite = [] ): array {
+		return [
+			$prefix              => self::_font_size_field( true, $overwrite ),
+			$prefix . '_custom'  => self::_font_size_custom_field( $prefix, $overwrite ),
+		];
+	}
 
+	/**
+	 * Return responsive text-align fields keyed by argument name (mobile, tablet, desktop).
+	 *
+	 * @param string $prefix   Base key (default 'text_align' → 'text_align', 'text_align_md', 'text_align_lg').
+	 * @param array  $overwrite Per-field overwrite config.
+	 * @return array<string, array>
+	 */
+	public static function text_align_group( string $prefix = 'text_align', array $overwrite = [] ): array {
+		return [
+			$prefix          => self::text_align( array_merge( $overwrite, [ 'device_type' => 'Mobile' ] ) ),
+			$prefix . '_md'  => self::text_align( array_merge( $overwrite, [ 'device_type' => 'Tablet' ] ) ),
+			$prefix . '_lg'  => self::text_align( array_merge( $overwrite, [ 'device_type' => 'Desktop' ] ) ),
+		];
+	}
 
-		$options = $options + array(
+	/**
+	 * Return text color select + custom color picker fields keyed by argument name.
+	 *
+	 * @param string $prefix   Base key (default 'text_color' → 'text_color', 'text_color_custom').
+	 * @param array  $overwrite Per-field overwrite config.
+	 * @return array<string, array> [$prefix => [...], $prefix . '_custom' => [...]]
+	 */
+	public static function text_color_group( string $prefix = 'text_color', array $overwrite = [] ): array {
+		return [
+			$prefix             => self::_text_color_field( true, $overwrite ),
+			$prefix . '_custom' => self::_custom_color_field( $prefix, $overwrite ),
+		];
+	}
+
+	// -------------------------------------------------------------------------
+	// Private helpers (shared logic between single + group variants)
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Build a font-size select field definition.
+	 *
+	 * @param bool  $has_custom Whether to include the "Custom size" option.
+	 * @param array $overwrite  Field config overrides.
+	 * @return array
+	 */
+	private static function _font_size_field( bool $has_custom, array $overwrite ): array {
+		// Numeric key 0 matches the legacy array structure — intentional.
+		$options    = [];
+		$options[]  = __( 'Inherit from parent', 'ayecode-connect' );
+		$options   += [
+			'fs-base'   => 'fs-base (body default)',
+			'fs-6'      => 'fs-6',
+			'fs-5'      => 'fs-5',
+			'fs-4'      => 'fs-4',
+			'fs-3'      => 'fs-3',
+			'fs-2'      => 'fs-2',
+			'fs-1'      => 'fs-1',
+			'fs-lg'     => 'fs-lg',
+			'fs-sm'     => 'fs-sm',
+			'fs-xs'     => 'fs-xs',
+			'fs-xxs'    => 'fs-xxs',
 			'h6'        => 'h6',
 			'h5'        => 'h5',
 			'h4'        => 'h4',
@@ -411,71 +357,134 @@ final class TypographyFields {
 			'display-2' => 'display-2',
 			'display-3' => 'display-3',
 			'display-4' => 'display-4',
-		);
-
-		$options['display-5'] = 'display-5';
-		$options['display-6'] = 'display-6';
-
+			'display-5' => 'display-5',
+			'display-6' => 'display-6',
+		];
 
 		if ( $has_custom ) {
 			$options['custom'] = __( 'Custom size', 'ayecode-connect' );
 		}
 
-		$defaults = array(
+		$defaults = [
 			'type'     => 'select',
 			'title'    => __( 'Font size', 'ayecode-connect' ),
 			'options'  => $options,
 			'default'  => '',
 			'desc_tip' => true,
 			'group'    => 'typography',
-		);
+		];
 
 		$input = wp_parse_args( $overwrite, $defaults );
 
-		// set as block_component
-		unset( $overwrite['device_type'] );
-		if ( empty( $overwrite ) ) {
-			$function_name            = $has_custom ? '_has_custom' : '';
-			$input['block_component'] = 'sd_get_font_size_input' . $function_name;
+		$clean = $overwrite;
+		unset( $clean['device_type'] );
+		if ( empty( $clean ) ) {
+			$input['block_component'] = $has_custom ? 'sd_get_font_size_input_has_custom' : 'sd_get_font_size_input';
 		}
 
 		return $input;
 	}
 
 	/**
-	 * Build a custom font-size (numeric rem) field definition.
+	 * Build a custom font-size number input.
 	 *
-	 * @param string $type        The field key (default 'font_size_custom').
-	 * @param array  $overwrite   Field config overrides.
-	 * @param string $parent_type When set, adds an element_require rule pointing at the parent.
+	 * @param string $parent_key The field key of the paired size select (for element_require). Empty = no condition.
+	 * @param array  $overwrite  Field config overrides.
 	 * @return array
 	 */
-	public static function font_custom_size_input( $type = 'font_size_custom', $overwrite = array(), $parent_type = '' ) {
-		$defaults = array(
+	private static function _font_size_custom_field( string $parent_key, array $overwrite ): array {
+		$defaults = [
 			'type'              => 'number',
 			'title'             => __( 'Font size (rem)', 'ayecode-connect' ),
 			'default'           => '',
 			'placeholder'       => '1.25',
-			'custom_attributes' => array(
+			'custom_attributes' => [
 				'step' => '0.1',
 				'min'  => '0',
 				'max'  => '100',
-			),
+			],
 			'desc_tip'          => true,
 			'group'             => 'typography',
-		);
+		];
 
-		if ( $parent_type ) {
-			$defaults['element_require'] = '[%' . $parent_type . '%]=="custom"';
+		if ( $parent_key ) {
+			$defaults['element_require'] = '[%' . $parent_key . '%]=="custom"';
 		}
 
 		$input = wp_parse_args( $overwrite, $defaults );
 
-		// set as block_component
-		unset( $overwrite['device_type'] );
-		if ( empty( $overwrite ) ) {
-			$function_name            = $parent_type ? '_' . $parent_type : '';
-			$input['block_component'] = 'sd_get_font_custom_size_input' . $function_name;
+		$clean = $overwrite;
+		unset( $clean['device_type'] );
+		if ( empty( $clean ) ) {
+			$suffix                   = $parent_key ? '_' . $parent_key : '';
+			$input['block_component'] = 'sd_get_font_custom_size_input' . $suffix;
+		}
+
+		return $input;
+	}
+
+	/**
+	 * Build a text-color select field definition.
+	 *
+	 * @param bool  $has_custom Whether to include the "Custom color" option.
+	 * @param array $overwrite  Field config overrides.
+	 * @return array
+	 */
+	private static function _text_color_field( bool $has_custom, array $overwrite ): array {
+		$options = [ '' => __( 'None', 'ayecode-connect' ) ] + sd_aui_colors( false, false, false, false, false, true );
+
+		if ( $has_custom ) {
+			$options['custom'] = __( 'Custom color', 'ayecode-connect' );
+		}
+
+		$defaults = [
+			'type'     => 'select',
+			'title'    => __( 'Text color', 'ayecode-connect' ),
+			'options'  => $options,
+			'default'  => '',
+			'desc_tip' => true,
+			'group'    => 'typography',
+		];
+
+		$input = wp_parse_args( $overwrite, $defaults );
+
+		$clean = $overwrite;
+		unset( $clean['device_type'] );
+		if ( empty( $clean ) ) {
+			$input['block_component'] = $has_custom ? 'sd_get_text_color_input_has_custom' : 'sd_get_text_color_input';
+		}
+
+		return $input;
+	}
+
+	/**
+	 * Build a custom color picker field.
+	 *
+	 * @param string $parent_key The field key of the paired color select (for element_require). Empty = no condition.
+	 * @param array  $overwrite  Field config overrides.
+	 * @return array
+	 */
+	private static function _custom_color_field( string $parent_key, array $overwrite ): array {
+		$defaults = [
+			'type'        => 'color',
+			'title'       => __( 'Custom color', 'ayecode-connect' ),
+			'default'     => '',
+			'placeholder' => '',
+			'desc_tip'    => true,
+			'group'       => 'typography',
+		];
+
+		if ( $parent_key ) {
+			$defaults['element_require'] = '[%' . $parent_key . '%]=="custom"';
+		}
+
+		$input = wp_parse_args( $overwrite, $defaults );
+
+		$clean = $overwrite;
+		unset( $clean['device_type'] );
+		if ( empty( $clean ) ) {
+			$suffix                   = $parent_key ? '_' . $parent_key : '';
+			$input['block_component'] = 'sd_get_custom_color_input' . $suffix;
 		}
 
 		return $input;

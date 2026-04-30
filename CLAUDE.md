@@ -54,7 +54,7 @@ All modern classes live under `AyeCode\SuperDuper\` (mapped to `src/` by the SPL
 | `SuperDuperWidget` | `src/SuperDuperWidget.php` | Widget-mode class (extends `WP_Widget`) |
 | `BricksElement` | `src/BricksElement.php` | Bricks Builder adapter |
 | `Loader` | `src/Loader.php` | Hook-registration entry point (constructor only) |
-| `Utils` | `src/Utils.php` | Static utilities: `is_preview()`, `string_to_bool()`, `encode_shortcodes()`, `decode_shortcodes()`, `replace_variables()` |
+| `Utils` | `src/Utils.php` | Static utilities: `is_preview()`, `string_to_bool()`, `encode_shortcodes()`, `decode_shortcodes()`, `replace_variables()`, `element_require()` |
 
 **Builder:**
 
@@ -66,14 +66,15 @@ All modern classes live under `AyeCode\SuperDuper\` (mapped to `src/` by the SPL
 
 | Class | File | Methods |
 |---|---|---|
-| `Fields\SpacingFields` | `src/Fields/SpacingFields.php` | `margin_input()`, `padding_input()` |
-| `Fields\StyleFields` | `src/Fields/StyleFields.php` | `border_input()`, `shadow_input()`, `background_inputs()`, `background_input()`, `display_input()`, `opacity_input()`, `hover_animations_input()`, `hover_icon_animation_input()`, `zindex_input()`, `overflow_input()`, `scrollbars_input()` |
-| `Fields\TypographyFields` | `src/Fields/TypographyFields.php` | `font_size_input_group()`, `font_size_input()`, `font_custom_size_input()`, `font_weight_input()`, `font_case_input()`, `font_italic_input()`, `font_line_height_input()`, `text_justify_input()`, `text_align_input()`, `text_align_input_group()`, `text_color_input_group()`, `text_color_input()`, `custom_color_input()` |
-| `Fields\LayoutFields` | `src/Fields/LayoutFields.php` | `container_class_input()`, `position_class_input()`, `sticky_offset_input()`, `col_input()`, `row_cols_input()`, `absolute_position_input()`, `width_input()`, `height_input()`, `max_height_input()` |
-| `Fields\CommonFields` | `src/Fields/CommonFields.php` | `class_input()`, `anchor_input()`, `custom_name_input()`, `visibility_conditions_input()`, `new_window_input()`, `nofollow_input()`, `attributes_input()`, `title_tag_input()`, `html_tag_input()`, `title_inputs()` |
-| `Fields\ColorFields` | `src/Fields/ColorFields.php` | `aui_colors()`, `get_aui_colors()`, `branding_colors()` |
-| `Fields\ShapeFields` | `src/Fields/ShapeFields.php` | `divider_inputs()`, `element_require_string()` |
-| `Fields\FlexFields` | `src/Fields/FlexFields.php` | `align_items_input()`, `align_items_group()`, `justify_content_input()`, `justify_content_group()`, `align_self_input()`, `align_self_group()`, `order_input()`, `order_group()`, `wrap_input()`, `wrap_group()`, `float_input()`, `float_group()` |
+| `Fields\SpacingFields` | `src/Fields/SpacingFields.php` | `margin( $side, $overwrite, $include_negatives )`, `padding( $side, $overwrite )`, `margin_group()`, `padding_group()` |
+| `Fields\StyleFields` | `src/Fields/StyleFields.php` | `border_show()`, `border_style()`, `border_width()`, `border_opacity()`, `border_radius()`, `border_radius_size()`, `border_group( $prefix )`, `shadow()`, `background()`, `background_group( $prefix )`, `display()`, `opacity()`, `hover_animation()`, `hover_icon_animation()`, `zindex()`, `overflow()`, `scrollbars()` |
+| `Fields\TypographyFields` | `src/Fields/TypographyFields.php` | `font_size()`, `font_size_custom()`, `font_weight()`, `font_case()`, `font_italic()`, `line_height()`, `text_justify()`, `text_align()`, `text_color()`, `text_color_custom()`, `font_size_group( $prefix )`, `text_align_group( $prefix )`, `text_color_group( $prefix )` |
+| `Fields\LayoutFields` | `src/Fields/LayoutFields.php` | `container()`, `position()`, `sticky_offset( $side )`, `col()`, `row_cols()`, `absolute_position()`, `width()`, `height()`, `max_height()` |
+| `Fields\CommonFields` | `src/Fields/CommonFields.php` | `css_class()`, `anchor()`, `metadata_name()`, `visibility_conditions()`, `new_window()`, `nofollow()`, `attributes()`, `title_tag()`, `html_tag()`, `title_group()` |
+| `Fields\ColorFields` | `src/Fields/ColorFields.php` | Deprecated shim — use `Helpers\ColorOptions` instead |
+| `Helpers\ColorOptions` | `src/Helpers/ColorOptions.php` | `aui( $types, $flatten )`, `branding()` — returns option arrays for `select`/`color` fields, not field definitions |
+| `Fields\ShapeFields` | `src/Fields/ShapeFields.php` | `divider_group( $prefix )` |
+| `Fields\FlexFields` | `src/Fields/FlexFields.php` | `align_items()`, `align_items_group( $prefix )`, `justify_content()`, `justify_content_group( $prefix )`, `align_self()`, `align_self_group( $prefix )`, `order()`, `order_group( $prefix )`, `flex_wrap()`, `flex_wrap_group( $prefix )`, `float()`, `float_group( $prefix )` |
 
 ### Trait Breakdown
 

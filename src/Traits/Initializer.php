@@ -49,14 +49,6 @@ trait Initializer {
 
 		$this->arguments = isset( $options['arguments'] ) ? $options['arguments'] : array();
 
-		// If the child class defines set_arguments(), merge its result.
-		// The builder result is applied after the constructor options array so it takes precedence.
-		// This is the modern alternative to passing 'arguments' in the options array.
-		if ( method_exists( $this, 'set_arguments' ) ) {
-			$builder_args    = $this->set_arguments();
-			$this->arguments = array_merge( $this->arguments, is_array( $builder_args ) ? $builder_args : [] );
-		}
-
 		// Nested blocks cannot function as widgets.
 		if ( ! empty( $this->options['nested-block'] ) ) {
 			if ( empty( $this->options['output_types'] ) ) {

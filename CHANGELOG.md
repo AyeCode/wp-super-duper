@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.0.6-beta] — 2026-04-30
+- Field builder refactor to new standards - CHANGED
+- ayecode_sd_register() function added to register blocks for better efficiency - ADDED
+- 
 ## [3.0.5-beta] — 2026-04-29
 - Large refactor to AyeCode Package standards - CHANGED
 

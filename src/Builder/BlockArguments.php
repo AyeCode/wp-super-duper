@@ -94,11 +94,7 @@ class BlockArguments {
 	 * @return static
 	 */
 	public function add_margins( array $overwrite = [], bool $include_negatives = true ): self {
-		$this->fields['mt'] = SpacingFields::margin_input( 'mt', $overwrite, $include_negatives );
-		$this->fields['mr'] = SpacingFields::margin_input( 'mr', $overwrite, $include_negatives );
-		$this->fields['mb'] = SpacingFields::margin_input( 'mb', $overwrite, $include_negatives );
-		$this->fields['ml'] = SpacingFields::margin_input( 'ml', $overwrite, $include_negatives );
-		return $this;
+		return $this->add_fields( SpacingFields::margin_group( $overwrite, $include_negatives ) );
 	}
 
 	/**
@@ -117,20 +113,20 @@ class BlockArguments {
 	public function add_responsive_margins( array $overwrite = [], bool $include_negatives = true, string $mb_lg_default = '3' ): self {
 		$this->add_margins( array_merge( $overwrite, [ 'device_type' => 'Mobile' ] ), $include_negatives );
 
+		$side_map = [ 'mt' => 'top', 'mr' => 'right', 'mb' => 'bottom', 'ml' => 'left' ];
+
 		// Tablet (_md) variants
-		foreach ( [ 'mt', 'mr', 'mb', 'ml' ] as $side ) {
-			$md_type                  = $side . '_md';
-			$this->fields[ $md_type ] = SpacingFields::margin_input( $side, array_merge( $overwrite, [ 'device_type' => 'Tablet' ] ), $include_negatives );
+		foreach ( $side_map as $key => $side ) {
+			$this->fields[ $key . '_md' ] = SpacingFields::margin( $side, array_merge( $overwrite, [ 'device_type' => 'Tablet' ] ), $include_negatives );
 		}
 
 		// Desktop (_lg) variants
-		foreach ( [ 'mt', 'mr', 'mb', 'ml' ] as $side ) {
-			$lg_type      = $side . '_lg';
+		foreach ( $side_map as $key => $side ) {
 			$lg_overwrite = array_merge( $overwrite, [ 'device_type' => 'Desktop' ] );
-			if ( 'mb' === $side && '' !== $mb_lg_default ) {
+			if ( 'mb' === $key && '' !== $mb_lg_default ) {
 				$lg_overwrite = array_merge( $lg_overwrite, [ 'default' => $mb_lg_default ] );
 			}
-			$this->fields[ $lg_type ] = SpacingFields::margin_input( $side, $lg_overwrite, $include_negatives );
+			$this->fields[ $key . '_lg' ] = SpacingFields::margin( $side, $lg_overwrite, $include_negatives );
 		}
 
 		return $this;
@@ -143,11 +139,7 @@ class BlockArguments {
 	 * @return static
 	 */
 	public function add_padding( array $overwrite = [] ): self {
-		$this->fields['pt'] = SpacingFields::padding_input( 'pt', $overwrite );
-		$this->fields['pr'] = SpacingFields::padding_input( 'pr', $overwrite );
-		$this->fields['pb'] = SpacingFields::padding_input( 'pb', $overwrite );
-		$this->fields['pl'] = SpacingFields::padding_input( 'pl', $overwrite );
-		return $this;
+		return $this->add_fields( SpacingFields::padding_group( $overwrite ) );
 	}
 
 	/**
@@ -159,16 +151,16 @@ class BlockArguments {
 	public function add_responsive_paddings( array $overwrite = [] ): self {
 		$this->add_padding( array_merge( $overwrite, [ 'device_type' => 'Mobile' ] ) );
 
+		$side_map = [ 'pt' => 'top', 'pr' => 'right', 'pb' => 'bottom', 'pl' => 'left' ];
+
 		// Tablet (_md) variants
-		foreach ( [ 'pt', 'pr', 'pb', 'pl' ] as $side ) {
-			$md_type                  = $side . '_md';
-			$this->fields[ $md_type ] = SpacingFields::padding_input( $side, array_merge( $overwrite, [ 'device_type' => 'Tablet' ] ) );
+		foreach ( $side_map as $key => $side ) {
+			$this->fields[ $key . '_md' ] = SpacingFields::padding( $side, array_merge( $overwrite, [ 'device_type' => 'Tablet' ] ) );
 		}
 
 		// Desktop (_lg) variants
-		foreach ( [ 'pt', 'pr', 'pb', 'pl' ] as $side ) {
-			$lg_type                  = $side . '_lg';
-			$this->fields[ $lg_type ] = SpacingFields::padding_input( $side, array_merge( $overwrite, [ 'device_type' => 'Desktop' ] ) );
+		foreach ( $side_map as $key => $side ) {
+			$this->fields[ $key . '_lg' ] = SpacingFields::padding( $side, array_merge( $overwrite, [ 'device_type' => 'Desktop' ] ) );
 		}
 
 		return $this;
@@ -182,13 +174,7 @@ class BlockArguments {
 	 * @return static
 	 */
 	public function add_border_group( string $prefix = '', array $overwrite = [] ): self {
-		$this->fields[ $prefix . 'border' ]         = StyleFields::border_input( 'border', $overwrite );
-		$this->fields[ $prefix . 'border_type' ]    = StyleFields::border_input( 'type', $overwrite );
-		$this->fields[ $prefix . 'border_width' ]   = StyleFields::border_input( 'width', $overwrite );
-		$this->fields[ $prefix . 'border_opacity' ] = StyleFields::border_input( 'opacity', $overwrite );
-		$this->fields[ $prefix . 'rounded' ]        = StyleFields::border_input( 'rounded', $overwrite );
-		$this->fields[ $prefix . 'rounded_size' ]   = StyleFields::border_input( 'rounded_size', $overwrite );
-		return $this;
+		return $this->add_fields( StyleFields::border_group( $prefix, $overwrite ) );
 	}
 
 	/**
@@ -199,7 +185,7 @@ class BlockArguments {
 	 * @return static
 	 */
 	public function add_shadow_group( string $prefix = '', array $overwrite = [] ): self {
-		$this->fields[ $prefix . 'shadow' ] = StyleFields::shadow_input( 'shadow', $overwrite );
+		$this->fields[ $prefix . 'shadow' ] = StyleFields::shadow( $overwrite );
 		return $this;
 	}
 
@@ -212,7 +198,7 @@ class BlockArguments {
 	 * @return static
 	 */
 	public function add_background_group( string $prefix = '', array $overwrite = [], bool $include_image = true ): self {
-		return $this->add_fields( StyleFields::background_inputs( $prefix . 'bg', $overwrite, [], [], $include_image ? [] : false ) );
+		return $this->add_fields( StyleFields::background_group( $prefix . 'bg', $overwrite, [], [], $include_image ? [] : false ) );
 	}
 
 	/**
@@ -225,7 +211,7 @@ class BlockArguments {
 	 * @return static
 	 */
 	public function add_display_group( string $prefix = '', array $overwrite = [] ): self {
-		$this->fields[ $prefix . 'display' ] = StyleFields::display_input( 'display', array_merge( $overwrite, [ 'device_type' => 'Mobile' ] ) );
+		$this->fields[ $prefix . 'display' ] = StyleFields::display( array_merge( $overwrite, [ 'device_type' => 'Mobile' ] ) );
 		return $this;
 	}
 
@@ -239,9 +225,9 @@ class BlockArguments {
 	 * @return static
 	 */
 	public function add_responsive_display_group( string $prefix = '', array $overwrite = [] ): self {
-		$this->fields[ $prefix . 'display' ]    = StyleFields::display_input( 'display', array_merge( $overwrite, [ 'device_type' => 'Mobile' ] ) );
-		$this->fields[ $prefix . 'display_md' ] = StyleFields::display_input( 'display', array_merge( $overwrite, [ 'device_type' => 'Tablet' ] ) );
-		$this->fields[ $prefix . 'display_lg' ] = StyleFields::display_input( 'display', array_merge( $overwrite, [ 'device_type' => 'Desktop' ] ) );
+		$this->fields[ $prefix . 'display' ]    = StyleFields::display( array_merge( $overwrite, [ 'device_type' => 'Mobile' ] ) );
+		$this->fields[ $prefix . 'display_md' ] = StyleFields::display( array_merge( $overwrite, [ 'device_type' => 'Tablet' ] ) );
+		$this->fields[ $prefix . 'display_lg' ] = StyleFields::display( array_merge( $overwrite, [ 'device_type' => 'Desktop' ] ) );
 		return $this;
 	}
 
@@ -253,14 +239,26 @@ class BlockArguments {
 	 * @return static
 	 */
 	public function add_typography_group( string $prefix = '', array $overwrite = [] ): self {
-		return $this->add_fields( TypographyFields::text_color_input_group( $prefix . 'text_color', $overwrite ) )
-		            ->add_fields( TypographyFields::font_size_input_group( $prefix . 'font_size', $overwrite ) )
-					->add_field( $prefix . 'font_weight', TypographyFields::font_weight_input( $prefix . 'font_weight', $overwrite ) )
-					->add_field( $prefix . 'font_case', TypographyFields::font_case_input( $prefix . 'font_case', $overwrite ) )
-					->add_field( $prefix . 'font_italic', TypographyFields::font_italic_input( $prefix . 'font_italic', $overwrite ) )
-					->add_field( $prefix . 'font_line_height', TypographyFields::font_line_height_input( $prefix . 'font_line_height', $overwrite ) )
-					->add_field( $prefix . 'text_justify', TypographyFields::text_justify_input( $prefix . 'text_justify', $overwrite ) )
-					->add_fields( TypographyFields::text_align_input_group( $prefix . 'text_align', array_merge( $overwrite, [ 'element_require' => '[%' . $prefix . 'text_justify%]==""' ] ) ) );
+		return $this->add_fields( TypographyFields::text_color_group( $prefix . 'text_color', $overwrite ) )
+		            ->add_fields( TypographyFields::font_size_group( $prefix . 'font_size', $overwrite ) )
+					->add_field( $prefix . 'font_weight', TypographyFields::font_weight( $overwrite ) )
+					->add_field( $prefix . 'font_case', TypographyFields::font_case( $overwrite ) )
+					->add_field( $prefix . 'font_italic', TypographyFields::font_italic( $overwrite ) )
+					->add_field( $prefix . 'font_line_height', TypographyFields::line_height( $overwrite ) )
+					->add_field( $prefix . 'text_justify', TypographyFields::text_justify( $overwrite ) )
+					->add_fields( TypographyFields::text_align_group( $prefix . 'text_align', array_merge( $overwrite, [ 'element_require' => '[%' . $prefix . 'text_justify%]==""' ] ) ) );
+	}
+
+	/**
+	 * Add the position class field (static, relative, absolute, fixed, sticky).
+	 *
+	 * @param string $prefix   Optional prefix for the field key.
+	 * @param array  $overwrite Per-field overwrite config.
+	 * @return static
+	 */
+	public function add_position( string $prefix = '', array $overwrite = [] ): self {
+		$this->fields[ $prefix . 'position' ] = LayoutFields::position( $overwrite );
+		return $this;
 	}
 
 	/**
@@ -271,8 +269,8 @@ class BlockArguments {
 	 * @return static
 	 */
 	public function add_layout_group( string $prefix = '', array $overwrite = [] ): self {
-		$this->fields[ $prefix . 'container' ] = LayoutFields::container_class_input( 'container', $overwrite );
-		$this->fields[ $prefix . 'position' ]  = LayoutFields::position_class_input( 'position', $overwrite );
+		$this->fields[ $prefix . 'container' ] = LayoutFields::container( $overwrite );
+		$this->fields[ $prefix . 'position' ]  = LayoutFields::position( $overwrite );
 		return $this;
 	}
 
@@ -284,7 +282,7 @@ class BlockArguments {
 	 * @return static
 	 */
 	public function add_colors_group( string $prefix = '', array $overwrite = [] ): self {
-		return $this->add_fields( TypographyFields::text_color_input_group( $prefix . 'text_color', $overwrite ) );
+		return $this->add_fields( TypographyFields::text_color_group( $prefix . 'text_color', $overwrite ) );
 	}
 
 	/**
@@ -295,8 +293,8 @@ class BlockArguments {
 	 * @return static
 	 */
 	public function add_sticky_offset_group( string $prefix = '', array $overwrite = [] ): self {
-		$this->fields[ $prefix . 'sticky_offset_top' ]    = LayoutFields::sticky_offset_input( 'top', $overwrite );
-		$this->fields[ $prefix . 'sticky_offset_bottom' ] = LayoutFields::sticky_offset_input( 'bottom', $overwrite );
+		$this->fields[ $prefix . 'sticky_offset_top' ]    = LayoutFields::sticky_offset( 'top', $overwrite );
+		$this->fields[ $prefix . 'sticky_offset_bottom' ] = LayoutFields::sticky_offset( 'bottom', $overwrite );
 		return $this;
 	}
 
@@ -308,7 +306,24 @@ class BlockArguments {
 	 * @return static
 	 */
 	public function add_visibility_conditions( string $prefix = '', array $overwrite = [] ): self {
-		$this->fields[ $prefix . 'visibility_conditions' ] = CommonFields::visibility_conditions_input( 'visibility_conditions', $overwrite );
+		$this->fields[ $prefix . 'visibility_conditions' ] = CommonFields::visibility_conditions( $overwrite );
+		return $this;
+	}
+
+	/**
+	 * Add the Advanced group: CSS class and custom metadata name.
+	 *
+	 * Use this as the standard "Advanced" tab fields for any block that
+	 * needs to expose a CSS class override and a custom metadata label
+	 * without the anchor ID field.
+	 *
+	 * @param string $prefix   Optional prefix for field keys.
+	 * @param array  $overwrite Per-field overwrite config.
+	 * @return static
+	 */
+	public function add_advanced_group( string $prefix = '', array $overwrite = [] ): self {
+		$this->fields[ $prefix . 'css_class' ]     = CommonFields::css_class( $overwrite );
+		$this->fields[ $prefix . 'metadata_name' ] = CommonFields::metadata_name( $overwrite );
 		return $this;
 	}
 
@@ -320,9 +335,9 @@ class BlockArguments {
 	 * @return static
 	 */
 	public function add_class_and_anchor( string $prefix = '', array $overwrite = [] ): self {
-		$this->fields[ $prefix . 'css_class' ]     = CommonFields::class_input( 'css_class', $overwrite );
-		$this->fields[ $prefix . 'anchor' ]        = CommonFields::anchor_input( 'anchor', $overwrite );
-		$this->fields[ $prefix . 'metadata_name' ] = CommonFields::custom_name_input( 'metadata_name', $overwrite );
+		$this->fields[ $prefix . 'css_class' ]     = CommonFields::css_class( $overwrite );
+		$this->fields[ $prefix . 'anchor' ]        = CommonFields::anchor( $overwrite );
+		$this->fields[ $prefix . 'metadata_name' ] = CommonFields::metadata_name( $overwrite );
 		return $this;
 	}
 }

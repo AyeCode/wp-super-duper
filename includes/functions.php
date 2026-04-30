@@ -4,6 +4,26 @@
  */
 
 /**
+ * Register a block/shortcode/widget class for lazy loading via the SD Registry.
+ *
+ * On the frontend, the class file and class itself are not loaded until a
+ * shortcode referencing this base_id is actually rendered on the page. On
+ * admin and AJAX requests all registered classes are instantiated eagerly so
+ * the block editor and AJAX handlers work as expected.
+ *
+ * @param string   $base_id      The shortcode / block base ID (e.g. 'bs_alert').
+ * @param string   $class_name   The class name (e.g. 'BlockStrap_Widget_Alert').
+ * @param string[] $output_types Supported output types: 'block', 'shortcode', 'widget'.
+ *                               Omit 'widget' for blocks that never appear in sidebar widget areas.
+ * @param string   $file_path    Absolute path to the class file. Required when the class is
+ *                               not PSR-4 autoloadable (i.e. most non-Composer plugins).
+ *                               Use __DIR__ . '/path/to/class-file.php'.
+ */
+function ayecode_sd_register( string $base_id, string $class_name, array $output_types = [], string $file_path = '' ): void {
+	\AyeCode\SuperDuper\Registry::register( $base_id, $class_name, $output_types, $file_path );
+}
+
+/**
  * Return an array of global $pagenow page names that should be used to exclude register_widgets.
  *
  * Used to block the loading of widgets on certain wp-admin pages to save on memory.
@@ -11,7 +31,7 @@
  * @return mixed|void
  */
 function sd_pagenow_exclude() {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Utils::pagenow_exclude' );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Utils::pagenow_exclude' );
 	return \AyeCode\SuperDuper\Utils::pagenow_exclude();
 }
 
@@ -24,7 +44,7 @@ function sd_pagenow_exclude() {
  * @return mixed|void
  */
 function sd_widget_exclude() {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Utils::widget_exclude' );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Utils::widget_exclude' );
 	return \AyeCode\SuperDuper\Utils::widget_exclude();
 }
 
@@ -38,8 +58,9 @@ function sd_widget_exclude() {
  * @return array
  */
 function sd_get_margin_input( $type = 'mt', $overwrite = array(), $include_negatives = true ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\SpacingFields::margin_input' );
-	return \AyeCode\SuperDuper\Fields\SpacingFields::margin_input( $type, $overwrite, $include_negatives );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\SpacingFields::margin' );
+	$side_map = [ 'mt' => 'top', 'mr' => 'right', 'mb' => 'bottom', 'ml' => 'left' ];
+	return \AyeCode\SuperDuper\Fields\SpacingFields::margin( $side_map[ $type ] ?? 'top', $overwrite, $include_negatives );
 }
 
 /**
@@ -51,8 +72,9 @@ function sd_get_margin_input( $type = 'mt', $overwrite = array(), $include_negat
  * @return array
  */
 function sd_get_padding_input( $type = 'pt', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\SpacingFields::padding_input' );
-	return \AyeCode\SuperDuper\Fields\SpacingFields::padding_input( $type, $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\SpacingFields::padding' );
+	$side_map = [ 'pt' => 'top', 'pr' => 'right', 'pb' => 'bottom', 'pl' => 'left' ];
+	return \AyeCode\SuperDuper\Fields\SpacingFields::padding( $side_map[ $type ] ?? 'top', $overwrite );
 }
 
 /**
@@ -64,8 +86,21 @@ function sd_get_padding_input( $type = 'pt', $overwrite = array() ) {
  * @return array
  */
 function sd_get_border_input( $type = 'border', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\StyleFields::border_input' );
-	return \AyeCode\SuperDuper\Fields\StyleFields::border_input( $type, $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\StyleFields::border_show' );
+	switch ( $type ) {
+		case 'type':
+			return \AyeCode\SuperDuper\Fields\StyleFields::border_style( $overwrite );
+		case 'width':
+			return \AyeCode\SuperDuper\Fields\StyleFields::border_width( $overwrite );
+		case 'opacity':
+			return \AyeCode\SuperDuper\Fields\StyleFields::border_opacity( $overwrite );
+		case 'rounded':
+			return \AyeCode\SuperDuper\Fields\StyleFields::border_radius( $overwrite );
+		case 'rounded_size':
+			return \AyeCode\SuperDuper\Fields\StyleFields::border_radius_size( $overwrite );
+		default:
+			return \AyeCode\SuperDuper\Fields\StyleFields::border_show( $overwrite );
+	}
 }
 
 /**
@@ -77,8 +112,8 @@ function sd_get_border_input( $type = 'border', $overwrite = array() ) {
  * @return array
  */
 function sd_get_shadow_input( $type = 'shadow', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\StyleFields::shadow_input' );
-	return \AyeCode\SuperDuper\Fields\StyleFields::shadow_input( $type, $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\StyleFields::shadow' );
+	return \AyeCode\SuperDuper\Fields\StyleFields::shadow( $overwrite );
 }
 
 /**
@@ -90,8 +125,8 @@ function sd_get_shadow_input( $type = 'shadow', $overwrite = array() ) {
  * @return array
  */
 function sd_get_background_input( $type = 'bg', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\StyleFields::background_input' );
-	return \AyeCode\SuperDuper\Fields\StyleFields::background_input( $type, $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\StyleFields::background' );
+	return \AyeCode\SuperDuper\Fields\StyleFields::background( $overwrite );
 }
 
 /**
@@ -103,8 +138,8 @@ function sd_get_background_input( $type = 'bg', $overwrite = array() ) {
  * @return array
  */
 function sd_get_opacity_input( $type = 'opacity', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\StyleFields::opacity_input' );
-	return \AyeCode\SuperDuper\Fields\StyleFields::opacity_input( $type, $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\StyleFields::opacity' );
+	return \AyeCode\SuperDuper\Fields\StyleFields::opacity( $overwrite );
 }
 
 /**
@@ -116,8 +151,8 @@ function sd_get_opacity_input( $type = 'opacity', $overwrite = array() ) {
  * @return array
  */
 function sd_get_background_inputs( $type = 'bg', $overwrite = array(), $overwrite_color = array(), $overwrite_gradient = array(), $overwrite_image = array(), $include_button_colors = false ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\StyleFields::background_inputs' );
-	return \AyeCode\SuperDuper\Fields\StyleFields::background_inputs( $type, $overwrite, $overwrite_color, $overwrite_gradient, $overwrite_image, $include_button_colors );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\StyleFields::background_group' );
+	return \AyeCode\SuperDuper\Fields\StyleFields::background_group( $type, $overwrite, $overwrite_color, $overwrite_gradient, $overwrite_image, $include_button_colors );
 }
 
 /**
@@ -129,8 +164,8 @@ function sd_get_background_inputs( $type = 'bg', $overwrite = array(), $overwrit
  * @return array
  */
 function sd_get_shape_divider_inputs( $type = 'sd', $overwrite = array(), $overwrite_color = array(), $overwrite_gradient = array(), $overwrite_image = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\ShapeFields::divider_inputs' );
-	return \AyeCode\SuperDuper\Fields\ShapeFields::divider_inputs( $type, $overwrite, $overwrite_color, $overwrite_gradient, $overwrite_image );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\ShapeFields::divider_group' );
+	return \AyeCode\SuperDuper\Fields\ShapeFields::divider_group( $type, $overwrite, $overwrite_color, [], $overwrite_image );
 }
 
 /**
@@ -143,8 +178,8 @@ function sd_get_shape_divider_inputs( $type = 'sd', $overwrite = array(), $overw
  * @return string
  */
 function sd_get_element_require_string( $args, $key, $type ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\ShapeFields::element_require_string' );
-	return \AyeCode\SuperDuper\Fields\ShapeFields::element_require_string( $args, $key, $type );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Utils::element_require' );
+	return \AyeCode\SuperDuper\Utils::element_require( $args, $key, $type );
 }
 
 /**
@@ -156,13 +191,13 @@ function sd_get_element_require_string( $args, $key, $type ) {
  * @return array
  */
 function sd_get_text_color_input( $type = 'text_color', $overwrite = array(), $has_custom = false, $emphasis = true ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\TypographyFields::text_color_input' );
-	return \AyeCode\SuperDuper\Fields\TypographyFields::text_color_input( $type, $overwrite, $has_custom, $emphasis );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\TypographyFields::text_color' );
+	return \AyeCode\SuperDuper\Fields\TypographyFields::text_color( $overwrite );
 }
 
 function sd_get_text_color_input_group( $type = 'text_color', $overwrite = array(), $overwrite_custom = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\TypographyFields::text_color_input_group' );
-	return \AyeCode\SuperDuper\Fields\TypographyFields::text_color_input_group( $type, $overwrite, $overwrite_custom );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\TypographyFields::text_color_group' );
+	return \AyeCode\SuperDuper\Fields\TypographyFields::text_color_group( $type, $overwrite );
 }
 
 /**
@@ -174,8 +209,11 @@ function sd_get_text_color_input_group( $type = 'text_color', $overwrite = array
  * @return array
  */
 function sd_get_custom_color_input( $type = 'color_custom', $overwrite = array(), $parent_type = '' ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\TypographyFields::custom_color_input' );
-	return \AyeCode\SuperDuper\Fields\TypographyFields::custom_color_input( $type, $overwrite, $parent_type );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\TypographyFields::text_color_custom' );
+	if ( $parent_type && empty( $overwrite['element_require'] ) ) {
+		$overwrite['element_require'] = '[%' . $parent_type . '%]=="custom"';
+	}
+	return \AyeCode\SuperDuper\Fields\TypographyFields::text_color_custom( $overwrite );
 }
 
 /**
@@ -187,8 +225,8 @@ function sd_get_custom_color_input( $type = 'color_custom', $overwrite = array()
  * @return array
  */
 function sd_get_col_input( $type = 'col', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\LayoutFields::col_input' );
-	return \AyeCode\SuperDuper\Fields\LayoutFields::col_input( $type, $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\LayoutFields::col' );
+	return \AyeCode\SuperDuper\Fields\LayoutFields::col( $overwrite );
 }
 
 /**
@@ -200,8 +238,8 @@ function sd_get_col_input( $type = 'col', $overwrite = array() ) {
  * @return array
  */
 function sd_get_row_cols_input( $type = 'row_cols', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\LayoutFields::row_cols_input' );
-	return \AyeCode\SuperDuper\Fields\LayoutFields::row_cols_input( $type, $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\LayoutFields::row_cols' );
+	return \AyeCode\SuperDuper\Fields\LayoutFields::row_cols( $overwrite );
 }
 
 /**
@@ -213,8 +251,8 @@ function sd_get_row_cols_input( $type = 'row_cols', $overwrite = array() ) {
  * @return array
  */
 function sd_get_text_align_input( $type = 'text_align', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\TypographyFields::text_align_input' );
-	return \AyeCode\SuperDuper\Fields\TypographyFields::text_align_input( $type, $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\TypographyFields::text_align' );
+	return \AyeCode\SuperDuper\Fields\TypographyFields::text_align( $overwrite );
 }
 
 /**
@@ -226,8 +264,8 @@ function sd_get_text_align_input( $type = 'text_align', $overwrite = array() ) {
  * @return array
  */
 function sd_get_display_input( $type = 'display', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\StyleFields::display_input' );
-	return \AyeCode\SuperDuper\Fields\StyleFields::display_input( $type, $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\StyleFields::display' );
+	return \AyeCode\SuperDuper\Fields\StyleFields::display( $overwrite );
 }
 
 /**
@@ -239,8 +277,8 @@ function sd_get_display_input( $type = 'display', $overwrite = array() ) {
  * @return array
  */
 function sd_get_text_justify_input( $type = 'text_justify', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\TypographyFields::text_justify_input' );
-	return \AyeCode\SuperDuper\Fields\TypographyFields::text_justify_input( $type, $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\TypographyFields::text_justify' );
+	return \AyeCode\SuperDuper\Fields\TypographyFields::text_justify( $overwrite );
 }
 
 /**
@@ -255,7 +293,7 @@ function sd_get_text_justify_input( $type = 'text_justify', $overwrite = array()
  * @return array
  */
 function sd_get_aui_colors( $types = array(), $flatten = false ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\ColorFields::get_aui_colors' );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\ColorFields::get_aui_colors' );
 	return \AyeCode\SuperDuper\Fields\ColorFields::get_aui_colors( $types, $flatten );
 }
 
@@ -266,7 +304,7 @@ function sd_get_aui_colors( $types = array(), $flatten = false ) {
  * @deprecated 3.1.0 Use ColorFields::get_aui_colors() instead.
  */
 function sd_aui_colors( $include_branding = false, $include_outlines = false, $outline_button_only_text = false, $include_translucent = false, $include_subtle = false, $include_emphasis = false ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\ColorFields::aui_colors' );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\ColorFields::aui_colors' );
 	return \AyeCode\SuperDuper\Fields\ColorFields::aui_colors( $include_branding, $include_outlines, $outline_button_only_text, $include_translucent, $include_subtle, $include_emphasis );
 }
 
@@ -276,7 +314,7 @@ function sd_aui_colors( $include_branding = false, $include_outlines = false, $o
  * @return array
  */
 function sd_aui_branding_colors() {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\ColorFields::branding_colors' );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\ColorFields::branding_colors' );
 	return \AyeCode\SuperDuper\Fields\ColorFields::branding_colors();
 }
 
@@ -289,8 +327,8 @@ function sd_aui_branding_colors() {
  * @return array
  */
 function sd_get_container_class_input( $type = 'container', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\LayoutFields::container_class_input' );
-	return \AyeCode\SuperDuper\Fields\LayoutFields::container_class_input( $type, $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\LayoutFields::container' );
+	return \AyeCode\SuperDuper\Fields\LayoutFields::container( $overwrite );
 }
 
 /**
@@ -302,8 +340,8 @@ function sd_get_container_class_input( $type = 'container', $overwrite = array()
  * @return array
  */
 function sd_get_position_class_input( $type = 'position', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\LayoutFields::position_class_input' );
-	return \AyeCode\SuperDuper\Fields\LayoutFields::position_class_input( $type, $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\LayoutFields::position' );
+	return \AyeCode\SuperDuper\Fields\LayoutFields::position( $overwrite );
 }
 
 /**
@@ -313,8 +351,8 @@ function sd_get_position_class_input( $type = 'position', $overwrite = array() )
  * @return array
  */
 function sd_get_absolute_position_input( $type = 'absolute_position', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\LayoutFields::absolute_position_input' );
-	return \AyeCode\SuperDuper\Fields\LayoutFields::absolute_position_input( $type, $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\LayoutFields::absolute_position' );
+	return \AyeCode\SuperDuper\Fields\LayoutFields::absolute_position( $overwrite );
 }
 
 /**
@@ -326,8 +364,8 @@ function sd_get_absolute_position_input( $type = 'absolute_position', $overwrite
  * @return array
  */
 function sd_get_sticky_offset_input( $type = 'top', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\LayoutFields::sticky_offset_input' );
-	return \AyeCode\SuperDuper\Fields\LayoutFields::sticky_offset_input( $type, $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\LayoutFields::sticky_offset' );
+	return \AyeCode\SuperDuper\Fields\LayoutFields::sticky_offset( $type, $overwrite );
 }
 
 /**
@@ -339,8 +377,8 @@ function sd_get_sticky_offset_input( $type = 'top', $overwrite = array() ) {
  * @return array
  */
 function sd_get_font_size_input( $type = 'font_size', $overwrite = array(), $has_custom = false ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\TypographyFields::font_size_input' );
-	return \AyeCode\SuperDuper\Fields\TypographyFields::font_size_input( $type, $overwrite, $has_custom );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\TypographyFields::font_size' );
+	return \AyeCode\SuperDuper\Fields\TypographyFields::font_size( $overwrite );
 }
 
 /**
@@ -352,8 +390,11 @@ function sd_get_font_size_input( $type = 'font_size', $overwrite = array(), $has
  * @return array
  */
 function sd_get_font_custom_size_input( $type = 'font_size_custom', $overwrite = array(), $parent_type = '' ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\TypographyFields::font_custom_size_input' );
-	return \AyeCode\SuperDuper\Fields\TypographyFields::font_custom_size_input( $type, $overwrite, $parent_type );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\TypographyFields::font_size_custom' );
+	if ( $parent_type && empty( $overwrite['element_require'] ) ) {
+		$overwrite['element_require'] = '[%' . $parent_type . '%]=="custom"';
+	}
+	return \AyeCode\SuperDuper\Fields\TypographyFields::font_size_custom( $overwrite );
 }
 
 /**
@@ -365,8 +406,8 @@ function sd_get_font_custom_size_input( $type = 'font_size_custom', $overwrite =
  * @return array
  */
 function sd_get_font_line_height_input( $type = 'font_line_height', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\TypographyFields::font_line_height_input' );
-	return \AyeCode\SuperDuper\Fields\TypographyFields::font_line_height_input( $type, $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\TypographyFields::line_height' );
+	return \AyeCode\SuperDuper\Fields\TypographyFields::line_height( $overwrite );
 }
 
 /**
@@ -378,8 +419,8 @@ function sd_get_font_line_height_input( $type = 'font_line_height', $overwrite =
  * @return array
  */
 function sd_get_font_size_input_group( $type = 'font_size', $overwrite = array(), $overwrite_custom = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\TypographyFields::font_size_input_group' );
-	return \AyeCode\SuperDuper\Fields\TypographyFields::font_size_input_group( $type, $overwrite, $overwrite_custom );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\TypographyFields::font_size_group' );
+	return \AyeCode\SuperDuper\Fields\TypographyFields::font_size_group( $type, $overwrite );
 }
 
 /**
@@ -391,8 +432,8 @@ function sd_get_font_size_input_group( $type = 'font_size', $overwrite = array()
  * @return array
  */
 function sd_get_font_weight_input( $type = 'font_weight', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\TypographyFields::font_weight_input' );
-	return \AyeCode\SuperDuper\Fields\TypographyFields::font_weight_input( $type, $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\TypographyFields::font_weight' );
+	return \AyeCode\SuperDuper\Fields\TypographyFields::font_weight( $overwrite );
 }
 
 /**
@@ -404,8 +445,8 @@ function sd_get_font_weight_input( $type = 'font_weight', $overwrite = array() )
  * @return array
  */
 function sd_get_font_case_input( $type = 'font_weight', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\TypographyFields::font_case_input' );
-	return \AyeCode\SuperDuper\Fields\TypographyFields::font_case_input( $type, $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\TypographyFields::font_case' );
+	return \AyeCode\SuperDuper\Fields\TypographyFields::font_case( $overwrite );
 }
 
 /**
@@ -418,8 +459,8 @@ function sd_get_font_case_input( $type = 'font_weight', $overwrite = array() ) {
  *
  */
 function sd_get_font_italic_input( $type = 'font_italic', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\TypographyFields::font_italic_input' );
-	return \AyeCode\SuperDuper\Fields\TypographyFields::font_italic_input( $type, $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\TypographyFields::font_italic' );
+	return \AyeCode\SuperDuper\Fields\TypographyFields::font_italic( $overwrite );
 }
 
 /**
@@ -431,8 +472,8 @@ function sd_get_font_italic_input( $type = 'font_italic', $overwrite = array() )
  * @return array
  */
 function sd_get_anchor_input( $type = 'anchor', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\CommonFields::anchor_input' );
-	return \AyeCode\SuperDuper\Fields\CommonFields::anchor_input( $type, $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\CommonFields::anchor' );
+	return \AyeCode\SuperDuper\Fields\CommonFields::anchor( $overwrite );
 }
 
 /**
@@ -444,8 +485,8 @@ function sd_get_anchor_input( $type = 'anchor', $overwrite = array() ) {
  * @return array
  */
 function sd_get_class_input( $type = 'css_class', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\CommonFields::class_input' );
-	return \AyeCode\SuperDuper\Fields\CommonFields::class_input( $type, $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\CommonFields::css_class' );
+	return \AyeCode\SuperDuper\Fields\CommonFields::css_class( $overwrite );
 }
 
 /**
@@ -457,8 +498,8 @@ function sd_get_class_input( $type = 'css_class', $overwrite = array() ) {
  * @return array
  */
 function sd_get_custom_name_input( $type = 'metadata_name', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\CommonFields::custom_name_input' );
-	return \AyeCode\SuperDuper\Fields\CommonFields::custom_name_input( $type, $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\CommonFields::metadata_name' );
+	return \AyeCode\SuperDuper\Fields\CommonFields::metadata_name( $overwrite );
 }
 
 /**
@@ -470,8 +511,8 @@ function sd_get_custom_name_input( $type = 'metadata_name', $overwrite = array()
  * @return array
  */
 function sd_get_hover_animations_input( $type = 'hover_animations', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\StyleFields::hover_animations_input' );
-	return \AyeCode\SuperDuper\Fields\StyleFields::hover_animations_input( $type, $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\StyleFields::hover_animation' );
+	return \AyeCode\SuperDuper\Fields\StyleFields::hover_animation( $overwrite );
 }
 
 /**
@@ -483,69 +524,69 @@ function sd_get_hover_animations_input( $type = 'hover_animations', $overwrite =
  * @return array Array of input settings.
  */
 function sd_get_hover_icon_animation_input( $type = 'hover_icon_animation', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\StyleFields::hover_icon_animation_input' );
-	return \AyeCode\SuperDuper\Fields\StyleFields::hover_icon_animation_input( $type, $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\StyleFields::hover_icon_animation' );
+	return \AyeCode\SuperDuper\Fields\StyleFields::hover_icon_animation( $overwrite );
 }
 
 
 function sd_get_flex_align_items_input( $type = 'align-items', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\FlexFields::align_items_input' );
-	return \AyeCode\SuperDuper\Fields\FlexFields::align_items_input( $type, $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\FlexFields::align_items' );
+	return \AyeCode\SuperDuper\Fields\FlexFields::align_items( $overwrite );
 }
 
 function sd_get_flex_align_items_input_group( $type = 'flex_align_items', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\FlexFields::align_items_group' );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\FlexFields::align_items_group' );
 	return \AyeCode\SuperDuper\Fields\FlexFields::align_items_group( $type, $overwrite );
 }
 
 function sd_get_flex_justify_content_input( $type = 'flex_justify_content', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\FlexFields::justify_content_input' );
-	return \AyeCode\SuperDuper\Fields\FlexFields::justify_content_input( $type, $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\FlexFields::justify_content' );
+	return \AyeCode\SuperDuper\Fields\FlexFields::justify_content( $overwrite );
 }
 
 function sd_get_flex_justify_content_input_group( $type = 'flex_justify_content', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\FlexFields::justify_content_group' );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\FlexFields::justify_content_group' );
 	return \AyeCode\SuperDuper\Fields\FlexFields::justify_content_group( $type, $overwrite );
 }
 
 function sd_get_flex_align_self_input( $type = 'flex_align_self', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\FlexFields::align_self_input' );
-	return \AyeCode\SuperDuper\Fields\FlexFields::align_self_input( $type, $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\FlexFields::align_self' );
+	return \AyeCode\SuperDuper\Fields\FlexFields::align_self( $overwrite );
 }
 
 function sd_get_flex_align_self_input_group( $type = 'flex_align_self', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\FlexFields::align_self_group' );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\FlexFields::align_self_group' );
 	return \AyeCode\SuperDuper\Fields\FlexFields::align_self_group( $type, $overwrite );
 }
 
 function sd_get_flex_order_input( $type = 'flex_order', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\FlexFields::order_input' );
-	return \AyeCode\SuperDuper\Fields\FlexFields::order_input( $type, $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\FlexFields::order' );
+	return \AyeCode\SuperDuper\Fields\FlexFields::order( $overwrite );
 }
 
 function sd_get_flex_order_input_group( $type = 'flex_order', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\FlexFields::order_group' );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\FlexFields::order_group' );
 	return \AyeCode\SuperDuper\Fields\FlexFields::order_group( $type, $overwrite );
 }
 
 function sd_get_flex_wrap_group( $type = 'flex_wrap', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\FlexFields::wrap_group' );
-	return \AyeCode\SuperDuper\Fields\FlexFields::wrap_group( $type, $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\FlexFields::flex_wrap_group' );
+	return \AyeCode\SuperDuper\Fields\FlexFields::flex_wrap_group( $type, $overwrite );
 }
 
 function sd_get_flex_wrap_input( $type = 'flex_wrap', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\FlexFields::wrap_input' );
-	return \AyeCode\SuperDuper\Fields\FlexFields::wrap_input( $type, $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\FlexFields::flex_wrap' );
+	return \AyeCode\SuperDuper\Fields\FlexFields::flex_wrap( $overwrite );
 }
 
 function sd_get_float_group( $type = 'float', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\FlexFields::float_group' );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\FlexFields::float_group' );
 	return \AyeCode\SuperDuper\Fields\FlexFields::float_group( $type, $overwrite );
 }
 
 function sd_get_float_input( $type = 'float', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\FlexFields::float_input' );
-	return \AyeCode\SuperDuper\Fields\FlexFields::float_input( $type, $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\FlexFields::float' );
+	return \AyeCode\SuperDuper\Fields\FlexFields::float( $overwrite );
 }
 
 /**
@@ -555,8 +596,8 @@ function sd_get_float_input( $type = 'float', $overwrite = array() ) {
  * @return array
  */
 function sd_get_zindex_input( $type = 'zindex', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\StyleFields::zindex_input' );
-	return \AyeCode\SuperDuper\Fields\StyleFields::zindex_input( $type, $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\StyleFields::zindex' );
+	return \AyeCode\SuperDuper\Fields\StyleFields::zindex( $overwrite );
 }
 
 /**
@@ -566,8 +607,8 @@ function sd_get_zindex_input( $type = 'zindex', $overwrite = array() ) {
  * @return array
  */
 function sd_get_overflow_input( $type = 'overflow', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\StyleFields::overflow_input' );
-	return \AyeCode\SuperDuper\Fields\StyleFields::overflow_input( $type, $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\StyleFields::overflow' );
+	return \AyeCode\SuperDuper\Fields\StyleFields::overflow( $overwrite );
 }
 
 /**
@@ -577,8 +618,8 @@ function sd_get_overflow_input( $type = 'overflow', $overwrite = array() ) {
  * @return array
  */
 function sd_get_max_height_input( $type = 'max_height', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\LayoutFields::max_height_input' );
-	return \AyeCode\SuperDuper\Fields\LayoutFields::max_height_input( $type, $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\LayoutFields::max_height' );
+	return \AyeCode\SuperDuper\Fields\LayoutFields::max_height( $overwrite );
 }
 
 /**
@@ -588,8 +629,8 @@ function sd_get_max_height_input( $type = 'max_height', $overwrite = array() ) {
  * @return array
  */
 function sd_get_scrollbars_input( $type = 'scrollbars', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\StyleFields::scrollbars_input' );
-	return \AyeCode\SuperDuper\Fields\StyleFields::scrollbars_input( $type, $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\StyleFields::scrollbars' );
+	return \AyeCode\SuperDuper\Fields\StyleFields::scrollbars( $overwrite );
 }
 
 /**
@@ -599,8 +640,8 @@ function sd_get_scrollbars_input( $type = 'scrollbars', $overwrite = array() ) {
  * @return array
  */
 function sd_get_new_window_input( $type = 'target', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\CommonFields::new_window_input' );
-	return \AyeCode\SuperDuper\Fields\CommonFields::new_window_input( $type, $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\CommonFields::new_window' );
+	return \AyeCode\SuperDuper\Fields\CommonFields::new_window( $overwrite );
 }
 
 /**
@@ -610,8 +651,8 @@ function sd_get_new_window_input( $type = 'target', $overwrite = array() ) {
  * @return array
  */
 function sd_get_nofollow_input( $type = 'nofollow', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\CommonFields::nofollow_input' );
-	return \AyeCode\SuperDuper\Fields\CommonFields::nofollow_input( $type, $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\CommonFields::nofollow' );
+	return \AyeCode\SuperDuper\Fields\CommonFields::nofollow( $overwrite );
 }
 
 /**
@@ -623,8 +664,8 @@ function sd_get_nofollow_input( $type = 'nofollow', $overwrite = array() ) {
  * @return array
  */
 function sd_get_width_input( $type = 'width', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\LayoutFields::width_input' );
-	return \AyeCode\SuperDuper\Fields\LayoutFields::width_input( $type, $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\LayoutFields::width' );
+	return \AyeCode\SuperDuper\Fields\LayoutFields::width( $overwrite );
 }
 
 /**
@@ -636,8 +677,8 @@ function sd_get_width_input( $type = 'width', $overwrite = array() ) {
  * @return array
  */
 function sd_get_height_input( $type = 'height', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\LayoutFields::height_input' );
-	return \AyeCode\SuperDuper\Fields\LayoutFields::height_input( $type, $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\LayoutFields::height' );
+	return \AyeCode\SuperDuper\Fields\LayoutFields::height( $overwrite );
 }
 
 /**
@@ -647,8 +688,8 @@ function sd_get_height_input( $type = 'height', $overwrite = array() ) {
  * @return array
  */
 function sd_get_attributes_input( $type = 'attributes', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\CommonFields::attributes_input' );
-	return \AyeCode\SuperDuper\Fields\CommonFields::attributes_input( $type, $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\CommonFields::attributes' );
+	return \AyeCode\SuperDuper\Fields\CommonFields::attributes( $overwrite );
 }
 
 /**
@@ -660,8 +701,8 @@ function sd_get_attributes_input( $type = 'attributes', $overwrite = array() ) {
  * @return array
  */
 function sd_get_title_tag_input( $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\CommonFields::title_tag_input' );
-	return \AyeCode\SuperDuper\Fields\CommonFields::title_tag_input( $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\CommonFields::title_tag' );
+	return \AyeCode\SuperDuper\Fields\CommonFields::title_tag( $overwrite );
 }
 
 /**
@@ -673,8 +714,8 @@ function sd_get_title_tag_input( $overwrite = array() ) {
  * @return array
  */
 function sd_get_html_tag_input( $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\CommonFields::html_tag_input' );
-	return \AyeCode\SuperDuper\Fields\CommonFields::html_tag_input( $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\CommonFields::html_tag' );
+	return \AyeCode\SuperDuper\Fields\CommonFields::html_tag( $overwrite );
 }
 
 /**
@@ -688,8 +729,8 @@ function sd_get_html_tag_input( $overwrite = array() ) {
  * @return array Array of title input arguments.
  */
 function sd_get_title_inputs(): array {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\CommonFields::title_inputs' );
-	return \AyeCode\SuperDuper\Fields\CommonFields::title_inputs();
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\CommonFields::title_group' );
+	return \AyeCode\SuperDuper\Fields\CommonFields::title_group();
 }
 
 /**
@@ -698,7 +739,7 @@ function sd_get_title_inputs(): array {
  * @return string
  */
 function sd_build_attributes_string_escaped( $args ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Utils::build_attributes_string_escaped' );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Utils::build_attributes_string_escaped' );
 	return \AyeCode\SuperDuper\Utils::build_attributes_string_escaped( $args );
 }
 
@@ -711,7 +752,7 @@ function sd_build_attributes_string_escaped( $args ) {
  * @return array
  */
 function sd_parse_custom_attributes( $attributes_string, $delimiter = ',' ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Utils::parse_custom_attributes' );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Utils::parse_custom_attributes' );
 	return \AyeCode\SuperDuper\Utils::parse_custom_attributes( $attributes_string, $delimiter );
 }
 
@@ -724,7 +765,7 @@ function sd_parse_custom_attributes( $attributes_string, $delimiter = ',' ) {
  * @todo find best way to use px- py- or general p-
  */
 function sd_build_aui_class( $args ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Utils::build_aui_class' );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Utils::build_aui_class' );
 	return \AyeCode\SuperDuper\Utils::build_aui_class( $args );
 }
 
@@ -736,7 +777,7 @@ function sd_build_aui_class( $args ) {
  * @return array
  */
 function sd_build_aui_styles( $args ) {
-	_deprecated_function( 'sd_build_aui_styles', '3.1.0', 'AyeCode\\SuperDuper\\Utils::build_aui_styles' );
+	//_deprecated_function( 'sd_build_aui_styles', '3.1.0', 'AyeCode\\SuperDuper\\Utils::build_aui_styles' );
 	return \AyeCode\SuperDuper\Utils::build_aui_styles( $args );
 }
 
@@ -749,7 +790,7 @@ function sd_build_aui_styles( $args ) {
  * @return string
  */
 function sd_build_hover_styles( $args, $is_preview = false ) {
-	_deprecated_function( 'sd_build_hover_styles', '3.1.0', 'AyeCode\\SuperDuper\\Utils::build_hover_styles' );
+	//_deprecated_function( 'sd_build_hover_styles', '3.1.0', 'AyeCode\\SuperDuper\\Utils::build_hover_styles' );
 	return \AyeCode\SuperDuper\Utils::build_hover_styles( $args, $is_preview );
 }
 
@@ -761,7 +802,7 @@ function sd_build_hover_styles( $args, $is_preview = false ) {
  * @return mixed|string
  */
 function sd_get_color_from_var( $var ) {
-	_deprecated_function( 'sd_get_color_from_var', '3.1.0', 'AyeCode\\SuperDuper\\Utils::get_color_from_var' );
+	//_deprecated_function( 'sd_get_color_from_var', '3.1.0', 'AyeCode\\SuperDuper\\Utils::get_color_from_var' );
 	return \AyeCode\SuperDuper\Utils::get_color_from_var( $var );
 }
 
@@ -774,7 +815,7 @@ function sd_get_color_from_var( $var ) {
  * @return string
  */
 function sd_sanitize_html_classes( $classes, $sep = ' ' ) {
-	_deprecated_function( 'sd_sanitize_html_classes', '3.1.0', 'AyeCode\\SuperDuper\\Utils::sanitize_html_classes' );
+	//_deprecated_function( 'sd_sanitize_html_classes', '3.1.0', 'AyeCode\\SuperDuper\\Utils::sanitize_html_classes' );
 	return \AyeCode\SuperDuper\Utils::sanitize_html_classes( $classes, $sep );
 }
 
@@ -785,7 +826,7 @@ function sd_sanitize_html_classes( $classes, $sep = ' ' ) {
  * @return void
  */
 function sd_get_class_build_keys() {
-	_deprecated_function( 'sd_get_class_build_keys', '3.1.0', 'AyeCode\\SuperDuper\\Utils::get_class_build_keys' );
+	//_deprecated_function( 'sd_get_class_build_keys', '3.1.0', 'AyeCode\\SuperDuper\\Utils::get_class_build_keys' );
 	return \AyeCode\SuperDuper\Utils::get_class_build_keys();
 }
 
@@ -798,8 +839,8 @@ function sd_get_class_build_keys() {
  * @return array
  */
 function sd_get_visibility_conditions_input( $type = 'visibility_conditions', $overwrite = array() ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\CommonFields::visibility_conditions_input' );
-	return \AyeCode\SuperDuper\Fields\CommonFields::visibility_conditions_input( $type, $overwrite );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Fields\\CommonFields::visibility_conditions' );
+	return \AyeCode\SuperDuper\Fields\CommonFields::visibility_conditions( $overwrite );
 }
 
 /**
@@ -811,7 +852,7 @@ function sd_get_visibility_conditions_input( $type = 'visibility_conditions', $o
  * @return array An array of roles.
  */
 function sd_user_roles_options( $exclude = array() ) {
-	_deprecated_function( 'sd_user_roles_options', '3.1.0', 'AyeCode\\SuperDuper\\Utils::user_roles_options' );
+	//_deprecated_function( 'sd_user_roles_options', '3.1.0', 'AyeCode\\SuperDuper\\Utils::user_roles_options' );
 	return \AyeCode\SuperDuper\Utils::user_roles_options( $exclude );
 }
 
@@ -823,7 +864,7 @@ function sd_user_roles_options( $exclude = array() ) {
  * @return array Rule options.
  */
 function sd_visibility_rules_options() {
-	_deprecated_function( 'sd_visibility_rules_options', '3.1.0', 'AyeCode\\SuperDuper\\Utils::visibility_rules_options' );
+	//_deprecated_function( 'sd_visibility_rules_options', '3.1.0', 'AyeCode\\SuperDuper\\Utils::visibility_rules_options' );
 	return \AyeCode\SuperDuper\Utils::visibility_rules_options();
 }
 
@@ -833,7 +874,7 @@ function sd_visibility_rules_options() {
  * @return array
  */
 function sd_visibility_gd_field_options() {
-	_deprecated_function( 'sd_visibility_gd_field_options', '3.1.0', 'AyeCode\\SuperDuper\\Utils::visibility_gd_field_options' );
+	//_deprecated_function( 'sd_visibility_gd_field_options', '3.1.0', 'AyeCode\\SuperDuper\\Utils::visibility_gd_field_options' );
 	return \AyeCode\SuperDuper\Utils::visibility_gd_field_options();
 }
 
@@ -843,7 +884,7 @@ function sd_visibility_gd_field_options() {
  * @return array
  */
 function sd_visibility_gd_standard_field_options( $post_type = '' ) {
-	_deprecated_function( 'sd_visibility_gd_standard_field_options', '3.1.0', 'AyeCode\\SuperDuper\\Utils::visibility_gd_standard_field_options' );
+	//_deprecated_function( 'sd_visibility_gd_standard_field_options', '3.1.0', 'AyeCode\\SuperDuper\\Utils::visibility_gd_standard_field_options' );
 	return \AyeCode\SuperDuper\Utils::visibility_gd_standard_field_options( $post_type );
 }
 
@@ -853,7 +894,7 @@ function sd_visibility_gd_standard_field_options( $post_type = '' ) {
  * @return array
  */
 function sd_visibility_gd_standard_fields( $post_type = '' ) {
-	_deprecated_function( 'sd_visibility_gd_standard_fields', '3.1.0', 'AyeCode\\SuperDuper\\Utils::visibility_gd_standard_fields' );
+	//_deprecated_function( 'sd_visibility_gd_standard_fields', '3.1.0', 'AyeCode\\SuperDuper\\Utils::visibility_gd_standard_fields' );
 	return \AyeCode\SuperDuper\Utils::visibility_gd_standard_fields( $post_type );
 }
 
@@ -863,7 +904,7 @@ function sd_visibility_gd_standard_fields( $post_type = '' ) {
  * @return array
  */
 function sd_visibility_field_condition_options() {
-	_deprecated_function( 'sd_visibility_field_condition_options', '3.1.0', 'AyeCode\\SuperDuper\\Utils::visibility_field_condition_options' );
+	//_deprecated_function( 'sd_visibility_field_condition_options', '3.1.0', 'AyeCode\\SuperDuper\\Utils::visibility_field_condition_options' );
 	return \AyeCode\SuperDuper\Utils::visibility_field_condition_options();
 }
 
@@ -875,7 +916,7 @@ function sd_visibility_field_condition_options() {
  * @return array Template type options.
  */
 function sd_visibility_output_options() {
-	_deprecated_function( 'sd_visibility_output_options', '3.1.0', 'AyeCode\\SuperDuper\\Utils::visibility_output_options' );
+	//_deprecated_function( 'sd_visibility_output_options', '3.1.0', 'AyeCode\\SuperDuper\\Utils::visibility_output_options' );
 	return \AyeCode\SuperDuper\Utils::visibility_output_options();
 }
 
@@ -888,7 +929,7 @@ function sd_visibility_output_options() {
  * @return array Template page options.
  */
 function sd_template_page_options( $args = array() ) {
-	_deprecated_function( 'sd_template_page_options', '3.1.0', 'AyeCode\\SuperDuper\\Utils::template_page_options' );
+	//_deprecated_function( 'sd_template_page_options', '3.1.0', 'AyeCode\\SuperDuper\\Utils::template_page_options' );
 	return \AyeCode\SuperDuper\Utils::template_page_options( $args );
 }
 
@@ -901,7 +942,7 @@ function sd_template_page_options( $args = array() ) {
  * @return array Template part options.
  */
 function sd_template_part_options( $args = array() ) {
-	_deprecated_function( 'sd_template_part_options', '3.1.0', 'AyeCode\\SuperDuper\\Utils::template_part_options' );
+	//_deprecated_function( 'sd_template_part_options', '3.1.0', 'AyeCode\\SuperDuper\\Utils::template_part_options' );
 	return \AyeCode\SuperDuper\Utils::template_part_options( $args );
 }
 
@@ -914,7 +955,7 @@ function sd_template_part_options( $args = array() ) {
  * @return array Template part object.
  */
 function sd_get_template_part_by_slug( $slug ) {
-	_deprecated_function( 'sd_get_template_part_by_slug', '3.1.0', 'AyeCode\\SuperDuper\\Utils::get_template_part_by_slug' );
+	//_deprecated_function( 'sd_get_template_part_by_slug', '3.1.0', 'AyeCode\\SuperDuper\\Utils::get_template_part_by_slug' );
 	return \AyeCode\SuperDuper\Utils::get_template_part_by_slug( $slug );
 }
 
@@ -928,44 +969,44 @@ function sd_get_template_part_by_slug( $slug ) {
  * @param WP_Block $instance      The block instance.
  */
 function sd_render_block( $block_content, $block, $instance = '' ) {
-	_deprecated_function( 'sd_render_block', '3.1.0', 'AyeCode\\SuperDuper\\Utils::render_block' );
+	//_deprecated_function( 'sd_render_block', '3.1.0', 'AyeCode\\SuperDuper\\Utils::render_block' );
 	return \AyeCode\SuperDuper\Utils::render_block( $block_content, $block, $instance );
 }
 add_filter( 'render_block', 'sd_render_block', 9, 3 );
 
 function sd_get_page_content( $page_id ) {
-	_deprecated_function( 'sd_get_page_content', '3.1.0', 'AyeCode\\SuperDuper\\Utils::get_page_content' );
+	//_deprecated_function( 'sd_get_page_content', '3.1.0', 'AyeCode\\SuperDuper\\Utils::get_page_content' );
 	return \AyeCode\SuperDuper\Utils::get_page_content( $page_id );
 }
 
 function sd_get_template_part_content( $template_part ) {
-	_deprecated_function( 'sd_get_template_part_content', '3.1.0', 'AyeCode\\SuperDuper\\Utils::get_template_part_content' );
+	//_deprecated_function( 'sd_get_template_part_content', '3.1.0', 'AyeCode\\SuperDuper\\Utils::get_template_part_content' );
 	return \AyeCode\SuperDuper\Utils::get_template_part_content( $template_part );
 }
 
 function sd_block_parse_rules( $attrs ) {
-	_deprecated_function( 'sd_block_parse_rules', '3.1.0', 'AyeCode\\SuperDuper\\Utils::block_parse_rules' );
+	//_deprecated_function( 'sd_block_parse_rules', '3.1.0', 'AyeCode\\SuperDuper\\Utils::block_parse_rules' );
 	return \AyeCode\SuperDuper\Utils::block_parse_rules( $attrs );
 }
 
 function sd_block_check_rules( $rules ) {
-	_deprecated_function( 'sd_block_check_rules', '3.1.0', 'AyeCode\\SuperDuper\\Utils::block_check_rules' );
+	//_deprecated_function( 'sd_block_check_rules', '3.1.0', 'AyeCode\\SuperDuper\\Utils::block_check_rules' );
 	return \AyeCode\SuperDuper\Utils::block_check_rules( $rules );
 }
 
 function sd_block_check_rule( $match, $rule ) {
-	_deprecated_function( 'sd_block_check_rule', '3.1.0', 'AyeCode\\SuperDuper\\Utils::block_check_rule' );
+	//_deprecated_function( 'sd_block_check_rule', '3.1.0', 'AyeCode\\SuperDuper\\Utils::block_check_rule' );
 	return \AyeCode\SuperDuper\Utils::block_check_rule( $match, $rule );
 }
 add_filter( 'sd_block_check_rule', 'sd_block_check_rule', 10, 2 );
 
 function sd_block_check_rule_gd_field( $rule ) {
-	_deprecated_function( 'sd_block_check_rule_gd_field', '3.1.0', 'AyeCode\\SuperDuper\\Utils::block_check_rule_gd_field' );
+	//_deprecated_function( 'sd_block_check_rule_gd_field', '3.1.0', 'AyeCode\\SuperDuper\\Utils::block_check_rule_gd_field' );
 	return \AyeCode\SuperDuper\Utils::block_check_rule_gd_field( $rule );
 }
 
 function sd_gd_field_rule_search( $search, $post_type, $rule, $field = array(), $gd_post = array() ) {
-	_deprecated_function( 'sd_gd_field_rule_search', '3.1.0', 'AyeCode\\SuperDuper\\Utils::gd_field_rule_search' );
+	//_deprecated_function( 'sd_gd_field_rule_search', '3.1.0', 'AyeCode\\SuperDuper\\Utils::gd_field_rule_search' );
 	return \AyeCode\SuperDuper\Utils::gd_field_rule_search( $search, $post_type, $rule, $field, $gd_post );
 }
 
@@ -1048,7 +1089,7 @@ add_filter('render_block', 'sd_blocks_render_blocks',10,3);
  * @return string The extracted shortcode slug.
  */
 function sd_get_shortcode_slug( $str ) {
-	_deprecated_function( 'sd_get_shortcode_slug', '3.1.0', 'AyeCode\\SuperDuper\\Utils::get_shortcode_slug' );
+	//_deprecated_function( 'sd_get_shortcode_slug', '3.1.0', 'AyeCode\\SuperDuper\\Utils::get_shortcode_slug' );
 	return \AyeCode\SuperDuper\Utils::get_shortcode_slug( $str );
 }
 
@@ -1062,7 +1103,7 @@ function sd_get_shortcode_slug( $str ) {
  * @return string Shortcode string if successful, otherwise an empty string.
  */
 function sd_build_shortcode( $name, $args = array(), $content = '' ) {
-	_deprecated_function( 'sd_build_shortcode', '3.1.0', 'AyeCode\\SuperDuper\\Utils::build_shortcode' );
+	//_deprecated_function( 'sd_build_shortcode', '3.1.0', 'AyeCode\\SuperDuper\\Utils::build_shortcode' );
 	return \AyeCode\SuperDuper\Utils::build_shortcode( $name, $args, $content );
 }
 
@@ -1078,6 +1119,6 @@ function sd_build_shortcode( $name, $args = array(), $content = '' ) {
  * @return string The text with variables replaced, which may include HTML.
  */
 function sd_replace_variables( $text ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Utils::replace_variables' );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Utils::replace_variables' );
 	return \AyeCode\SuperDuper\Utils::replace_variables( (string) $text );
 }

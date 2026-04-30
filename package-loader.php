@@ -23,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	$registry_key = 'ayecode_super_duper_registry';
 
 	// Must match the Version header in wp-super-duper.php. This drives negotiation.
-	$this_version = '3.0.5-beta';
+	$this_version = '3.0.6-beta';
 
 	$this_path = dirname( __FILE__ );
 
@@ -33,79 +33,46 @@ if ( ! defined( 'ABSPATH' ) ) {
 	// Fully-qualified Loader class — instantiated in Step 3 after SPL autoloader is live.
 	$loader_class = 'AyeCode\\SuperDuper\\Loader';
 
-	// Hook and priority at which the Loader class is instantiated (used in Phase 3).
+	// Hook and priority at which the Loader class is instantiated.
 	$loader_hook     = 'plugins_loaded';
 	$loader_priority = 10;
 
-	// Constants defined only if this version wins the negotiation.
-	// Note: SUPER_DUPER_INCLUDES_PATH is intentionally omitted here — it is defined
-	// inside includes/loader.php (guarded by class_exists) to keep the path relative
-	// to the includes/ directory itself.
+	// Constants to define ONLY if this package version wins the negotiation.
 	$winning_constants = array(
-		'SUPER_DUPER_VER'        => $this_version,
-		'SUPER_DUPER_PLUGIN_URL' => plugin_dir_url( __FILE__ ),
+		'SUPER_DUPER_VER'           => $this_version,
+		'SUPER_DUPER_PLUGIN_URL'    => plugin_dir_url( __FILE__ ),
+		'SUPER_DUPER_INCLUDES_PATH' => $this_path . '/includes/',
 	);
 
 	// -------------------------------------------------------------------------
-	// DO NOT EDIT BELOW THIS LINE. CORE PACKAGE NEGOTIATION LOGIC.
+	// EARLY CLAIM — package-specific backward-compat for pre-package-loader copies.
+	//
+	// Older bundled copies guard on SUPER_DUPER_VER at direct-load time and define
+	// WP_Super_Duper immediately (before plugins_loaded). If this copy runs first,
+	// we claim the constant and register the autoloader so those older copies bail
+	// out when they see SUPER_DUPER_VER already defined.
 	// -------------------------------------------------------------------------
-
-	/**
-	 * Step 0: Early Claim (Direct-load time)
-	 *
-	 * Older bundled copies of this package use SUPER_DUPER_VER as a "loaded"
-	 * guard and define the class at direct-load time (before plugins_loaded).
-	 * If we are the first copy to run, we claim the constant and bootstrap
-	 * immediately so those older copies see the constant already defined and
-	 * bail out — preventing their inferior class definition from winning.
-	 *
-	 * This block is a no-op when another copy has already claimed the constant.
-	 * The plugins_loaded steps below still run to handle negotiation between
-	 * multiple copies that all use this new package-loader format.
-	 */
 	if ( ! defined( 'SUPER_DUPER_VER' ) ) {
 		foreach ( $winning_constants as $name => $value ) {
 			if ( ! defined( $name ) ) {
 				define( $name, $value );
 			}
 		}
-		if ( ! defined( 'SUPER_DUPER_INCLUDES_PATH' ) ) {
-			define( 'SUPER_DUPER_INCLUDES_PATH', $this_path . '/includes/' );
-		}
 
 		// Register PSR-4 SPL autoloader for AyeCode\SuperDuper\ → src/.
-		if ( ! empty( $prefix ) ) {
-			spl_autoload_register( function ( $class ) use ( $prefix, $this_path ) {
-				if ( strncmp( $class, $prefix, strlen( $prefix ) ) !== 0 ) {
-					return;
-				}
-				$relative_class = substr( $class, strlen( $prefix ) );
-				$file           = $this_path . '/src/' . str_replace( '\\', '/', $relative_class ) . '.php';
-				if ( file_exists( $file ) ) {
-					require $file;
-				}
-			} );
-		}
+		spl_autoload_register( function ( $class ) use ( $prefix, $this_path ) {
+			if ( strncmp( $class, $prefix, strlen( $prefix ) ) !== 0 ) {
+				return;
+			}
+			$relative_class = substr( $class, strlen( $prefix ) );
+			$file           = $this_path . '/src/' . str_replace( '\\', '/', $relative_class ) . '.php';
+			if ( file_exists( $file ) ) {
+				require $file;
+			}
+		}, true, true );
 
-		// Load global function files (cannot be autoloaded — define global sd_* functions).
-		if ( ! function_exists( 'sd_get_margin_input' ) ) {
-			require_once SUPER_DUPER_INCLUDES_PATH . 'functions.php';
-			require_once SUPER_DUPER_INCLUDES_PATH . 'helpers.php';
-		}
-
-		// Load old (global-name) trait files so plugins referencing WP_Super_Duper_Initializer
-		// etc. continue to work.
-		if ( ! trait_exists( 'WP_Super_Duper_Utilities' ) ) {
-			require_once SUPER_DUPER_INCLUDES_PATH . 'traits/trait-utilities.php';
-			require_once SUPER_DUPER_INCLUDES_PATH . 'traits/trait-page-builders.php';
-			require_once SUPER_DUPER_INCLUDES_PATH . 'traits/trait-shortcode-inserter.php';
-			require_once SUPER_DUPER_INCLUDES_PATH . 'traits/trait-widget-form.php';
-			require_once SUPER_DUPER_INCLUDES_PATH . 'traits/trait-output-handler.php';
-			require_once SUPER_DUPER_INCLUDES_PATH . 'traits/trait-gutenberg-block.php';
-			require_once SUPER_DUPER_INCLUDES_PATH . 'traits/trait-initializer.php';
-		}
-
-		// Map WP_Super_Duper → AyeCode\SuperDuper\SuperDuper (or widget variant).
+		// Alias WP_Super_Duper early so consumer plugins that extend it at
+		// direct-load time (before plugins_loaded) resolve to the correct class.
 		if ( ! class_exists( 'WP_Super_Duper' ) ) {
 			if ( defined( 'SUPER_DUPER_LOAD_WIDGET' ) && SUPER_DUPER_LOAD_WIDGET === true ) {
 				class_alias( 'AyeCode\\SuperDuper\\SuperDuperWidget', 'WP_Super_Duper' );
@@ -115,6 +82,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 		}
 	}
 
+	// -------------------------------------------------------------------------
+	// DO NOT EDIT BELOW THIS LINE. CORE PACKAGE NEGOTIATION LOGIC.
+	// -------------------------------------------------------------------------
+
 	/**
 	 * Step 1: Version Negotiation (Priority 1)
 	 *
@@ -123,114 +94,64 @@ if ( ! defined( 'ABSPATH' ) ) {
 	 */
 	add_action( 'plugins_loaded', function () use ( $registry_key, $this_version, $this_path ) {
 		if ( empty( $GLOBALS[ $registry_key ] ) || version_compare( $this_version, $GLOBALS[ $registry_key ]['version'], '>' ) ) {
-			$GLOBALS[ $registry_key ] = array(
+			$GLOBALS[ $registry_key ] = [
 				'version' => $this_version,
 				'path'    => $this_path,
-			);
+			];
 		}
 	}, 1 );
 
 	/**
-	 * Step 2: Class Loading (Priority 2)
+	 * Step 2: Lazy Loading Registration (Priority 2)
 	 *
-	 * Only the winning version loads the framework classes. Losing copies bail
+	 * Only the winning version registers an SPL autoloader. Losing copies bail
 	 * out early, preventing duplicate class definitions.
-	 *
-	 * Constants are defined here (before the require) because the base class uses
-	 * SUPER_DUPER_VER as a property default, which PHP resolves at parse time.
-	 *
-	 * Phase 2 bridge: requires includes/loader.php directly.
-	 * Phase 3 will replace this with an SPL PSR-4 autoloader.
 	 */
-	add_action( 'plugins_loaded', function () use ( $registry_key, $this_path, $prefix, $winning_constants ) {
+	add_action( 'plugins_loaded', function () use ( $registry_key, $this_path, $prefix ) {
 		if ( empty( $GLOBALS[ $registry_key ] ) || $GLOBALS[ $registry_key ]['path'] !== $this_path ) {
 			return;
 		}
 
-		// Define constants before requiring any class files that use them as property defaults.
-		foreach ( $winning_constants as $name => $value ) {
-			if ( ! defined( $name ) ) {
-				define( $name, $value );
+		$base_dir = $this_path . '/src/';
+
+		spl_autoload_register( function ( $class ) use ( $prefix, $base_dir ) {
+			if ( strpos( $class, $prefix ) !== 0 ) {
+				return;
 			}
-		}
 
-		// Register PSR-4 SPL autoloader for AyeCode\SuperDuper\ → src/.
-		if ( ! empty( $prefix ) ) {
-			spl_autoload_register( function ( $class ) use ( $prefix, $this_path ) {
-				if ( strncmp( $class, $prefix, strlen( $prefix ) ) !== 0 ) {
-					return;
-				}
-				$relative_class = substr( $class, strlen( $prefix ) );
-				$file           = $this_path . '/src/' . str_replace( '\\', '/', $relative_class ) . '.php';
-				if ( file_exists( $file ) ) {
-					require $file;
-				}
-			} );
-		}
+			$relative_class = substr( $class, strlen( $prefix ) );
+			$file           = $base_dir . str_replace( '\\', '/', $relative_class ) . '.php';
 
-		// Load global function files that cannot be autoloaded (they define global sd_* functions).
-		if ( ! defined( 'SUPER_DUPER_INCLUDES_PATH' ) ) {
-			define( 'SUPER_DUPER_INCLUDES_PATH', $this_path . '/includes/' );
-		}
-		if ( ! function_exists( 'sd_get_margin_input' ) ) {
-			require_once SUPER_DUPER_INCLUDES_PATH . 'functions.php';
-			require_once SUPER_DUPER_INCLUDES_PATH . 'helpers.php';
-		}
-
-		// Load the old (global-name) trait files so that any plugin that directly
-		// references WP_Super_Duper_Initializer (etc.) continues to work.
-		if ( ! trait_exists( 'WP_Super_Duper_Utilities' ) ) {
-			require_once SUPER_DUPER_INCLUDES_PATH . 'traits/trait-utilities.php';
-			require_once SUPER_DUPER_INCLUDES_PATH . 'traits/trait-page-builders.php';
-			require_once SUPER_DUPER_INCLUDES_PATH . 'traits/trait-shortcode-inserter.php';
-			require_once SUPER_DUPER_INCLUDES_PATH . 'traits/trait-widget-form.php';
-			require_once SUPER_DUPER_INCLUDES_PATH . 'traits/trait-output-handler.php';
-			require_once SUPER_DUPER_INCLUDES_PATH . 'traits/trait-gutenberg-block.php';
-			require_once SUPER_DUPER_INCLUDES_PATH . 'traits/trait-initializer.php';
-		}
-
-		// Map WP_Super_Duper → AyeCode\SuperDuper\SuperDuper (and widget variant)
-		// so all existing `class MyWidget extends WP_Super_Duper` code continues to work.
-		if ( ! class_exists( 'WP_Super_Duper' ) ) {
-			// Decide which class to alias based on the SUPER_DUPER_LOAD_WIDGET flag.
-			if ( defined( 'SUPER_DUPER_LOAD_WIDGET' ) && SUPER_DUPER_LOAD_WIDGET === true ) {
-				class_alias( 'AyeCode\\SuperDuper\\SuperDuperWidget', 'WP_Super_Duper' );
-			} else {
-				class_alias( 'AyeCode\\SuperDuper\\SuperDuper', 'WP_Super_Duper' );
+			if ( file_exists( $file ) ) {
+				require $file;
 			}
-		}
-
-		// NOTE: The Bricks element class alias (Super_Duper_Bricks_Element → BricksElement)
-		// is NOT set up here because BricksElement extends \Bricks\Element, which only
-		// exists when Bricks Builder is installed and active. The alias is registered
-		// lazily in load_bricks_element_class(), which is only called when Bricks is present.
+		}, true, true );
 
 	}, 2 );
 
 	/**
-	 * Step 3: Loader Class Initialization (Configurable Hook/Priority)
+	 * Step 3: Package Initialization (Configurable Hook/Priority)
 	 *
-	 * Instantiates the Loader class for the winning version.
-	 * Populated in Phase 3 when $loader_class is set.
+	 * Defines constants and boots the Loader class, but only for the winning
+	 * version. All other copies have already bailed in Step 2.
 	 */
-	add_action( $loader_hook, function () use ( $registry_key, $this_path, $loader_class, $winning_constants ) {
-		if ( empty( $GLOBALS[ $registry_key ] ) || $GLOBALS[ $registry_key ]['path'] !== $this_path ) {
-			return;
-		}
-
-		// Constants are already defined in Step 2; this loop is a no-op until Phase 3
-		// replaces Step 2 with a pure SPL autoloader (no constant definitions there).
-		foreach ( $winning_constants as $name => $value ) {
-			if ( ! defined( $name ) ) {
-				define( $name, $value );
+	if ( ! empty( $loader_class ) ) {
+		add_action( $loader_hook, function () use ( $registry_key, $this_path, $loader_class, $winning_constants ) {
+			if ( empty( $GLOBALS[ $registry_key ] ) || $GLOBALS[ $registry_key ]['path'] !== $this_path ) {
+				return;
 			}
-		}
 
-		// Phase 3: $loader_class will be set to 'AyeCode\SuperDuper\Loader' and
-		// class_exists() will trigger the SPL autoloader registered in Step 2.
-		if ( ! empty( $loader_class ) && class_exists( $loader_class ) ) {
-			new $loader_class();
-		}
-	}, $loader_priority );
+			foreach ( $winning_constants as $name => $value ) {
+				if ( ! defined( $name ) ) {
+					define( $name, $value );
+				}
+			}
+
+			// class_exists() triggers the autoloader registered in Step 2.
+			if ( class_exists( $loader_class ) ) {
+				new $loader_class();
+			}
+		}, $loader_priority );
+	}
 
 } )();

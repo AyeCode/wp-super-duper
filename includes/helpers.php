@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @return bool True if a builder preview is detected, false otherwise.
  */
 function sd_is_preview() {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Utils::is_preview' );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Utils::is_preview' );
 	return \AyeCode\SuperDuper\Utils::is_preview();
 }
 
@@ -31,7 +31,7 @@ function sd_is_preview() {
  * @return array The processed array.
  */
 function sd_string_to_bool( $options ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Utils::string_to_bool' );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Utils::string_to_bool' );
 	return \AyeCode\SuperDuper\Utils::string_to_bool( $options );
 }
 
@@ -43,7 +43,7 @@ function sd_string_to_bool( $options ) {
  * @return string The encoded content.
  */
 function sd_encode_shortcodes( $content ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Utils::encode_shortcodes' );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Utils::encode_shortcodes' );
 	return \AyeCode\SuperDuper\Utils::encode_shortcodes( (string) $content );
 }
 
@@ -55,6 +55,6 @@ function sd_encode_shortcodes( $content ) {
  * @return string The decoded content.
  */
 function sd_decode_shortcodes( $content ) {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Utils::decode_shortcodes' );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Utils::decode_shortcodes' );
 	return \AyeCode\SuperDuper\Utils::decode_shortcodes( (string) $content );
 }

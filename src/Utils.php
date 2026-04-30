@@ -146,15 +146,6 @@ class Utils {
 	}
 
 	/**
-	 * Replaces dynamic variable placeholders in a text string.
-	 *
-	 * Supports: {post_title}, {user_display_name}, {site_title}, etc.
-	 * Full syntax: {variable_name:filter:option|fallback_text}
-	 *
-	 * @param string $text The text containing placeholders.
-	 * @return string The text with placeholders replaced.
-	 */
-	/**
 	 * Return the list of wp-admin page filenames where widget registration should be skipped.
 	 *
 	 * @return array
@@ -682,6 +673,14 @@ class Utils {
 
 	/**
 	 * Replaces dynamic variable placeholders in a text string.
+	 *
+	 * Supports: {post_title}, {user_display_name}, {site_title}, etc.
+	 * Full syntax: {variable_name:filter:option|fallback_text}
+	 *
+	 * @param string $text The text containing placeholders.
+	 * @return string The text with placeholders replaced.
+	 */
+	public static function replace_variables( string $text ): string {
 		if ( strpos( $text, '{' ) === false ) {
 			return $text;
 		}
@@ -1809,6 +1808,33 @@ class Utils {
 		}
 
 		return apply_filters( 'sd_gd_field_rule_search', $search, $post_type, $rule, $orig_search );
+	}
+
+	// -------------------------------------------------------------------------
+	// Field helpers
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Build an element_require conditional expression for shape-divider fields.
+	 *
+	 * Returns a parenthesised OR expression over every shape whose supported-feature
+	 * list contains $key. Moved from ShapeFields::element_require_string().
+	 *
+	 * @param array  $args Array of shape => supported-keys pairs.
+	 * @param string $key  The feature key to check (e.g. 'flip', 'invert').
+	 * @param string $type The field-prefix used in the expression (e.g. 'sd').
+	 * @return string
+	 */
+	public static function element_require( array $args, string $key, string $type ): string {
+		$requires = [];
+
+		foreach ( $args as $shape => $supported ) {
+			if ( in_array( $key, $supported, true ) ) {
+				$requires[] = '[%' . $type . '%]=="' . $shape . '"';
+			}
+		}
+
+		return $requires ? '(' . implode( ' || ', $requires ) . ')' : '';
 	}
 
 	// -------------------------------------------------------------------------

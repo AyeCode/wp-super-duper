@@ -111,6 +111,7 @@ class My_Widget extends WP_Super_Duper {
 
 | Method | Description |
 |---|---|
+| `add_position( string $prefix = '', array $overwrite = [] ): self` | Position class select (static, relative, absolute, fixed, sticky) |
 | `add_layout_group( string $prefix = '', array $overwrite = [] ): self` | Container class select and position class select |
 
 ### Utilities
@@ -119,6 +120,7 @@ class My_Widget extends WP_Super_Duper {
 |---|---|
 | `add_sticky_offset_group( string $prefix = '', array $overwrite = [] ): self` | Sticky offset top and bottom fields (shown when position is sticky) |
 | `add_visibility_conditions( string $prefix = '', array $overwrite = [] ): self` | Block visibility conditions field |
+| `add_advanced_group( string $prefix = '', array $overwrite = [] ): self` | Additional CSS class(es) and custom block name — standard "Advanced" tab fields |
 | `add_class_and_anchor( string $prefix = '', array $overwrite = [] ): self` | Additional CSS class(es), HTML anchor, and custom block name fields |
 
 ## Calling `Fields\*` Static Classes Directly
@@ -129,20 +131,20 @@ Each `add_*` method delegates to a `Fields\*` static class. You can call these d
 use AyeCode\SuperDuper\Fields\SpacingFields;
 use AyeCode\SuperDuper\Fields\CommonFields;
 
-$mt_field = SpacingFields::margin_input( 'mt' );
-$anchor   = CommonFields::anchor_input( 'anchor', array( 'group' => 'Custom Group' ) );
+$mt_field = SpacingFields::margin( 'top' );
+$anchor   = CommonFields::anchor( array( 'group' => 'Custom Group' ) );
 ```
 
 | Static class | Methods |
 |---|---|
-| `Fields\SpacingFields` | `margin_input( $type, $overwrite, $include_negatives )`, `padding_input( $type, $overwrite )` |
-| `Fields\StyleFields` | `border_input( $type, $overwrite )`, `shadow_input( $type, $overwrite )`, `background_inputs( $type, $overwrite, ... )`, `background_input( $type, $overwrite )`, `display_input( $type, $overwrite )`, `opacity_input( $type, $overwrite )`, `hover_animations_input( $type, $overwrite )`, `hover_icon_animation_input( $type, $overwrite )`, `zindex_input( $type, $overwrite )`, `overflow_input( $type, $overwrite )`, `scrollbars_input( $type, $overwrite )` |
-| `Fields\TypographyFields` | `font_size_input_group()`, `font_size_input()`, `font_custom_size_input()`, `font_weight_input()`, `font_case_input()`, `font_italic_input()`, `font_line_height_input()`, `text_justify_input()`, `text_align_input()`, `text_align_input_group()`, `text_color_input_group()`, `text_color_input()`, `custom_color_input()` |
-| `Fields\LayoutFields` | `container_class_input( $type, $overwrite )`, `position_class_input( $type, $overwrite )`, `sticky_offset_input( $type, $overwrite )`, `col_input( $type, $overwrite )`, `row_cols_input( $type, $overwrite )`, `absolute_position_input( $type, $overwrite )`, `width_input( $type, $overwrite )`, `height_input( $type, $overwrite )`, `max_height_input( $type, $overwrite )` |
-| `Fields\CommonFields` | `class_input()`, `anchor_input()`, `custom_name_input()`, `visibility_conditions_input()`, `new_window_input()`, `nofollow_input()`, `attributes_input()`, `title_tag_input()`, `html_tag_input()`, `title_inputs()` |
-| `Fields\ColorFields` | `aui_colors( $include_branding, $include_outlines, ... )`, `get_aui_colors( $types, $flatten )`, `branding_colors()` |
-| `Fields\ShapeFields` | `divider_inputs( $type, $overwrite, ... )`, `element_require_string( $args, $key, $type )` |
-| `Fields\FlexFields` | `align_items_input( $type, $overwrite )`, `align_items_group( $type, $overwrite )`, `justify_content_input( $type, $overwrite )`, `justify_content_group( $type, $overwrite )`, `align_self_input( $type, $overwrite )`, `align_self_group( $type, $overwrite )`, `order_input( $type, $overwrite )`, `order_group( $type, $overwrite )`, `wrap_input( $type, $overwrite )`, `wrap_group( $type, $overwrite )`, `float_input( $type, $overwrite )`, `float_group( $type, $overwrite )` |
+| `Fields\SpacingFields` | `margin( $side, $overwrite, $include_negatives )`, `padding( $side, $overwrite )`, `margin_group( $overwrite, $include_negatives )`, `padding_group( $overwrite )` |
+| `Fields\StyleFields` | `border_show()`, `border_style()`, `border_width()`, `border_opacity()`, `border_radius()`, `border_radius_size()`, `border_group( $prefix, $overwrite )`, `shadow()`, `background()`, `background_group( $prefix, $overwrite )`, `display()`, `opacity()`, `hover_animation()`, `hover_icon_animation()`, `zindex()`, `overflow()`, `scrollbars()` |
+| `Fields\TypographyFields` | `font_size()`, `font_size_custom()`, `font_weight()`, `font_case()`, `font_italic()`, `line_height()`, `text_justify()`, `text_align()`, `text_color()`, `text_color_custom()`, `font_size_group( $prefix, $overwrite )`, `text_align_group( $prefix, $overwrite )`, `text_color_group( $prefix, $overwrite )` |
+| `Fields\LayoutFields` | `container()`, `position()`, `sticky_offset( $side )`, `col()`, `row_cols()`, `absolute_position()`, `width()`, `height()`, `max_height()` |
+| `Fields\CommonFields` | `css_class()`, `anchor()`, `metadata_name()`, `visibility_conditions()`, `new_window()`, `nofollow()`, `attributes()`, `title_tag()`, `html_tag()`, `title_group()` |
+| `Helpers\ColorOptions` | `aui( $types, $flatten )`, `branding()` — returns option arrays for `select`/`color` fields, not field definitions |
+| `Fields\ShapeFields` | `divider_group( $prefix, $overwrite )` |
+| `Fields\FlexFields` | `align_items()`, `align_items_group( $prefix, $overwrite )`, `justify_content()`, `justify_content_group( $prefix, $overwrite )`, `align_self()`, `align_self_group( $prefix, $overwrite )`, `order()`, `order_group( $prefix, $overwrite )`, `flex_wrap()`, `flex_wrap_group( $prefix, $overwrite )`, `float()`, `float_group( $prefix, $overwrite )` |
 
 ## Deprecated Global Functions
 
@@ -150,56 +152,56 @@ All `sd_get_*` global functions are soft-deprecated since 3.1.0. They still work
 
 | Deprecated global | Replacement |
 |---|---|
-| `sd_get_margin_input( 'mt' )` | `SpacingFields::margin_input( 'mt' )` |
-| `sd_get_padding_input( 'pt' )` | `SpacingFields::padding_input( 'pt' )` |
-| `sd_get_border_input( 'border' )` | `StyleFields::border_input( 'border' )` |
-| `sd_get_shadow_input()` | `StyleFields::shadow_input()` |
-| `sd_get_background_inputs()` | `StyleFields::background_inputs()` |
-| `sd_get_display_input()` | `StyleFields::display_input()` |
-| `sd_get_text_color_input_group()` | `TypographyFields::text_color_input_group()` |
-| `sd_get_text_align_input()` | `TypographyFields::text_align_input()` |
-| `sd_get_font_size_input_group()` | `TypographyFields::font_size_input_group()` |
-| `sd_get_font_weight_input()` | `TypographyFields::font_weight_input()` |
-| `sd_get_font_case_input()` | `TypographyFields::font_case_input()` |
-| `sd_get_font_italic_input()` | `TypographyFields::font_italic_input()` |
-| `sd_get_container_class_input()` | `LayoutFields::container_class_input()` |
-| `sd_get_position_class_input()` | `LayoutFields::position_class_input()` |
-| `sd_get_class_input()` | `CommonFields::class_input()` |
-| `sd_get_anchor_input()` | `CommonFields::anchor_input()` |
-| `sd_get_custom_name_input()` | `CommonFields::custom_name_input()` |
-| `sd_get_visibility_conditions_input()` | `CommonFields::visibility_conditions_input()` |
-| `sd_get_font_line_height_input()` | `TypographyFields::font_line_height_input()` |
-| `sd_get_text_justify_input()` | `TypographyFields::text_justify_input()` |
-| `sd_get_sticky_offset_input()` | `LayoutFields::sticky_offset_input()` |
-| `sd_get_col_input()` | `LayoutFields::col_input()` |
-| `sd_get_row_cols_input()` | `LayoutFields::row_cols_input()` |
-| `sd_get_absolute_position_input()` | `LayoutFields::absolute_position_input()` |
-| `sd_get_width_input()` | `LayoutFields::width_input()` |
-| `sd_get_height_input()` | `LayoutFields::height_input()` |
-| `sd_get_max_height_input()` | `LayoutFields::max_height_input()` |
-| `sd_get_background_input()` | `StyleFields::background_input()` |
-| `sd_get_opacity_input()` | `StyleFields::opacity_input()` |
-| `sd_get_hover_animations_input()` | `StyleFields::hover_animations_input()` |
-| `sd_get_hover_icon_animation_input()` | `StyleFields::hover_icon_animation_input()` |
-| `sd_get_zindex_input()` | `StyleFields::zindex_input()` |
-| `sd_get_overflow_input()` | `StyleFields::overflow_input()` |
-| `sd_get_scrollbars_input()` | `StyleFields::scrollbars_input()` |
-| `sd_get_new_window_input()` | `CommonFields::new_window_input()` |
-| `sd_get_nofollow_input()` | `CommonFields::nofollow_input()` |
-| `sd_get_attributes_input()` | `CommonFields::attributes_input()` |
-| `sd_get_title_tag_input()` | `CommonFields::title_tag_input()` |
-| `sd_get_html_tag_input()` | `CommonFields::html_tag_input()` |
-| `sd_get_title_inputs()` | `CommonFields::title_inputs()` |
-| `sd_get_aui_colors()` | `ColorFields::get_aui_colors()` |
-| `sd_get_branding_colors()` | `ColorFields::branding_colors()` |
-| `sd_get_shape_divider_inputs()` | `ShapeFields::divider_inputs()` |
-| `sd_get_element_require_string()` | `ShapeFields::element_require_string()` |
-| `sd_get_flex_align_items_input()` | `FlexFields::align_items_input()` |
-| `sd_get_flex_justify_content_input()` | `FlexFields::justify_content_input()` |
-| `sd_get_flex_align_self_input()` | `FlexFields::align_self_input()` |
-| `sd_get_flex_order_input()` | `FlexFields::order_input()` |
-| `sd_get_flex_wrap_input()` | `FlexFields::wrap_input()` |
-| `sd_get_float_input()` | `FlexFields::float_input()` |
+| `sd_get_margin_input( 'mt' )` | `SpacingFields::margin( 'top' )` |
+| `sd_get_padding_input( 'pt' )` | `SpacingFields::padding( 'top' )` |
+| `sd_get_border_input( 'border' )` | `StyleFields::border_show()` |
+| `sd_get_shadow_input()` | `StyleFields::shadow()` |
+| `sd_get_background_inputs()` | `StyleFields::background_group()` |
+| `sd_get_display_input()` | `StyleFields::display()` |
+| `sd_get_text_color_input_group()` | `TypographyFields::text_color_group()` |
+| `sd_get_text_align_input()` | `TypographyFields::text_align()` |
+| `sd_get_font_size_input_group()` | `TypographyFields::font_size_group()` |
+| `sd_get_font_weight_input()` | `TypographyFields::font_weight()` |
+| `sd_get_font_case_input()` | `TypographyFields::font_case()` |
+| `sd_get_font_italic_input()` | `TypographyFields::font_italic()` |
+| `sd_get_container_class_input()` | `LayoutFields::container()` |
+| `sd_get_position_class_input()` | `LayoutFields::position()` |
+| `sd_get_class_input()` | `CommonFields::css_class()` |
+| `sd_get_anchor_input()` | `CommonFields::anchor()` |
+| `sd_get_custom_name_input()` | `CommonFields::metadata_name()` |
+| `sd_get_visibility_conditions_input()` | `CommonFields::visibility_conditions()` |
+| `sd_get_font_line_height_input()` | `TypographyFields::line_height()` |
+| `sd_get_text_justify_input()` | `TypographyFields::text_justify()` |
+| `sd_get_sticky_offset_input()` | `LayoutFields::sticky_offset( 'top' )` |
+| `sd_get_col_input()` | `LayoutFields::col()` |
+| `sd_get_row_cols_input()` | `LayoutFields::row_cols()` |
+| `sd_get_absolute_position_input()` | `LayoutFields::absolute_position()` |
+| `sd_get_width_input()` | `LayoutFields::width()` |
+| `sd_get_height_input()` | `LayoutFields::height()` |
+| `sd_get_max_height_input()` | `LayoutFields::max_height()` |
+| `sd_get_background_input()` | `StyleFields::background()` |
+| `sd_get_opacity_input()` | `StyleFields::opacity()` |
+| `sd_get_hover_animations_input()` | `StyleFields::hover_animation()` |
+| `sd_get_hover_icon_animation_input()` | `StyleFields::hover_icon_animation()` |
+| `sd_get_zindex_input()` | `StyleFields::zindex()` |
+| `sd_get_overflow_input()` | `StyleFields::overflow()` |
+| `sd_get_scrollbars_input()` | `StyleFields::scrollbars()` |
+| `sd_get_new_window_input()` | `CommonFields::new_window()` |
+| `sd_get_nofollow_input()` | `CommonFields::nofollow()` |
+| `sd_get_attributes_input()` | `CommonFields::attributes()` |
+| `sd_get_title_tag_input()` | `CommonFields::title_tag()` |
+| `sd_get_html_tag_input()` | `CommonFields::html_tag()` |
+| `sd_get_title_inputs()` | `CommonFields::title_group()` |
+| `sd_get_aui_colors()` | `ColorOptions::aui()` |
+| `sd_get_branding_colors()` | `ColorOptions::branding()` |
+| `sd_get_shape_divider_inputs()` | `ShapeFields::divider_group()` |
+| `sd_get_element_require_string()` | `Utils::element_require()` |
+| `sd_get_flex_align_items_input()` | `FlexFields::align_items()` |
+| `sd_get_flex_justify_content_input()` | `FlexFields::justify_content()` |
+| `sd_get_flex_align_self_input()` | `FlexFields::align_self()` |
+| `sd_get_flex_order_input()` | `FlexFields::order()` |
+| `sd_get_flex_wrap_input()` | `FlexFields::flex_wrap()` |
+| `sd_get_float_input()` | `FlexFields::float()` |
 
 ## See Also
 

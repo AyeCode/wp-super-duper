@@ -80,13 +80,22 @@ trait WP_Super_Duper_Utilities {
 	}
 
 	/**
+	 * Tracks whether set_arguments() has been called and merged into $this->arguments.
+	 */
+	private bool $_arguments_initialized = false;
+
+	/**
 	 * Get the arguments for the instance, applying filters.
 	 *
 	 * @return array The filtered arguments.
 	 */
 	public function get_arguments() {
-		if ( empty( $this->arguments ) ) {
-			$this->arguments = $this->set_arguments();
+		if ( ! $this->_arguments_initialized ) {
+			$this->_arguments_initialized = true;
+			if ( method_exists( $this, 'set_arguments' ) ) {
+				$builder_args    = $this->set_arguments();
+				$this->arguments = array_merge( $this->arguments, is_array( $builder_args ) ? $builder_args : [] );
+			}
 		}
 
 		$this->arguments = apply_filters( 'wp_super_duper_arguments', $this->arguments, $this->options, $this->instance );
