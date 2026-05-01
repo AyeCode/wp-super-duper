@@ -43,6 +43,12 @@ class BlockArguments {
 	 */
 	private array $fields = [];
 
+	/** @var string Last group seen via add_field() — inherited by tab marker fields. */
+	private string $current_group = '';
+
+	/** @var int Counter for generating unique tab close marker names. */
+	private int $tab_counter = 0;
+
 	// -------------------------------------------------------------------------
 	// Core API
 	// -------------------------------------------------------------------------
@@ -56,6 +62,9 @@ class BlockArguments {
 	 */
 	public function add_field( string $name, array $config ): self {
 		$this->fields[ $name ] = $config;
+		if ( ! empty( $config['group'] ) ) {
+			$this->current_group = $config['group'];
+		}
 		return $this;
 	}
 
@@ -80,6 +89,94 @@ class BlockArguments {
 	 */
 	public function get(): array {
 		return $this->fields;
+	}
+
+	// -------------------------------------------------------------------------
+	// Field-level tab helpers
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Open a tab container and its first tab pane within the current group.
+	 *
+	 * Call this before adding the first field that belongs to the first tab.
+	 * The group is inherited automatically from the last add_field() call.
+	 *
+	 * @param string $key   Unique tab key (used as the tab identifier in JS).
+	 * @param string $title Visible tab label.
+	 * @param string $class Additional CSS classes for the tab button.
+	 * @return static
+	 */
+	public function open_tabs( string $key, string $title, string $class = '' ): self {
+		$marker = '__tab_open_' . $key;
+		$this->fields[ $marker ] = [
+			'type'  => '_tab_marker',
+			'name'  => $marker,
+			'group' => $this->current_group,
+			'tab'   => [
+				'tabs_open' => 1,
+				'open'      => 1,
+				'key'       => $key,
+				'title'     => $title,
+				'class'     => $class,
+			],
+		];
+		return $this;
+	}
+
+	/**
+	 * Open a subsequent tab pane within the already-open tab container.
+	 *
+	 * @param string $key   Unique tab key.
+	 * @param string $title Visible tab label.
+	 * @param string $class Additional CSS classes for the tab button.
+	 * @return static
+	 */
+	public function open_tab( string $key, string $title, string $class = '' ): self {
+		$marker = '__tab_' . $key;
+		$this->fields[ $marker ] = [
+			'type'  => '_tab_marker',
+			'name'  => $marker,
+			'group' => $this->current_group,
+			'tab'   => [
+				'open'  => 1,
+				'key'   => $key,
+				'title' => $title,
+				'class' => $class,
+			],
+		];
+		return $this;
+	}
+
+	/**
+	 * Close the current tab pane.
+	 *
+	 * @return static
+	 */
+	public function close_tab(): self {
+		$marker = '__tab_close_' . ( ++$this->tab_counter );
+		$this->fields[ $marker ] = [
+			'type'  => '_tab_marker',
+			'name'  => $marker,
+			'group' => $this->current_group,
+			'tab'   => [ 'close' => 1 ],
+		];
+		return $this;
+	}
+
+	/**
+	 * Close the current tab pane and the entire tab container.
+	 *
+	 * @return static
+	 */
+	public function close_tabs(): self {
+		$marker = '__tabs_close_' . ( ++$this->tab_counter );
+		$this->fields[ $marker ] = [
+			'type'  => '_tab_marker',
+			'name'  => $marker,
+			'group' => $this->current_group,
+			'tab'   => [ 'close' => 1, 'tabs_close' => 1 ],
+		];
+		return $this;
 	}
 
 	// -------------------------------------------------------------------------

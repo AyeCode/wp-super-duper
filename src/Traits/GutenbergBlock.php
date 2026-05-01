@@ -201,6 +201,10 @@ trait GutenbergBlock {
                     if(!empty($arg['element_require'])){
                         $new_args['element_require'] = $arg['element_require'];
                     }
+                    // preserve tab markers on block_component fields
+                    if(!empty($arg['tab'])){
+                        $new_args['tab'] = $arg['tab'];
+                    }
                     $arguments[$key] = $new_args;
                 }else{
                     // just make sure the name is set from the key

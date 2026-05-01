@@ -987,18 +987,22 @@ class Utils {
 		if ( ! $rules ) {
 			return '';
 		}
+//
+//		$handle = wp_style_is( 'super-duper-universal-block-editor', 'registered' )
+//			? 'super-duper-universal-block-editor'
+//			: 'sd-hover-styles';
+//
+//		if ( ! wp_style_is( $handle, 'registered' ) ) {
+//			wp_register_style( $handle, false, array(), false, false );
+//		}
+//
+//		wp_add_inline_style( $handle, $rules );
 
-		$handle = wp_style_is( 'super-duper-universal-block-editor', 'registered' )
-			? 'super-duper-universal-block-editor'
-			: 'sd-hover-styles';
+//		$rules = 'body{display:none;};';
+//		echo '###'.$rules;exit;
+//		wp_add_inline_style( 'ayecode-ui', $rules );
 
-		if ( ! wp_style_is( $handle, 'registered' ) ) {
-			wp_register_style( $handle, false, array(), false, false );
-		}
-
-		wp_add_inline_style( $handle, $rules );
-
-		return '';
+		return '<style>'.$rules.'</style>';
 	}
 
 	/**

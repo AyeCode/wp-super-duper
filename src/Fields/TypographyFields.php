@@ -433,7 +433,7 @@ final class TypographyFields {
 	 * @return array
 	 */
 	private static function _text_color_field( bool $has_custom, array $overwrite ): array {
-		$options = [ '' => __( 'None', 'ayecode-connect' ) ] + ColorOptions::aui( [ 'core', 'emphasis' ], false );
+		$options = ColorOptions::aui( [ 'none', 'core', 'emphasis' ] );
 
 		if ( $has_custom ) {
 			$options['custom'] = __( 'Custom color', 'ayecode-connect' );

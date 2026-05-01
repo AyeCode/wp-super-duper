@@ -1090,6 +1090,9 @@ window.sdDependentFieldCache = window.sdDependentFieldCache || {};
 				const blockProps = useBlockProps();
 				const deviceType = wp.data.useSelect(select => select('core/editor')?.getDeviceType() || 'Desktop', []);
 				const [activeTab, setActiveTab] = useState(blockOptions.block_group_tabs && Object.keys(blockOptions.block_group_tabs).length ? Object.values(blockOptions.block_group_tabs)[0].tab.key : null);
+				const initialFieldTabs = {};
+				hydratedArgsConfig.forEach(arg => { if (arg.tab && arg.tab.tabs_open && arg.tab.key) initialFieldTabs[arg.tab.key] = arg.tab.key; });
+				const [activeFieldTabs, setActiveFieldTabs] = useState(initialFieldTabs);
 				const [isVisibilityModalOpen, setVisibilityModalOpen] = useState(false);
 				const [isDynamicDataModalOpen, setDynamicDataModalOpen] = useState(false);
 				const [previewHtml, setPreviewHtml] = useState(attributes.content || 'Loading preview...');
@@ -1367,16 +1370,16 @@ window.sdDependentFieldCache = window.sdDependentFieldCache || {};
 
 				const renderGroupControls = (groupName) => {
 					const groupArgs = groupedArgs[groupName] || [];
-					const elements = [];
-					const renderedRows = {};
 					const propsWithModal = { ...props, openVisibilityModal: () => setVisibilityModalOpen(true) };
-					groupArgs.forEach(arg => {
+
+					// Helper: render a single field (row / template / control) from a scoped field list.
+					const renderFieldItem = (arg, scopedArgs, renderedRows) => {
 						if (arg.row && arg.row.key) {
-							if (renderedRows[arg.row.key]) return;
+							if (renderedRows[arg.row.key]) return null;
 							const rowKey = arg.row.key;
 							const rowTitle = arg.row.title;
 							const rowClass = arg.row.class || '';
-							const rowElements = groupArgs
+							const rowElements = scopedArgs
 								.filter(rowArg => {
 									if (!rowArg.row || rowArg.row.key !== rowKey) return false;
 									if (rowArg.device_type && rowArg.device_type !== deviceType) return false;
@@ -1384,32 +1387,105 @@ window.sdDependentFieldCache = window.sdDependentFieldCache || {};
 									return true;
 								})
 								.map(rowArg => renderInlineControl(rowArg, props));
-							if (rowElements.length > 0) {
-								const hasDeviceType = groupArgs.some(rowArg => rowArg.row && rowArg.row.key === rowKey && rowArg.device_type);
-								const labelParts = [el('span', {}, rowTitle)];
-								if (hasDeviceType) {
-									labelParts.push(el(DeviceSwitcherIcon, { isInlineRow: true }));
-								}
-								const labelContent = hasDeviceType
-									? el('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } }, ...labelParts)
-									: rowTitle;
-								const rowClassName = rowClass ? `sd-control-row ${rowClass}` : 'sd-control-row';
-								elements.push(
-									el(BaseControl, { key: rowKey, label: labelContent },
-										el('div', { className: rowClassName, style: { display: 'flex', gap: '8px', alignItems: 'flex-end' } }, rowElements)
-									)
-								);
-								renderedRows[rowKey] = true;
-							}
-						}  else if (arg.template) {
+							renderedRows[rowKey] = true;
+							if (rowElements.length === 0) return null;
+							const hasDeviceType = scopedArgs.some(rowArg => rowArg.row && rowArg.row.key === rowKey && rowArg.device_type);
+							const labelParts = [el('span', {}, rowTitle)];
+							if (hasDeviceType) labelParts.push(el(DeviceSwitcherIcon, { isInlineRow: true }));
+							const labelContent = hasDeviceType
+								? el('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } }, ...labelParts)
+								: rowTitle;
+							const rowClassName = rowClass ? `sd-control-row ${rowClass}` : 'sd-control-row';
+							return el(BaseControl, { key: rowKey, label: labelContent },
+								el('div', { className: rowClassName, style: { display: 'flex', gap: '8px', alignItems: 'flex-end' } }, rowElements)
+							);
+						} else if (arg.template) {
 							const component = window.sdBlockInputComponents && window.sdBlockInputComponents[arg.template];
 							if (component && typeof component.renderer === 'function') {
-								elements.push(component.renderer(propsWithModal, arg, deviceType));
+								return component.renderer(propsWithModal, arg, deviceType);
 							}
+							return null;
 						} else if (!arg.row) {
-							elements.push(renderControl(arg, propsWithModal, deviceType, dependentFieldOptions, dependentFieldLoading));
+							return renderControl(arg, propsWithModal, deviceType, dependentFieldOptions, dependentFieldLoading);
+						}
+						return null;
+					};
+
+					// Pre-process group fields into a layout: plain fields and tab_group items.
+					const layout = [];
+					let currentTabGroup = null;
+					let currentTab = null;
+
+					groupArgs.forEach(arg => {
+						const tabInfo = arg.tab || null;
+						if (tabInfo) {
+							if (tabInfo.tabs_open) {
+								currentTabGroup = { key: tabInfo.key, tabs: [] };
+								layout.push({ kind: 'tab_group', data: currentTabGroup });
+							}
+							if (tabInfo.open) {
+								currentTab = { name: tabInfo.key, title: tabInfo.title, class: tabInfo.class || '', fields: [] };
+								if (currentTabGroup) currentTabGroup.tabs.push(currentTab);
+							}
+							// Real fields (not pure tab markers) belong to the pane they open or are inside.
+							if (arg.type && arg.type !== '_tab_marker') {
+								if (currentTab) {
+									currentTab.fields.push(arg);
+								} else {
+									layout.push({ kind: 'field', arg });
+								}
+							}
+							if (tabInfo.close) currentTab = null;
+							if (tabInfo.tabs_close) currentTabGroup = null;
+						} else {
+							if (currentTab) {
+								currentTab.fields.push(arg);
+							} else {
+								layout.push({ kind: 'field', arg });
+							}
 						}
 					});
+
+					// Render the layout.
+					const elements = [];
+					const renderedRows = {};
+
+					layout.forEach((item, idx) => {
+						if (item.kind === 'field') {
+							const rendered = renderFieldItem(item.arg, groupArgs, renderedRows);
+							if (rendered) elements.push(rendered);
+						} else if (item.kind === 'tab_group') {
+							const tabGroupKey = item.data.key;
+							const tabs = item.data.tabs.map(tab => ({
+								name: tab.name,
+								title: tab.title,
+								className: (tab.class ? tab.class + ' ' : '') + 'text-center flex-fill d-flex justify-content-center',
+							}));
+							if (!tabs.length) return;
+							elements.push(
+								el('div', { className: 'bsui', key: `tab-group-${tabGroupKey}-${idx}` },
+									el(TabPanel, {
+										className: 'sd-inspector-tabs sd-field-tabs',
+										activeClass: 'is-active',
+										tabs: tabs,
+										initialTabName: activeFieldTabs[tabGroupKey] || tabs[0].name,
+										onSelect: (name) => setActiveFieldTabs(prev => ({ ...prev, [tabGroupKey]: name })),
+										children: (tab) => {
+											const tabData = item.data.tabs.find(t => t.name === tab.name);
+											if (!tabData) return el(Fragment, {});
+											const tabRenderedRows = {};
+											return el(Fragment, {},
+												tabData.fields
+													.map(fieldArg => renderFieldItem(fieldArg, tabData.fields, tabRenderedRows))
+													.filter(Boolean)
+											);
+										}
+									})
+								)
+							);
+						}
+					});
+
 					return elements;
 				};
 

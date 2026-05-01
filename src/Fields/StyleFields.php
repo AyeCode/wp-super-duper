@@ -598,7 +598,7 @@ final class StyleFields {
 	 */
 	public static function background_group( string $prefix = 'bg', array $overwrite = [], $overwrite_color = [], $overwrite_gradient = [], $overwrite_image = [], bool $include_button_colors = false ): array {
 		$color_types = $include_button_colors
-			? [ 'none', 'transparent', 'core', 'outline', 'outline_btn_text', 'subtle' ]
+			? [ 'none', 'transparent', 'core', 'outline', 'outline_btn_text' ]
 			: [ 'none', 'transparent', 'core', 'subtle' ];
 
 		$options = ColorOptions::aui( $color_types );
