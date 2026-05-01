@@ -2,6 +2,7 @@
 
 namespace AyeCode\SuperDuper\Fields;
 
+use AyeCode\SuperDuper\Helpers\ColorOptions;
 use AyeCode\SuperDuper\Utils;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -90,8 +91,7 @@ final class ShapeFields {
 			]
 		);
 
-		$color_options = [ '' => __( 'None', 'ayecode-connect' ), 'transparent' => __( 'Transparent', 'ayecode-connect' ) ]
-			+ sd_aui_colors( false, false, false, false, true )
+		$color_options = ColorOptions::aui( [ 'none', 'transparent', 'core', 'subtle' ] )
 			+ [ 'custom-color' => __( 'Custom Color', 'ayecode-connect' ) ];
 
 		$fields[ $prefix . '_color' ] = wp_parse_args(

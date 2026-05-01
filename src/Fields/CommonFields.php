@@ -61,6 +61,7 @@ final class CommonFields {
 			'default'  => '',
 			'desc_tip' => true,
 			'group'    => 'advanced',
+			'is_slug'  => true,
 		];
 
 		$input = wp_parse_args( $overwrite, $defaults );

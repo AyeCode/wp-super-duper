@@ -159,14 +159,14 @@ All accept `'device_type'` in `$overwrite` (`'Mobile'` / `'Tablet'` / `'Desktop'
 
 ### Group methods (mobile / tablet / desktop)
 
-| Method | Returns | Keys |
-|---|---|---|
-| `align_items_group( string $prefix = 'flex_align_items', array $overwrite = [] )` | 3 fields | `$prefix`, `$prefix.'_md'`, `$prefix.'_lg'` |
+| Method                                                                                    | Returns  | Keys                                        |
+|-------------------------------------------------------------------------------------------|----------|---------------------------------------------|
+| `align_items_group( string $prefix = 'flex_align_items', array $overwrite = [] )`         | 3 fields | `$prefix`, `$prefix.'_md'`, `$prefix.'_lg'` |
 | `justify_content_group( string $prefix = 'flex_justify_content', array $overwrite = [] )` | 3 fields | `$prefix`, `$prefix.'_md'`, `$prefix.'_lg'` |
-| `align_self_group( string $prefix = 'flex_align_self', array $overwrite = [] )` | 3 fields | `$prefix`, `$prefix.'_md'`, `$prefix.'_lg'` |
-| `order_group( string $prefix = 'flex_order', array $overwrite = [] )` | 3 fields | `$prefix`, `$prefix.'_md'`, `$prefix.'_lg'` |
-| `flex_wrap_group( string $prefix = 'flex_wrap', array $overwrite = [] )` | 3 fields | `$prefix`, `$prefix.'_md'`, `$prefix.'_lg'` |
-| `float_group( string $prefix = 'float', array $overwrite = [] )` | 3 fields | `$prefix`, `$prefix.'_md'`, `$prefix.'_lg'` |
+| `align_self_group( string $prefix = 'flex_align_self', array $overwrite = [] )`           | 3 fields | `$prefix`, `$prefix.'_md'`, `$prefix.'_lg'` |
+| `order_group( string $prefix = 'flex_order', array $overwrite = [] )`                     | 3 fields | `$prefix`, `$prefix.'_md'`, `$prefix.'_lg'` |
+| `flex_wrap_group( string $prefix = 'flex_wrap', array $overwrite = [] )`                  | 3 fields | `$prefix`, `$prefix.'_md'`, `$prefix.'_lg'` |
+| `float_group( string $prefix = 'float', array $overwrite = [] )`                          | 3 fields | `$prefix`, `$prefix.'_md'`, `$prefix.'_lg'` |
 
 ---
 

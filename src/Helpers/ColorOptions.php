@@ -29,6 +29,16 @@ final class ColorOptions {
 			$types = [ 'core' ];
 		}
 
+		$prepend = [];
+
+		if ( in_array( 'none', $types, true ) ) {
+			$prepend[''] = __( 'None', 'ayecode-connect' );
+		}
+
+		if ( in_array( 'transparent', $types, true ) ) {
+			$prepend['transparent'] = __( 'Transparent', 'ayecode-connect' );
+		}
+
 		$grouped = [];
 
 		// 1. Core colors (standard backgrounds).
@@ -106,10 +116,10 @@ final class ColorOptions {
 					$flat[ $key ] = $label;
 				}
 			}
-			return apply_filters( 'sd_get_aui_colors_flat', $flat, $types );
+			return apply_filters( 'sd_get_aui_colors_flat', $prepend + $flat, $types );
 		}
 
-		return apply_filters( 'sd_get_aui_colors', $grouped, $types );
+		return apply_filters( 'sd_get_aui_colors', $prepend + $grouped, $types );
 	}
 
 	/**

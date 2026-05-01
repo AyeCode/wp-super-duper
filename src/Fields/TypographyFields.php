@@ -2,6 +2,8 @@
 
 namespace AyeCode\SuperDuper\Fields;
 
+use AyeCode\SuperDuper\Helpers\ColorOptions;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -431,7 +433,7 @@ final class TypographyFields {
 	 * @return array
 	 */
 	private static function _text_color_field( bool $has_custom, array $overwrite ): array {
-		$options = [ '' => __( 'None', 'ayecode-connect' ) ] + sd_aui_colors( false, false, false, false, false, true );
+		$options = [ '' => __( 'None', 'ayecode-connect' ) ] + ColorOptions::aui( [ 'core', 'emphasis' ], false );
 
 		if ( $has_custom ) {
 			$options['custom'] = __( 'Custom color', 'ayecode-connect' );

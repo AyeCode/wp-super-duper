@@ -91,6 +91,14 @@ window.sdDependentFieldCache = window.sdDependentFieldCache || {};
 	};
 
 	/**
+	 * Sanitizes a value to a URL-safe slug: lowercase, spaces to hyphens, strips non-alphanumeric chars.
+	 * Used by text fields with is_slug: true, mirroring WP's HTML anchor input behaviour.
+	 * @param {*} val - Raw input value
+	 * @returns {string}
+	 */
+	const sanitizeSlug = (val) => String(val || '').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+
+	/**
 	 * Fetches dependent field options based on configuration
 	 * @param {Object} config - The depends_on configuration
 	 * @param {*} parentValue - The value of the parent field
@@ -380,7 +388,7 @@ window.sdDependentFieldCache = window.sdDependentFieldCache || {};
 		}
 
 		const { attributes, setAttributes, openVisibilityModal } = props;
-		const { type, name, label, title, help, desc, options, default: defaultValue, ...rest } = config;
+		const { type, name, label, title, help, desc, options, default: defaultValue, is_slug, ...rest } = config;
 		const value = attributes[name] !== undefined ? attributes[name] : defaultValue;
 		const controlLabel = label || title;
 		const controlHelp = help || desc;
@@ -528,7 +536,7 @@ window.sdDependentFieldCache = window.sdDependentFieldCache || {};
 						el(InputControl, {
 							id: name,
 							value: value || '',
-							onChange: (val) => setAttributes({ [name]: val }),
+							onChange: (val) => setAttributes({ [name]: is_slug ? sanitizeSlug(val) : val }),
 							type: type,
 							suffix: suffixContent,
 							...rest,
@@ -541,7 +549,7 @@ window.sdDependentFieldCache = window.sdDependentFieldCache || {};
 					const textInputElement = el(TextControl, {
 						id: name,
 						value: value || '',
-						onChange: (val) => setAttributes({ [name]: val }),
+						onChange: (val) => setAttributes({ [name]: is_slug ? sanitizeSlug(val) : val }),
 						type: type,
 						...rest,
 						...inputEventHandlers

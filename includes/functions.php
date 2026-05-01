@@ -774,7 +774,7 @@ function sd_build_aui_class( $args ) {
  *
  * @param $args
  *
- * @return array
+ * @return string
  */
 function sd_build_aui_styles( $args ) {
 	//_deprecated_function( 'sd_build_aui_styles', '3.1.0', 'AyeCode\\SuperDuper\\Utils::build_aui_styles' );

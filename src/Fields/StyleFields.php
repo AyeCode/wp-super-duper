@@ -2,6 +2,8 @@
 
 namespace AyeCode\SuperDuper\Fields;
 
+use AyeCode\SuperDuper\Helpers\ColorOptions;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -31,7 +33,7 @@ final class StyleFields {
 		$defaults = [
 			'type'     => 'select',
 			'title'    => __( 'Border color', 'ayecode-connect' ),
-			'options'  => [ '' => __( 'Default', 'ayecode-connect' ), '0' => __( 'None', 'ayecode-connect' ) ] + sd_aui_colors( false, false, false, false, true ),
+			'options'  => [ '' => __( 'Default', 'ayecode-connect' ), '0' => __( 'None', 'ayecode-connect' ) ] + ColorOptions::aui( [ 'core', 'subtle' ] ),
 			'default'  => '',
 			'desc_tip' => true,
 			'group'    => 'wrapper-styles',
@@ -323,7 +325,7 @@ final class StyleFields {
 		$defaults = [
 			'type'     => 'select',
 			'title'    => __( 'Background color', 'ayecode-connect' ),
-			'options'  => [ '' => __( 'None', 'ayecode-connect' ), 'transparent' => __( 'Transparent', 'ayecode-connect' ) ] + sd_aui_colors( false, false, false, false, true ),
+			'options'  => ColorOptions::aui( [ 'none', 'transparent', 'core', 'subtle' ] ),
 			'default'  => '',
 			'desc_tip' => true,
 			'group'    => 'wrapper-styles',
@@ -595,11 +597,11 @@ final class StyleFields {
 	 * @return array<string, array>
 	 */
 	public static function background_group( string $prefix = 'bg', array $overwrite = [], $overwrite_color = [], $overwrite_gradient = [], $overwrite_image = [], bool $include_button_colors = false ): array {
-		$color_options = $include_button_colors
-			? sd_aui_colors( false, true, true, true, true )
-			: sd_aui_colors( false, false, false, false, true );
+		$color_types = $include_button_colors
+			? [ 'none', 'transparent', 'core', 'outline', 'outline_btn_text', 'subtle' ]
+			: [ 'none', 'transparent', 'core', 'subtle' ];
 
-		$options = [ '' => __( 'None', 'ayecode-connect' ), 'transparent' => __( 'Transparent', 'ayecode-connect' ) ] + $color_options;
+		$options = ColorOptions::aui( $color_types );
 
 		if ( false !== $overwrite_color ) {
 			$options['custom-color'] = __( 'Custom Color', 'ayecode-connect' );
