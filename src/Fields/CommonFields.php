@@ -130,6 +130,92 @@ final class CommonFields {
 	}
 
 	/**
+	 * Hidden input field.
+	 *
+	 * Stores a value in block attributes without rendering any UI control.
+	 * The block editor JS returns null for hidden fields, so they are
+	 * invisible to the user but included in the saved attributes.
+	 *
+	 * @param array $overwrite Field config overrides.
+	 * @return array
+	 */
+	public static function hidden( array $overwrite = [] ): array {
+		$defaults = [
+			'type'    => 'hidden',
+			'title'   => '',
+			'default' => '',
+		];
+
+		return wp_parse_args( $overwrite, $defaults );
+	}
+
+	/**
+	 * Style ID hidden field.
+	 *
+	 * Stores the block style identifier as a hidden attribute — no UI control is rendered.
+	 *
+	 * @param array $overwrite Field config overrides.
+	 * @return array
+	 */
+	public static function style_id( array $overwrite = [] ): array {
+		$defaults = [
+			'type'     => 'hidden',
+			'title'    => __( 'Style ID', 'ayecode-connect' ),
+			'desc_tip' => true,
+			'default'  => '',
+			'group'    => 'advanced',
+		];
+
+		return wp_parse_args( $overwrite, $defaults );
+	}
+
+	/**
+	 * Icon class text input with icon picker.
+	 *
+	 * @param array $overwrite Field config overrides.
+	 * @return array
+	 */
+	public static function icon_class( array $overwrite = [] ): array {
+		$defaults = [
+			'type'         => 'text',
+			'title'        => __( 'Icon class', 'ayecode-connect' ),
+			'desc'         => __( 'Enter a font awesome icon class.', 'ayecode-connect' ),
+			'placeholder'  => 'fas fa-info-circle',
+			'default'      => '',
+			'desc_tip'     => true,
+			'icon_picker'  => true,
+			'dynamic_data' => true,
+			'group'        => 'icon',
+		];
+
+		return wp_parse_args( $overwrite, $defaults );
+	}
+
+	/**
+	 * Icon position select field.
+	 *
+	 * @param array $overwrite Field config overrides.
+	 * @return array
+	 */
+	public static function icon_position( array $overwrite = [] ): array {
+		$defaults = [
+			'type'     => 'select',
+			'title'    => __( 'Icon position', 'ayecode-connect' ),
+			'options'  => [
+				'start' => __( 'Start', 'ayecode-connect' ),
+				'end'   => __( 'End', 'ayecode-connect' ),
+//				'none'  => __( 'Remove', 'ayecode-connect' ),
+			],
+			'default'  => 'start',
+			'desc_tip' => true,
+			'group'    => 'icon',
+			'element_require' => '[%icon_class%]!=""',
+		];
+
+		return wp_parse_args( $overwrite, $defaults );
+	}
+
+	/**
 	 * Open in new window checkbox.
 	 *
 	 * @param array $overwrite Field config overrides.

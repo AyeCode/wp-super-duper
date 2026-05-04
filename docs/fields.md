@@ -128,6 +128,10 @@ When using `border_group()` with a prefix, the condition is updated automaticall
 | `anchor( array $overwrite = [] )` | HTML anchor ID text input |
 | `metadata_name( array $overwrite = [] )` | Custom block name text input |
 | `visibility_conditions( array $overwrite = [] )` | Block visibility conditions UI field |
+| `hidden( array $overwrite = [] )` | Generic hidden input — no UI rendered, value stored in attributes |
+| `style_id( array $overwrite = [] )` | Hidden field for block style identifier (key: `styleid`, group: `advanced`) |
+| `icon_class( array $overwrite = [] )` | Icon class text input with icon picker (key: `icon_class`, group: `icon`) |
+| `icon_position( array $overwrite = [] )` | Icon position select — Start / End / Remove (key: `icon_position`, group: `icon`) |
 | `new_window( array $overwrite = [] )` | Open in new window checkbox |
 | `nofollow( array $overwrite = [] )` | Add nofollow checkbox |
 | `attributes( array $overwrite = [] )` | Custom HTML attributes text input |

@@ -396,6 +396,63 @@ class BlockArguments {
 	}
 
 	/**
+	 * Add a hidden field that stores a value in block attributes with no UI control.
+	 *
+	 * @param string $name     The argument name (array key).
+	 * @param array  $overwrite Field config overrides merged on top of the hidden defaults.
+	 * @return static
+	 */
+	public function add_hidden_field( string $name, array $overwrite = [] ): self {
+		$this->fields[ $name ] = CommonFields::hidden( $overwrite );
+		return $this;
+	}
+
+	/**
+	 * Add the style ID hidden field.
+	 *
+	 * @param array $overwrite Field config overrides.
+	 * @return static
+	 */
+	public function add_style_id( array $overwrite = [] ): self {
+		$this->fields['styleid'] = CommonFields::style_id( $overwrite );
+		return $this;
+	}
+
+	/**
+	 * Add the icon class text input (with icon picker).
+	 *
+	 * @param array $overwrite Field config overrides.
+	 * @return static
+	 */
+	public function add_icon_class( array $overwrite = [] ): self {
+		$this->fields['icon_class'] = CommonFields::icon_class( $overwrite );
+		return $this;
+	}
+
+	/**
+	 * Add the icon position select field.
+	 *
+	 * @param array $overwrite Field config overrides.
+	 * @return static
+	 */
+	public function add_icon_position( array $overwrite = [] ): self {
+		$this->fields['icon_position'] = CommonFields::icon_position( $overwrite );
+		return $this;
+	}
+
+	/**
+	 * Add icon class and icon position fields together.
+	 *
+	 * @param array $overwrite Field config overrides applied to both fields.
+	 * @return static
+	 */
+	public function add_icon_group( array $overwrite = [] ): self {
+		$this->fields['icon_class']    = CommonFields::icon_class( $overwrite );
+		$this->fields['icon_position'] = CommonFields::icon_position( $overwrite );
+		return $this;
+	}
+
+	/**
 	 * Add the block visibility conditions field.
 	 *
 	 * @param string $prefix   Optional prefix for the field key.

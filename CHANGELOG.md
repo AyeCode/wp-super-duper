@@ -3,6 +3,7 @@
 ## [3.0.7-beta] — 2026-TBD
 - Added 'is_slug' param for text inputs to force slug format - ADDED
 - Package loader is not respecting load order due to AI slop - FIXED
+- Added new fields to the block arguments builder - ADDED
 
 ## [3.0.6-beta] — 2026-04-30
 - Field builder refactor to new standards - CHANGED
