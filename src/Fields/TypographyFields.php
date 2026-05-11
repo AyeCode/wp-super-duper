@@ -282,15 +282,26 @@ final class TypographyFields {
 	/**
 	 * Return font size + custom size fields keyed by argument name.
 	 *
-	 * @param string $prefix   Base key used for both fields (default 'font_size' → 'font_size', 'font_size_custom').
-	 * @param array  $overwrite Per-field overwrite config.
-	 * @return array<string, array> [$prefix => [...], $prefix . '_custom' => [...]]
+	 * @param string     $prefix          Base key used for both fields (default 'font_size' → 'font_size', 'font_size_custom').
+	 * @param array      $overwrite        Overrides for the main font-size select field.
+	 * @param array|bool $overwrite_custom Overrides for the custom font-size number input. Pass false to omit the custom field entirely.
+	 * @return array<string, array>
 	 */
-	public static function font_size_group( string $prefix = 'font_size', array $overwrite = [] ): array {
-		return [
-			$prefix              => self::_font_size_field( true, $overwrite ),
-			$prefix . '_custom'  => self::_font_size_custom_field( $prefix, $overwrite ),
-		];
+	public static function font_size_group( string $prefix = 'font_size', array $overwrite = [], $overwrite_custom = [] ): array {
+		$fields = [];
+
+		if ( $overwrite !== false ) {
+			$fields[ $prefix ] = self::_font_size_field( true, $overwrite );
+		}
+
+		if ( false !== $overwrite_custom ) {
+			// Strip field-type-specific keys that belong to the main select only, so they
+			// don't pollute the custom number input (e.g. a CSS-class 'default' like 'h2').
+			$custom_base = array_diff_key( $overwrite, array_flip( [ 'default', 'options' ] ) );
+			$fields[ $prefix . '_custom' ] = self::_font_size_custom_field( $prefix, array_merge( $custom_base, (array) $overwrite_custom ) );
+		}
+
+		return $fields;
 	}
 
 	/**
@@ -311,15 +322,26 @@ final class TypographyFields {
 	/**
 	 * Return text color select + custom color picker fields keyed by argument name.
 	 *
-	 * @param string $prefix   Base key (default 'text_color' → 'text_color', 'text_color_custom').
-	 * @param array  $overwrite Per-field overwrite config.
-	 * @return array<string, array> [$prefix => [...], $prefix . '_custom' => [...]]
+	 * @param string     $prefix          Base key (default 'text_color' → 'text_color', 'text_color_custom').
+	 * @param array      $overwrite        Overrides for the main text-color select field.
+	 * @param array|bool $overwrite_custom Overrides for the custom color picker. Pass false to omit the custom field entirely.
+	 * @return array<string, array>
 	 */
-	public static function text_color_group( string $prefix = 'text_color', array $overwrite = [] ): array {
-		return [
-			$prefix             => self::_text_color_field( true, $overwrite ),
-			$prefix . '_custom' => self::_custom_color_field( $prefix, $overwrite ),
-		];
+	public static function text_color_group( string $prefix = 'text_color', array $overwrite = [], $overwrite_custom = [] ): array {
+		$fields = [];
+
+		if ( $overwrite !== false ) {
+			$fields[ $prefix ] = self::_text_color_field( true, $overwrite );
+		}
+
+		if ( false !== $overwrite_custom ) {
+			// Strip field-type-specific keys that belong to the main select only, so they
+			// don't pollute the custom color picker (e.g. a CSS-class 'default' like 'primary').
+			$custom_base = array_diff_key( $overwrite, array_flip( [ 'default', 'options' ] ) );
+			$fields[ $prefix . '_custom' ] = self::_custom_color_field( $prefix, array_merge( $custom_base, (array) $overwrite_custom ) );
+		}
+
+		return $fields;
 	}
 
 	// -------------------------------------------------------------------------

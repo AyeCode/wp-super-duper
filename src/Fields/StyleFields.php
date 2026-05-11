@@ -588,26 +588,39 @@ final class StyleFields {
 	/**
 	 * Return all background field definitions (color, custom color, gradient, and image).
 	 *
-	 * @param string     $prefix         Key prefix / base key (default 'bg' → keys: bg, bg_color, bg_gradient, …).
-	 * @param array      $overwrite      Overrides for the main background select.
-	 * @param array|bool $overwrite_color    Overrides for the custom color picker; false to omit.
-	 * @param array|bool $overwrite_gradient Overrides for the gradient picker; false to omit.
-	 * @param array|bool $overwrite_image    Overrides for the image picker; false to omit.
-	 * @param bool       $include_button_colors Whether to include button-specific colors in the palette.
+	 * @param string $prefix               Key prefix / base key (default 'bg' → keys: bg, bg_color, bg_gradient, …).
+	 * @param array  $overwrite             Global overwrite applied to every sub-field.
+	 * @param array  $field_overwrites      Per-field overwrite map merged on top of $overwrite.
+	 *                                      Valid keys: 'color', 'gradient', 'image'.
+	 *                                      Pass false as a key value to omit that sub-field entirely.
+	 *                                      Example: [ 'color' => [ 'default' => '#ff0000' ], 'image' => false ]
+	 * @param bool   $include_button_colors Whether to include button-specific colors in the palette.
 	 * @return array<string, array>
 	 */
-	public static function background_group( string $prefix = 'bg', array $overwrite = [], $overwrite_color = [], $overwrite_gradient = [], $overwrite_image = [], bool $include_button_colors = false ): array {
+	public static function background_group( string $prefix = 'bg', array $overwrite = [], array $field_overwrites = [], bool $include_button_colors = false ): array {
+		// Resolve per-sub-field overwrite: merge $overwrite (global) with the per-field delta,
+		// or false if the caller explicitly passed false to omit that sub-field.
+		$ow_color    = array_key_exists( 'color', $field_overwrites )
+			? ( false === $field_overwrites['color']    ? false : array_merge( $overwrite, (array) $field_overwrites['color'] ) )
+			: $overwrite;
+		$ow_gradient = array_key_exists( 'gradient', $field_overwrites )
+			? ( false === $field_overwrites['gradient'] ? false : array_merge( $overwrite, (array) $field_overwrites['gradient'] ) )
+			: $overwrite;
+		$ow_image    = array_key_exists( 'image', $field_overwrites )
+			? ( false === $field_overwrites['image']    ? false : array_merge( $overwrite, (array) $field_overwrites['image'] ) )
+			: $overwrite;
+
 		$color_types = $include_button_colors
 			? [ 'none', 'transparent', 'core', 'outline', 'outline_btn_text' ]
 			: [ 'none', 'transparent', 'core', 'subtle' ];
 
 		$options = ColorOptions::aui( $color_types );
 
-		if ( false !== $overwrite_color ) {
+		if ( false !== $ow_color ) {
 			$options['custom-color'] = __( 'Custom Color', 'ayecode-connect' );
 		}
 
-		if ( false !== $overwrite_gradient ) {
+		if ( false !== $ow_gradient ) {
 			$options['custom-gradient'] = __( 'Custom Gradient', 'ayecode-connect' );
 		}
 
@@ -631,9 +644,9 @@ final class StyleFields {
 			$fields[ $prefix ] = wp_parse_args( $overwrite, $main_defaults );
 		}
 
-		if ( false !== $overwrite_color ) {
+		if ( false !== $ow_color ) {
 			$fields[ $prefix . '_color' ] = wp_parse_args(
-				$overwrite_color,
+				$ow_color,
 				[
 					'type'            => 'color',
 					'title'           => __( 'Custom color', 'ayecode-connect' ),
@@ -645,9 +658,9 @@ final class StyleFields {
 			);
 		}
 
-		if ( false !== $overwrite_gradient ) {
+		if ( false !== $ow_gradient ) {
 			$fields[ $prefix . '_gradient' ] = wp_parse_args(
-				$overwrite_gradient,
+				$ow_gradient,
 				[
 					'type'            => 'gradient',
 					'title'           => __( 'Custom gradient', 'ayecode-connect' ),
@@ -671,8 +684,8 @@ final class StyleFields {
 			];
 		}
 
-		if ( false !== $overwrite_image ) {
-			$img_group = ! empty( $overwrite_image['group'] ) ? $overwrite_image['group'] : 'wrapper-styles';
+		if ( false !== $ow_image ) {
+			$img_group = ! empty( $ow_image['group'] ) ? $ow_image['group'] : 'wrapper-styles';
 			$not_image = '( [%' . $prefix . '%]=="" || [%' . $prefix . '%]=="custom-color" || [%' . $prefix . '%]=="custom-gradient" || [%' . $prefix . '%]=="transparent" )';
 
 			$fields[ $prefix . '_image_fixed' ] = [
@@ -694,7 +707,7 @@ final class StyleFields {
 			];
 
 			$fields[ $prefix . '_image' ] = wp_parse_args(
-				$overwrite_image,
+				$ow_image,
 				[
 					'type'        => 'image',
 					'title'       => __( 'Custom image', 'ayecode-connect' ),
@@ -707,7 +720,7 @@ final class StyleFields {
 			);
 
 			$fields[ $prefix . '_image_id' ] = wp_parse_args(
-				$overwrite_image,
+				$ow_image,
 				[
 					'type'        => 'hidden',
 					'hidden_type' => 'number',
@@ -719,7 +732,7 @@ final class StyleFields {
 			);
 
 			$fields[ $prefix . '_image_xy' ] = wp_parse_args(
-				$overwrite_image,
+				$ow_image,
 				[
 					'type'        => 'image_xy',
 					'title'       => '',

@@ -28,10 +28,16 @@ class Loader {
 	public function __construct() {
 		$includes = SUPER_DUPER_INCLUDES_PATH;
 
-		// Global sd_* helper functions — cannot be autoloaded.
-		if ( ! function_exists( 'sd_get_margin_input' ) ) {
+		// Core helper functions (build_aui_class, build_aui_styles, etc.) — cannot be autoloaded.
+		if ( ! function_exists( 'sd_build_aui_class' ) ) {
 			require_once $includes . 'functions.php';
 			require_once $includes . 'helpers.php';
+		}
+
+		// Deprecated sd_get_* field shims — loaded separately so the core utilities
+		// are always available even when a consuming plugin has already loaded these.
+		if ( ! function_exists( 'sd_get_margin_input' ) ) {
+			require_once $includes . 'functions-deprecated.php';
 		}
 
 		// Legacy global-name trait files so plugins referencing WP_Super_Duper_Initializer

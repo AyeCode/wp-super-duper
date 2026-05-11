@@ -1,9 +1,12 @@
 # Changelog
 
-## [3.0.7-beta] — 2026-TBD
+## [3.0.7-beta] — 2026-05-11
 - Added 'is_slug' param for text inputs to force slug format - ADDED
 - Package loader is not respecting load order due to AI slop - FIXED
 - Added new fields to the block arguments builder - ADDED
+- Deprecation notices for deprecated functions - ADDED
+- Claude command added for converting blocks to use new BlockArguments() class - ADDED
+- New function added for getting colors  ayecode_get_sd_colors() - ADDED
 
 ## [3.0.6-beta] — 2026-04-30
 - Field builder refactor to new standards - CHANGED

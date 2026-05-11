@@ -289,13 +289,20 @@ class BlockArguments {
 	/**
 	 * Add background fields (bg color, gradient, image).
 	 *
-	 * @param string     $prefix         Optional prefix for all field keys (e.g. 'card_' → card_bg, card_bg_color, …).
-	 * @param array      $overwrite      Per-field overwrite config.
-	 * @param bool       $include_image  Whether to include the image picker fields. Default true.
+	 * @param string $prefix          Optional prefix for all field keys (e.g. 'card_' → card_bg, card_bg_color, …).
+	 * @param array  $overwrite        Global overwrite applied to every background field.
+	 * @param bool   $include_image   Whether to include the image picker fields. Default true.
+	 * @param array  $field_overwrites Per-field overwrite map merged on top of $overwrite.
+	 *                                 Valid keys: 'color', 'gradient', 'image'.
+	 *                                 Pass false as a key value to omit that sub-field.
+	 *                                 Example: [ 'color' => [ 'default' => '#ff0000' ] ]
 	 * @return static
 	 */
-	public function add_background_group( string $prefix = '', array $overwrite = [], bool $include_image = true ): self {
-		return $this->add_fields( StyleFields::background_group( $prefix . 'bg', $overwrite, [], [], $include_image ? [] : false ) );
+	public function add_background_group( string $prefix = '', array $overwrite = [], bool $include_image = true, array $field_overwrites = [] ): self {
+		if ( ! $include_image ) {
+			$field_overwrites['image'] = false;
+		}
+		return $this->add_fields( StyleFields::background_group( $prefix . 'bg', $overwrite, $field_overwrites ) );
 	}
 
 	/**
@@ -331,19 +338,44 @@ class BlockArguments {
 	/**
 	 * Add typography fields: font size, font weight, font case, italic, line height, text justify, text alignment, text color.
 	 *
-	 * @param string $prefix   Optional prefix for all field keys (e.g. 'heading_' → heading_font_size, …).
-	 * @param array  $overwrite Per-group overwrite config (applied to all typography fields).
+	 * @param string $prefix          Optional prefix for all field keys (e.g. 'heading_' → heading_font_size, …).
+	 * @param array  $overwrite        Global overwrite applied to every field in the group.
+	 * @param array  $field_overwrites Per-field overwrite map merged on top of $overwrite for individual sub-fields.
+	 *                                 Valid keys: 'color', 'font_size', 'font_weight', 'font_case', 'font_italic',
+	 *                                 'line_height', 'text_justify', 'text_align'.
+	 *                                 Example: [ 'font_size' => [ 'default' => 'h2' ], 'color' => [ 'default' => 'primary' ] ]
 	 * @return static
 	 */
-	public function add_typography_group( string $prefix = '', array $overwrite = [] ): self {
-		return $this->add_fields( TypographyFields::text_color_group( $prefix . 'text_color', $overwrite ) )
-		            ->add_fields( TypographyFields::font_size_group( $prefix . 'font_size', $overwrite ) )
-					->add_field( $prefix . 'font_weight', TypographyFields::font_weight( $overwrite ) )
-					->add_field( $prefix . 'font_case', TypographyFields::font_case( $overwrite ) )
-					->add_field( $prefix . 'font_italic', TypographyFields::font_italic( $overwrite ) )
-					->add_field( $prefix . 'font_line_height', TypographyFields::line_height( $overwrite ) )
-					->add_field( $prefix . 'text_justify', TypographyFields::text_justify( $overwrite ) )
-					->add_fields( TypographyFields::text_align_group( $prefix . 'text_align', array_merge( $overwrite, [ 'element_require' => '[%' . $prefix . 'text_justify%]==""' ] ) ) );
+	public function add_typography_group( string $prefix = '', array $overwrite = [], array $field_overwrites = [] ): self {
+		$fo = $field_overwrites;
+
+		return $this
+			->add_fields( TypographyFields::text_color_group(
+				$prefix . 'text_color',
+				array_merge( $overwrite, $fo['color'] ?? [] )
+			) )
+			->add_fields( TypographyFields::font_size_group(
+				$prefix . 'font_size',
+				array_merge( $overwrite, $fo['font_size'] ?? [] )
+			) )
+			->add_field( $prefix . 'font_weight',
+				TypographyFields::font_weight( array_merge( $overwrite, $fo['font_weight'] ?? [] ) ) )
+			->add_field( $prefix . 'font_case',
+				TypographyFields::font_case( array_merge( $overwrite, $fo['font_case'] ?? [] ) ) )
+			->add_field( $prefix . 'font_italic',
+				TypographyFields::font_italic( array_merge( $overwrite, $fo['font_italic'] ?? [] ) ) )
+			->add_field( $prefix . 'font_line_height',
+				TypographyFields::line_height( array_merge( $overwrite, $fo['line_height'] ?? [] ) ) )
+			->add_field( $prefix . 'text_justify',
+				TypographyFields::text_justify( array_merge( $overwrite, $fo['text_justify'] ?? [] ) ) )
+			->add_fields( TypographyFields::text_align_group(
+				$prefix . 'text_align',
+				array_merge(
+					$overwrite,
+					$fo['text_align'] ?? [],
+					[ 'element_require' => '[%' . $prefix . 'text_justify%]==""' ] // always last — prevents callers from breaking the text_justify condition
+				)
+			) );
 	}
 
 	/**

@@ -19,8 +19,8 @@ final class ColorOptions {
 	/**
 	 * Return AUI color options, filtered by type slugs.
 	 *
-	 * @param array $types   Slugs to include: 'core', 'subtle', 'emphasis', 'outline', 'outline_btn_text'.
-	 *                       Defaults to ['core'] when empty.
+	 * @param array $types   Slugs to include: 'core', 'subtle', 'emphasis', 'outline', 'outline_btn_text', 'branding'.
+	 *                       Prepend options: 'none', 'transparent'. Defaults to ['core'] when empty.
 	 * @param bool  $flatten When true returns a flat key => label array; otherwise returns optgroups.
 	 * @return array
 	 */
@@ -107,6 +107,11 @@ final class ColorOptions {
 				'outline-dark'      => __( 'Dark outline', 'ayecode-connect' ) . $suffix,
 				'outline-white'     => __( 'White outline', 'ayecode-connect' ) . $suffix,
 			];
+		}
+
+		// 5. Branding / social colors.
+		if ( in_array( 'branding', $types, true ) ) {
+			$grouped[ __( 'Branding Colors', 'ayecode-connect' ) ] = self::branding();
 		}
 
 		if ( $flatten ) {

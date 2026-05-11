@@ -69,7 +69,7 @@ When using `border_group()` with a prefix, the condition is updated automaticall
 | Method | Returns | Notes |
 |---|---|---|
 | `border_group( string $prefix = '', array $overwrite = [] )` | `['border'=>..., 'border_type'=>..., 'border_width'=>..., 'border_opacity'=>..., 'rounded'=>..., 'rounded_size'=>...]` | Prefix is prepended to all keys; `element_require` references updated automatically |
-| `background_group( string $prefix = 'bg', array $overwrite = [], $overwrite_color = [], $overwrite_gradient = [], $overwrite_image = [], bool $include_button_colors = false )` | Color select + custom color picker + gradient + image fields | Pass `false` for any `$overwrite_*` param to omit that field |
+| `background_group( string $prefix = 'bg', array $overwrite = [], array $field_overwrites = [], bool $include_button_colors = false )` | Color select + custom color picker + gradient + image fields | `$overwrite` applies to all fields; `$field_overwrites` keys: `'color'`, `'gradient'`, `'image'`. Pass `false` as a key value to omit that sub-field |
 
 ---
 
@@ -94,9 +94,9 @@ When using `border_group()` with a prefix, the condition is updated automaticall
 
 | Method | Returns | Notes |
 |---|---|---|
-| `font_size_group( string $prefix = 'font_size', array $overwrite = [] )` | `[$prefix => ..., $prefix.'_custom' => ...]` | Main select includes "Custom size" option; custom field has auto-wired `element_require` |
+| `font_size_group( string $prefix = 'font_size', array $overwrite = [], $overwrite_custom = [] )` | `[$prefix => ..., $prefix.'_custom' => ...]` | Main select includes "Custom size" option; custom field has auto-wired `element_require`. Pass `false` for `$overwrite_custom` to omit the custom field |
 | `text_align_group( string $prefix = 'text_align', array $overwrite = [] )` | `[$prefix => ..., $prefix.'_md' => ..., $prefix.'_lg' => ...]` | Mobile / Tablet / Desktop responsive fields |
-| `text_color_group( string $prefix = 'text_color', array $overwrite = [] )` | `[$prefix => ..., $prefix.'_custom' => ...]` | Main select includes "Custom color" option; picker has auto-wired `element_require` |
+| `text_color_group( string $prefix = 'text_color', array $overwrite = [], $overwrite_custom = [] )` | `[$prefix => ..., $prefix.'_custom' => ...]` | Main select includes "Custom color" option; picker has auto-wired `element_require`. Pass `false` for `$overwrite_custom` to omit the custom field |
 
 ---
 
@@ -240,10 +240,10 @@ All `sd_get_*` global functions are deprecated since 3.1.0. They keep the same e
 | `sd_get_shape_divider_inputs( $type, ... )`                    | `ShapeFields::divider_group( $prefix, ... )`                                    |
 | `sd_get_element_require_string( $args, $key, $type )`          | `Utils::element_require( $args, $key, $type )`                                  |
 | `sd_get_text_color_input( $type, $overwrite )`                 | `TypographyFields::text_color( $overwrite )`                                    |
-| `sd_get_text_color_input_group( $type, $overwrite )`           | `TypographyFields::text_color_group( $prefix, $overwrite )`                     |
+| `sd_get_text_color_input_group( $type, $overwrite, $overwrite_custom )` | `TypographyFields::text_color_group( $prefix, $overwrite, $overwrite_custom )` |
 | `sd_get_custom_color_input( $type, $overwrite, $parent_type )` | `TypographyFields::text_color_custom( $overwrite )`                             |
 | `sd_get_font_size_input( $type, $overwrite )`                  | `TypographyFields::font_size( $overwrite )`                                     |
-| `sd_get_font_size_input_group( $type, $overwrite )`            | `TypographyFields::font_size_group( $prefix, $overwrite )`                      |
+| `sd_get_font_size_input_group( $type, $overwrite, $overwrite_custom )` | `TypographyFields::font_size_group( $prefix, $overwrite, $overwrite_custom )` |
 | `sd_get_font_custom_size_input( $type, $overwrite, $parent )`  | `TypographyFields::font_size_custom( $overwrite )`                              |
 | `sd_get_font_weight_input( $type, $overwrite )`                | `TypographyFields::font_weight( $overwrite )`                                   |
 | `sd_get_font_case_input( $type, $overwrite )`                  | `TypographyFields::font_case( $overwrite )`                                     |

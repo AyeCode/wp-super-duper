@@ -31,7 +31,7 @@ There are no automated tests or a build step for PHP. The JS at `assets/js/super
 `package-loader.php` is the **AyeCode Double Negotiation loader** — the real bootstrap. It has four phases:
 
 **Step 0 — Early Claim (direct-load time, before `plugins_loaded`)**
-Defines `SUPER_DUPER_VER` and `SUPER_DUPER_PLUGIN_URL`, registers the PSR-4 SPL autoloader (`AyeCode\SuperDuper\` → `src/`), requires the global function files (`includes/functions.php`, `includes/helpers.php`) and all legacy trait files (`includes/traits/`), then sets `class_alias('AyeCode\SuperDuper\SuperDuper', 'WP_Super_Duper')`. This early-claim prevents older bundled copies (loaded alphabetically before this file) from winning the class-definition race.
+Defines `SUPER_DUPER_VER` and `SUPER_DUPER_PLUGIN_URL`, registers the PSR-4 SPL autoloader (`AyeCode\SuperDuper\` → `src/`), requires the global function files (`includes/functions.php`, `includes/functions-deprecated.php`, `includes/helpers.php`) and all legacy trait files (`includes/traits/`), then sets `class_alias('AyeCode\SuperDuper\SuperDuper', 'WP_Super_Duper')`. This early-claim prevents older bundled copies (loaded alphabetically before this file) from winning the class-definition race.
 
 **Step 1 — Version Registration (priority 1)**
 Registers this copy's version in `$GLOBALS['ayecode_super_duper_registry']`. The copy with the highest version wins subsequent steps.
@@ -68,11 +68,11 @@ All modern classes live under `AyeCode\SuperDuper\` (mapped to `src/` by the SPL
 |---|---|---|
 | `Fields\SpacingFields` | `src/Fields/SpacingFields.php` | `margin( $side, $overwrite, $include_negatives )`, `padding( $side, $overwrite )`, `margin_group()`, `padding_group()` |
 | `Fields\StyleFields` | `src/Fields/StyleFields.php` | `border_show()`, `border_style()`, `border_width()`, `border_opacity()`, `border_radius()`, `border_radius_size()`, `border_group( $prefix )`, `shadow()`, `background()`, `background_group( $prefix )`, `display()`, `opacity()`, `hover_animation()`, `hover_icon_animation()`, `zindex()`, `overflow()`, `scrollbars()` |
-| `Fields\TypographyFields` | `src/Fields/TypographyFields.php` | `font_size()`, `font_size_custom()`, `font_weight()`, `font_case()`, `font_italic()`, `line_height()`, `text_justify()`, `text_align()`, `text_color()`, `text_color_custom()`, `font_size_group( $prefix )`, `text_align_group( $prefix )`, `text_color_group( $prefix )` |
+| `Fields\TypographyFields` | `src/Fields/TypographyFields.php` | `font_size()`, `font_size_custom()`, `font_weight()`, `font_case()`, `font_italic()`, `line_height()`, `text_justify()`, `text_align()`, `text_color()`, `text_color_custom()`, `font_size_group( $prefix, $overwrite, $overwrite_custom )`, `text_align_group( $prefix, $overwrite )`, `text_color_group( $prefix, $overwrite, $overwrite_custom )` |
 | `Fields\LayoutFields` | `src/Fields/LayoutFields.php` | `container()`, `position()`, `sticky_offset( $side )`, `col()`, `row_cols()`, `absolute_position()`, `width()`, `height()`, `max_height()` |
 | `Fields\CommonFields` | `src/Fields/CommonFields.php` | `css_class()`, `anchor()`, `metadata_name()`, `visibility_conditions()`, `new_window()`, `nofollow()`, `attributes()`, `title_tag()`, `html_tag()`, `title_group()` |
 | `Fields\ColorFields` | `src/Fields/ColorFields.php` | Deprecated shim — use `Helpers\ColorOptions` instead |
-| `Helpers\ColorOptions` | `src/Helpers/ColorOptions.php` | `aui( $types, $flatten )`, `branding()` — returns option arrays for `select`/`color` fields, not field definitions |
+| `Helpers\ColorOptions` | `src/Helpers/ColorOptions.php` | `aui( $types, $flatten )`, `branding()` — returns option arrays for `select`/`color` fields, not field definitions. `$types`: `'none'`, `'transparent'`, `'core'`, `'subtle'`, `'emphasis'`, `'outline'`, `'outline_btn_text'`, `'branding'` |
 | `Fields\ShapeFields` | `src/Fields/ShapeFields.php` | `divider_group( $prefix )` |
 | `Fields\FlexFields` | `src/Fields/FlexFields.php` | `align_items()`, `align_items_group( $prefix )`, `justify_content()`, `justify_content_group( $prefix )`, `align_self()`, `align_self_group( $prefix )`, `order()`, `order_group( $prefix )`, `flex_wrap()`, `flex_wrap_group( $prefix )`, `float()`, `float_group( $prefix )` |
 
@@ -98,7 +98,9 @@ All traits exist in two locations: the canonical `src/Traits/` (PSR-4 autoloaded
 
 `includes/helpers.php` (top-level) provides standalone functions like `sd_is_preview()` that detect page-builder preview contexts.
 
-`includes/functions.php` — global field-helper functions (`sd_get_*`). All are soft-deprecated since 3.1.0; implementations now live in the `Fields\*` static classes.
+`includes/functions.php` — non-deprecated global helpers: `ayecode_sd_register()`, `ayecode_get_sd_colors()`, `sd_build_aui_class()`, `sd_build_aui_styles()`, `sd_build_hover_styles()`, `sd_get_color_from_var()`, `sd_sanitize_html_classes()`.
+
+`includes/functions-deprecated.php` — all soft-deprecated `sd_get_*` field-input wrappers and `sd_*` Utils wrappers since 3.1.0. Implementations live in the `Fields\*` static classes and `Utils::*` methods. Use `ayecode_get_sd_colors()` instead of `sd_aui_colors()`.
 
 ### JavaScript (`assets/js/super-duper-block-editor.js`)
 

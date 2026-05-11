@@ -45,44 +45,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 	);
 
 	// -------------------------------------------------------------------------
-	// EARLY CLAIM — package-specific backward-compat for pre-package-loader copies.
-	//
-	// Older bundled copies guard on SUPER_DUPER_VER at direct-load time and define
-	// WP_Super_Duper immediately (before plugins_loaded). If this copy runs first,
-	// we claim the constant and register the autoloader so those older copies bail
-	// out when they see SUPER_DUPER_VER already defined.
-	// -------------------------------------------------------------------------
-//	if ( ! defined( 'SUPER_DUPER_VER' ) ) {
-//		foreach ( $winning_constants as $name => $value ) {
-//			if ( ! defined( $name ) ) {
-//				define( $name, $value );
-//			}
-//		}
-//
-//		// Register PSR-4 SPL autoloader for AyeCode\SuperDuper\ → src/.
-//		spl_autoload_register( function ( $class ) use ( $prefix, $this_path ) {
-//			if ( strncmp( $class, $prefix, strlen( $prefix ) ) !== 0 ) {
-//				return;
-//			}
-//			$relative_class = substr( $class, strlen( $prefix ) );
-//			$file           = $this_path . '/src/' . str_replace( '\\', '/', $relative_class ) . '.php';
-//			if ( file_exists( $file ) ) {
-//				require $file;
-//			}
-//		}, true, true );
-//
-//		// Alias WP_Super_Duper early so consumer plugins that extend it at
-//		// direct-load time (before plugins_loaded) resolve to the correct class.
-//		if ( ! class_exists( 'WP_Super_Duper' ) ) {
-//			if ( defined( 'SUPER_DUPER_LOAD_WIDGET' ) && SUPER_DUPER_LOAD_WIDGET === true ) {
-//				class_alias( 'AyeCode\\SuperDuper\\SuperDuperWidget', 'WP_Super_Duper' );
-//			} else {
-//				class_alias( 'AyeCode\\SuperDuper\\SuperDuper', 'WP_Super_Duper' );
-//			}
-//		}
-//	}
-
-	// -------------------------------------------------------------------------
 	// DO NOT EDIT BELOW THIS LINE. CORE PACKAGE NEGOTIATION LOGIC.
 	// -------------------------------------------------------------------------
 

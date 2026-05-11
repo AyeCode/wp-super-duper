@@ -27,6 +27,7 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 	 * more complex traits that might depend on them.
 	 */
 	require_once SUPER_DUPER_INCLUDES_PATH . 'functions.php';
+	require_once SUPER_DUPER_INCLUDES_PATH . 'functions-deprecated.php';
 	require_once SUPER_DUPER_INCLUDES_PATH . 'helpers.php';
 	require_once SUPER_DUPER_INCLUDES_PATH . 'traits/trait-utilities.php';
 	require_once SUPER_DUPER_INCLUDES_PATH . 'traits/trait-page-builders.php';
