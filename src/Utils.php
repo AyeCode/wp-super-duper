@@ -257,6 +257,7 @@ class Utils {
 	 *
 	 * Converts individual field values (margins, padding, colours, display, flex,
 	 * border, background, etc.) into a single space-separated CSS class string.
+	 * This needs to be kept in sync with the JS version in includes/helpers/gutenberg-block-helpers.php
 	 *
 	 * @param array $args Settings array from a widget/shortcode instance.
 	 * @return string
@@ -869,6 +870,8 @@ class Utils {
 
 	/**
 	 * Build an inline CSS style string from a widget/shortcode arguments array.
+	 *
+	 * This needs to be kept in sync with the JS version in includes/helpers/gutenberg-block-helpers.php
 	 *
 	 * @param array $args Widget arguments.
 	 * @return string Inline style attribute value (e.g. "background-color:#fff;font-size:1.2rem;").

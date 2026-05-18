@@ -62,6 +62,9 @@ class My_Block extends WP_Super_Duper {
 - **Never remove comments or docblocks.** Preserve all existing `/** ... */` docblocks, `//` line comments, and `/* ... */` block comments exactly as written. Only add new comments if the WHY is non-obvious.
 - **Never remove `<script>` tags from `block_global_js()` methods.** The `<script>` / `</script>` wrapper is intentional — it enables IDE syntax highlighting and autocomplete for the JS snippet. The tags are stripped at runtime by `str_replace( [ '<script>', '</script>' ], '', ob_get_clean() )`.
 - **Never remove the dead `outputx()` method** or similar alternate/draft output methods without explicit instruction — they may be works-in-progress.
+- **Drop `function_exists()` guards around deprecated field functions.** Old code often wrapped `sd_get_new_window_input()`, `sd_get_nofollow_input()`, `sd_get_attributes_input()`, `sd_get_custom_name_input()`, etc. in `if ( function_exists(...) )` checks. In v3+, their replacements (`CommonFields::new_window()`, `CommonFields::nofollow()`, `CommonFields::attributes()`, `CommonFields::metadata_name()`) are always available — remove the guards.
+- **Conversions are an upgrade opportunity.** When old code uses only a subset of what a group method provides, always use the full group method — missing fields are an omission in the old code, not an intentional exclusion. The one exception: when `block-output` references a field's value directly as a raw CSS class (e.g. `[%brand_font_size%]` inside an `if_class` expression), adding the `*_custom` companion field would produce `"custom"` as the class string and break the output. In that case, keep individual calls to avoid the custom companion.
+- **Prefer group methods when individual fields match.** When old code defines individual `sd_get_*` fields that together produce the same field keys as a group method, replace with the group method — the old code simply wasn't updated yet. The group method's `element_require` wiring is authoritative; do **not** try to replicate the deprecated function's element_require values. Check the "What Each Group Method Creates" section to confirm which group method to use. Example: `sd_get_border_input('border')` + `sd_get_border_input('rounded')` + `sd_get_border_input('rounded_size')` → use `->add_border_group()`. The missing `border_type`, `border_width`, `border_opacity` are a standard upgrade.
 
 ---
 
@@ -297,10 +300,10 @@ Standard three-tab layout (Content / Styles / Advanced):
 
 | Method | Signature | Description |
 |--------|-----------|-------------|
-| `add_margins()` | `add_margins( array $overwrite = [], bool $include_negatives = true ): self` | Add mt/mr/mb/ml margin selects |
-| `add_responsive_margins()` | `add_responsive_margins( array $overwrite = [], bool $include_negatives = true, string $mb_lg_default = '3' ): self` | Add margins for mobile/tablet/desktop breakpoints (base + _md + _lg variants). `mb_lg` defaults to `'3'`; pass `''` to omit |
-| `add_padding()` | `add_padding( array $overwrite = [] ): self` | Add pt/pr/pb/pl padding selects |
-| `add_responsive_paddings()` | `add_responsive_paddings( array $overwrite = [] ): self` | Add paddings for mobile/tablet/desktop breakpoints |
+| `add_margins()` | `add_margins( string $prefix = '', array $overwrite = [], bool $include_negatives = true ): self` | Add mt/mr/mb/ml margin selects. `$prefix` is prepended to all keys (e.g. `'link_'` → `link_mt`, `link_mr`, …) |
+| `add_responsive_margins()` | `add_responsive_margins( string $prefix = '', array $overwrite = [], bool $include_negatives = true, array $per_field = [] ): self` | Add margins for mobile/tablet/desktop breakpoints (base + _md + _lg variants). `mb_lg` defaults to `'3'`; pass `array( 'mb_lg' => array( 'default' => '' ) )` to clear it. `$per_field` keys are always unprefixed base keys |
+| `add_padding()` | `add_padding( string $prefix = '', array $overwrite = [] ): self` | Add pt/pr/pb/pl padding selects. `$prefix` is prepended to all keys |
+| `add_responsive_paddings()` | `add_responsive_paddings( string $prefix = '', array $overwrite = [], array $per_field = [] ): self` | Add paddings for mobile/tablet/desktop breakpoints. `$prefix` is prepended to all keys |
 
 ### Style Methods
 
@@ -325,7 +328,7 @@ Standard three-tab layout (Content / Styles / Advanced):
 |--------|-----------|-------------|
 | `add_position()` | `add_position( string $prefix = '', array $overwrite = [] ): self` | Position class select (static/relative/absolute/fixed/sticky) |
 | `add_layout_group()` | `add_layout_group( string $prefix = '', array $overwrite = [] ): self` | Container width + position class together |
-| `add_sticky_offset_group()` | `add_sticky_offset_group( string $prefix = '', array $overwrite = [] ): self` | Sticky offset top and bottom (shown when position is sticky) |
+| `add_sticky_offset_group()` | `add_sticky_offset_group( string $prefix = '', array $overwrite = [] ): self` | Sticky offset top and bottom (shown when position is `sticky` or `sticky-top`) |
 
 ### Icon Methods
 
@@ -360,35 +363,35 @@ Standard three-tab layout (Content / Styles / Advanced):
 
 Understanding exactly which fields are created by each group method is critical to avoiding duplicate fields.
 
-### `add_margins( $overwrite = [], $include_negatives = true )`
+### `add_margins( $prefix = '', $overwrite = [], $include_negatives = true )`
 
-Creates 4 fields with default `group: 'wrapper-styles'`:
-- `mt` — Margin top select
-- `mr` — Margin right select
-- `mb` — Margin bottom select
-- `ml` — Margin left select
+Creates 4 fields with default `group: 'wrapper-styles'`. All keys are prefixed when `$prefix` is given:
+- `{$prefix}mt` — Margin top select
+- `{$prefix}mr` — Margin right select
+- `{$prefix}mb` — Margin bottom select
+- `{$prefix}ml` — Margin left select
 
-### `add_responsive_margins( $overwrite = [], $include_negatives = true, $mb_lg_default = '3' )`
+### `add_responsive_margins( $prefix = '', $overwrite = [], $include_negatives = true, $per_field = [] )`
 
-Creates 12 fields (mobile + tablet + desktop):
-- `mt`, `mr`, `mb`, `ml` — Mobile (base) with `device_type: 'Mobile'`
-- `mt_md`, `mr_md`, `mb_md`, `ml_md` — Tablet with `device_type: 'Tablet'`
-- `mt_lg`, `mr_lg`, `mb_lg`, `ml_lg` — Desktop with `device_type: 'Desktop'`, `mb_lg` defaults to `'3'`
+Creates 12 fields (mobile + tablet + desktop). All keys are prefixed when `$prefix` is given. `$per_field` keys are always the unprefixed base key (e.g. `'mb_lg'`):
+- `{$prefix}mt`, `{$prefix}mr`, `{$prefix}mb`, `{$prefix}ml` — Mobile (base) with `device_type: 'Mobile'`
+- `{$prefix}mt_md`, `{$prefix}mr_md`, `{$prefix}mb_md`, `{$prefix}ml_md` — Tablet with `device_type: 'Tablet'`
+- `{$prefix}mt_lg`, `{$prefix}mr_lg`, `{$prefix}mb_lg`, `{$prefix}ml_lg` — Desktop with `device_type: 'Desktop'`, `mb_lg` defaults to `'3'`; pass `array( 'mb_lg' => array( 'default' => '' ) )` to clear it
 
-### `add_padding( $overwrite = [] )`
+### `add_padding( $prefix = '', $overwrite = [] )`
 
-Creates 4 fields with default `group: 'wrapper-styles'`:
-- `pt` — Padding top select
-- `pr` — Padding right select
-- `pb` — Padding bottom select
-- `pl` — Padding left select
+Creates 4 fields with default `group: 'wrapper-styles'`. All keys are prefixed when `$prefix` is given:
+- `{$prefix}pt` — Padding top select
+- `{$prefix}pr` — Padding right select
+- `{$prefix}pb` — Padding bottom select
+- `{$prefix}pl` — Padding left select
 
-### `add_responsive_paddings( $overwrite = [] )`
+### `add_responsive_paddings( $prefix = '', $overwrite = [], $per_field = [] )`
 
-Creates 12 fields (mobile + tablet + desktop):
-- `pt`, `pr`, `pb`, `pl` — Mobile with `device_type: 'Mobile'`
-- `pt_md`, `pr_md`, `pb_md`, `pl_md` — Tablet with `device_type: 'Tablet'`
-- `pt_lg`, `pr_lg`, `pb_lg`, `pl_lg` — Desktop with `device_type: 'Desktop'`
+Creates 12 fields (mobile + tablet + desktop). All keys are prefixed when `$prefix` is given. `$per_field` keys are always the unprefixed base key:
+- `{$prefix}pt`, `{$prefix}pr`, `{$prefix}pb`, `{$prefix}pl` — Mobile with `device_type: 'Mobile'`
+- `{$prefix}pt_md`, `{$prefix}pr_md`, `{$prefix}pb_md`, `{$prefix}pl_md` — Tablet with `device_type: 'Tablet'`
+- `{$prefix}pt_lg`, `{$prefix}pr_lg`, `{$prefix}pb_lg`, `{$prefix}pl_lg` — Desktop with `device_type: 'Desktop'`
 
 ### `add_border_group( $prefix = '', $overwrite = [] )`
 
@@ -397,8 +400,10 @@ Creates 6 fields with default `group: 'wrapper-styles'`:
 - `{$prefix}border_type` — Border show/sides select (element_require: `[%border%]` is set)
 - `{$prefix}border_width` — Border width select (element_require: `[%border%]` is set)
 - `{$prefix}border_opacity` — Border opacity select (element_require: `[%border%]` is set)
-- `{$prefix}rounded` — Border radius type select
-- `{$prefix}rounded_size` — Border radius size select (element_require: `[%rounded%]=="custom"`)
+- `{$prefix}rounded` — Border radius type select (element_require: `([%border%]&&[%border%]!="0")`)
+- `{$prefix}rounded_size` — Border radius size select (element_require: `([%border%]&&[%border%]!="0")`)
+
+All 5 dependent fields (`border_type`, `border_width`, `border_opacity`, `rounded`, `rounded_size`) share the same condition — they are all hidden until a border colour is chosen.
 
 Default prefix is empty string, so fields are: `border`, `border_type`, etc.
 
@@ -468,24 +473,31 @@ Creates 12 fields with default `group: 'typography'`:
 
 **`$overwrite`** — global baseline applied to every field (use for `group`, `desc_tip`, etc.).
 
-**`$field_overwrites`** — keyed per sub-component, merged on top of `$overwrite`. Valid keys:
+**`$field_overwrites`** — keyed per sub-component, merged on top of `$overwrite`. Pass `false` as the value to omit that sub-field entirely. Valid keys:
 
-| Key | Targets |
-|---|---|
-| `'color'` | `text_color` + `text_color_custom` |
-| `'font_size'` | `font_size` + `font_size_custom` |
-| `'font_weight'` | `font_weight` |
-| `'font_case'` | `font_case` |
-| `'font_italic'` | `font_italic` |
-| `'line_height'` | `font_line_height` |
-| `'text_justify'` | `text_justify` |
-| `'text_align'` | `text_align`, `text_align_md`, `text_align_lg` |
+| Key | Targets | Pass `false` to omit |
+|---|---|---|
+| `'color'` | `text_color` + `text_color_custom` | Yes |
+| `'font_size'` | `font_size` + `font_size_custom` | Yes |
+| `'font_weight'` | `font_weight` | Yes |
+| `'font_case'` | `font_case` | Yes |
+| `'font_italic'` | `font_italic` | Yes |
+| `'line_height'` | `font_line_height` | Yes |
+| `'text_justify'` | `text_justify` | Yes — `text_align` fields lose their `element_require` condition |
+| `'text_align'` | `text_align`, `text_align_md`, `text_align_lg` | Yes |
 
 ```php
+// Set defaults
 ->add_typography_group( 'num_', [ 'group' => 'typography' ], [
     'font_size' => [ 'default' => 'h2' ],
     'color'     => [ 'default' => 'primary' ],
     'text_align'=> [ 'default' => 'text-center' ],
+] )
+
+// Omit font size and line height
+->add_typography_group( '', [], [
+    'font_size'   => false,
+    'line_height' => false,
 ] )
 ```
 
@@ -511,8 +523,10 @@ Creates 2 fields with default `group: 'wrapper-styles'`:
 ### `add_sticky_offset_group( $prefix = '', $overwrite = [] )`
 
 Creates 2 fields with default `group: 'wrapper-styles'`:
-- `{$prefix}sticky_offset_top` — Sticky offset top number (element_require: `[%position%]=="position-sticky"`)
-- `{$prefix}sticky_offset_bottom` — Sticky offset bottom number (element_require: `[%position%]=="position-sticky"`)
+- `{$prefix}sticky_offset_top` — Sticky offset top number (element_require: `[%position%]=="sticky" || [%position%]=="sticky-top"`)
+- `{$prefix}sticky_offset_bottom` — Sticky offset bottom number (element_require: `[%position%]=="sticky" || [%position%]=="sticky-top"`)
+
+Works with both the standard `add_position()` value (`position-sticky` renders as `sticky`) and blocks that store `sticky-top` directly (e.g. navbars). No element_require override is needed for either case.
 
 ### `add_icon_group( $overwrite = [] )`
 
@@ -673,12 +687,12 @@ return ( new BlockArguments() )
 
 | Method | Signature | Returns |
 |--------|-----------|---------|
-| `border_show()` | `border_show( array $overwrite = [] )` | Border color select |
-| `border_style()` | `border_style( array $overwrite = [] )` | Border show/sides select (full/top/bottom/…) |
-| `border_width()` | `border_width( array $overwrite = [] )` | Border width select |
-| `border_opacity()` | `border_opacity( array $overwrite = [] )` | Border opacity select |
-| `border_radius()` | `border_radius( array $overwrite = [] )` | Border radius type select |
-| `border_radius_size()` | `border_radius_size( array $overwrite = [] )` | Border radius size select |
+| `border_show()` | `border_show( array $overwrite = [] )` | Border color select (no element_require — this is the trigger field) |
+| `border_style()` | `border_style( array $overwrite = [] )` | Border show/sides select (full/top/bottom/…) — default element_require: `([%border%]&&[%border%]!="0")` |
+| `border_width()` | `border_width( array $overwrite = [] )` | Border width select — default element_require: `([%border%]&&[%border%]!="0")` |
+| `border_opacity()` | `border_opacity( array $overwrite = [] )` | Border opacity select — default element_require: `([%border%]&&[%border%]!="0")` |
+| `border_radius()` | `border_radius( array $overwrite = [] )` | Border radius type select — default element_require: `([%border%]&&[%border%]!="0")` |
+| `border_radius_size()` | `border_radius_size( array $overwrite = [] )` | Border radius size select — default element_require: `([%border%]&&[%border%]!="0")` |
 | `border_group()` | `border_group( string $prefix = '', array $overwrite = [] )` | All border fields (color/type/width/opacity/radius) |
 | `shadow()` | `shadow( array $overwrite = [] )` | Box shadow select |
 | `background()` | `background( array $overwrite = [] )` | Single background color select |
@@ -716,7 +730,7 @@ Pass `false` as a value in `$field_overwrites` to omit that sub-field: `backgrou
 | Method | Signature | Returns |
 |--------|-----------|---------|
 | `container()` | `container( array $overwrite = [] )` | Container width / type select |
-| `position()` | `position( array $overwrite = [] )` | Position class select (static/relative/absolute/fixed/sticky) |
+| `position()` | `position( array $overwrite = [] )` | Position class select. Standard option values: `''`, `'position-static'`, `'position-relative'`, `'position-absolute'`, `'position-fixed'`, `'position-sticky'`, `'fixed-top'`, `'fixed-bottom'`, `'sticky-top'`. Use a custom `add_field('position', ...)` only when the required subset or labels differ from these. |
 | `sticky_offset()` | `sticky_offset( string $side, array $overwrite = [] )` | Sticky offset number (`$side`: `'top'` or `'bottom'`) |
 | `col()` | `col( array $overwrite = [] )` | Bootstrap column width select |
 | `row_cols()` | `row_cols( array $overwrite = [] )` | Row columns select |
@@ -804,6 +818,7 @@ Returns a flat or grouped option array for use as a field's `options` key.
 | `sd_aui_colors( false, true )` | `ayecode_get_sd_colors( ['core', 'outline'] )` |
 | `sd_aui_colors( false, true, true )` | `ayecode_get_sd_colors( ['core', 'outline', 'outline_btn_text'] )` |
 | `sd_aui_colors( true, true, true )` | `ayecode_get_sd_colors( ['core', 'outline', 'outline_btn_text', 'branding'] )` |
+| `sd_aui_colors( true, true, true, true )` | `ayecode_get_sd_colors( ['core', 'outline', 'outline_btn_text', 'subtle', 'branding'] )` |
 | `sd_aui_colors( false, false, false, false, true )` | `ayecode_get_sd_colors( ['core', 'subtle'] )` |
 | `sd_aui_colors( false, false, false, false, false, true )` | `ayecode_get_sd_colors( ['core', 'emphasis'] )` |
 
@@ -1184,5 +1199,6 @@ public function set_arguments(): array {
         ->add_field( 'hover_animation', StyleFields::hover_animation( [ 'group' => 'styles' ] ) )
         ->get();
 }
-```
+```' ) . ' ' . __( 'Linkedin', 'blockstrap-page-builder-blocks' ) . '</a>';
+			}
 

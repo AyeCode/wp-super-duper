@@ -217,6 +217,7 @@ function sd_get_block_editor_global_js() {
 
 
         /**
+		 * This needs to be kept in sync with the PHP version in includes/functions.php
          *
          * @param $args
          * @returns {*|{}}
@@ -315,6 +316,12 @@ function sd_get_block_editor_global_js() {
 
         }
 
+		/**
+		 * This needs to be kept in sync with the PHP version in includes/functions.php
+		 *
+		 * @param $args
+		 * @returns {string}
+		 */
         function sd_build_aui_class($args) {
 
             $classes = [];
@@ -543,7 +550,7 @@ function sd_get_block_editor_global_js() {
                     $args['border_type'] = $args['border_type'].replace('-left', '-start').replace('-right', '-end');
                 }
                 $border_class = 'border';
-                if ($args['border_type'] !== undefined && !$args['border_type'].includes('-0')) {
+                if ($args['border_type'] !== undefined && $args['border_type'] !== "" && !$args['border_type'].includes('-0')) {
                     $border_class = '';
                 }
                 $classes.push($border_class + " border-" + $args['border']);

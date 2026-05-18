@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.8-beta] — 2026-05-18
+- font_italic field removed from add_typography_group() as it is part for font_weight field - CHANGED
+- added helper function ayecode_get_current_url( $with_query_string = true ) - ADDED
+- add_responsive_margins() and add_responsive_paddings() functions third param changed to allow individual overrides - CHANGED
+- Update the super-duper-block command with new options - CHANGED
+- Several improvements for BlockArgument group methods - CHANGED
+
 ## [3.0.7-beta] — 2026-05-11
 - Added 'is_slug' param for text inputs to force slug format - ADDED
 - Package loader is not respecting load order due to AI slop - FIXED

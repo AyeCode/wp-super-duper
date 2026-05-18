@@ -186,12 +186,20 @@ class BlockArguments {
 	/**
 	 * Add margin fields (mt, mr, mb, ml).
 	 *
-	 * @param array $overwrite Per-field overwrite config merged into every margin input.
-	 * @param bool  $include_negatives Whether to include negative margin options.
+	 * @param string $prefix           Optional prefix applied to all field keys (e.g. 'link_' → link_mt, link_mr, …).
+	 * @param array  $overwrite        Per-field overwrite config merged into every margin input.
+	 * @param bool   $include_negatives Whether to include negative margin options.
 	 * @return static
 	 */
-	public function add_margins( array $overwrite = [], bool $include_negatives = true ): self {
-		return $this->add_fields( SpacingFields::margin_group( $overwrite, $include_negatives ) );
+	public function add_margins( string $prefix = '', array $overwrite = [], bool $include_negatives = true ): self {
+		$fields = SpacingFields::margin_group( $overwrite, $include_negatives );
+		if ( $prefix !== '' ) {
+			$fields = array_combine(
+				array_map( fn( $k ) => $prefix . $k, array_keys( $fields ) ),
+				array_values( $fields )
+			);
+		}
+		return $this->add_fields( $fields );
 	}
 
 	/**
@@ -202,28 +210,27 @@ class BlockArguments {
 	 *   - tablet (_md):  mt_md, mr_md, mb_md, ml_md
 	 *   - desktop (_lg): mt_lg, mr_lg, mb_lg, ml_lg
 	 *
-	 * @param array  $overwrite        Per-field overwrite config.
+	 * @param string $prefix           Optional prefix applied to all field keys (e.g. 'link_' → link_mt, link_mt_md, …).
+	 * @param array  $overwrite        Global overwrite applied to every margin field.
 	 * @param bool   $include_negatives Whether to include negative margin options.
-	 * @param string $mb_lg_default    Default value for mb_lg. Pass '' to leave unset.
+	 * @param array  $per_field        Per-field overwrite map keyed by unprefixed field key (e.g. 'mb_lg', 'mt').
+	 *                                 Merged on top of $overwrite for that specific field.
+	 *                                 Example: [ 'mb_lg' => [ 'default' => '3' ] ]
 	 * @return static
 	 */
-	public function add_responsive_margins( array $overwrite = [], bool $include_negatives = true, string $mb_lg_default = '3' ): self {
-		$this->add_margins( array_merge( $overwrite, [ 'device_type' => 'Mobile' ] ), $include_negatives );
-
+	public function add_responsive_margins( string $prefix = '', array $overwrite = [], bool $include_negatives = true, array $per_field = [ 'mb_lg' => [ 'default' => '3' ] ] ): self {
 		$side_map = [ 'mt' => 'top', 'mr' => 'right', 'mb' => 'bottom', 'ml' => 'left' ];
 
-		// Tablet (_md) variants
 		foreach ( $side_map as $key => $side ) {
-			$this->fields[ $key . '_md' ] = SpacingFields::margin( $side, array_merge( $overwrite, [ 'device_type' => 'Tablet' ] ), $include_negatives );
+			$this->fields[ $prefix . $key ] = SpacingFields::margin( $side, array_merge( $overwrite, [ 'device_type' => 'Mobile' ], $per_field[ $key ] ?? [] ), $include_negatives );
 		}
 
-		// Desktop (_lg) variants
 		foreach ( $side_map as $key => $side ) {
-			$lg_overwrite = array_merge( $overwrite, [ 'device_type' => 'Desktop' ] );
-			if ( 'mb' === $key && '' !== $mb_lg_default ) {
-				$lg_overwrite = array_merge( $lg_overwrite, [ 'default' => $mb_lg_default ] );
-			}
-			$this->fields[ $key . '_lg' ] = SpacingFields::margin( $side, $lg_overwrite, $include_negatives );
+			$this->fields[ $prefix . $key . '_md' ] = SpacingFields::margin( $side, array_merge( $overwrite, [ 'device_type' => 'Tablet' ], $per_field[ $key . '_md' ] ?? [] ), $include_negatives );
+		}
+
+		foreach ( $side_map as $key => $side ) {
+			$this->fields[ $prefix . $key . '_lg' ] = SpacingFields::margin( $side, array_merge( $overwrite, [ 'device_type' => 'Desktop' ], $per_field[ $key . '_lg' ] ?? [] ), $include_negatives );
 		}
 
 		return $this;
@@ -232,32 +239,43 @@ class BlockArguments {
 	/**
 	 * Add padding fields (pt, pr, pb, pl).
 	 *
-	 * @param array $overwrite Per-field overwrite config.
+	 * @param string $prefix   Optional prefix applied to all field keys (e.g. 'link_' → link_pt, link_pr, …).
+	 * @param array  $overwrite Per-field overwrite config.
 	 * @return static
 	 */
-	public function add_padding( array $overwrite = [] ): self {
-		return $this->add_fields( SpacingFields::padding_group( $overwrite ) );
+	public function add_padding( string $prefix = '', array $overwrite = [] ): self {
+		$fields = SpacingFields::padding_group( $overwrite );
+		if ( $prefix !== '' ) {
+			$fields = array_combine(
+				array_map( fn( $k ) => $prefix . $k, array_keys( $fields ) ),
+				array_values( $fields )
+			);
+		}
+		return $this->add_fields( $fields );
 	}
 
 	/**
 	 * Add responsive padding fields (mobile, tablet, desktop breakpoints).
 	 *
-	 * @param array $overwrite Per-field overwrite config.
+	 * @param string $prefix   Optional prefix applied to all field keys (e.g. 'link_' → link_pt, link_pt_md, …).
+	 * @param array  $overwrite Global overwrite applied to every padding field.
+	 * @param array  $per_field Per-field overwrite map keyed by unprefixed field key (e.g. 'pb_lg', 'pt').
+	 *                          Merged on top of $overwrite for that specific field.
 	 * @return static
 	 */
-	public function add_responsive_paddings( array $overwrite = [] ): self {
-		$this->add_padding( array_merge( $overwrite, [ 'device_type' => 'Mobile' ] ) );
-
+	public function add_responsive_paddings( string $prefix = '', array $overwrite = [], array $per_field = [] ): self {
 		$side_map = [ 'pt' => 'top', 'pr' => 'right', 'pb' => 'bottom', 'pl' => 'left' ];
 
-		// Tablet (_md) variants
 		foreach ( $side_map as $key => $side ) {
-			$this->fields[ $key . '_md' ] = SpacingFields::padding( $side, array_merge( $overwrite, [ 'device_type' => 'Tablet' ] ) );
+			$this->fields[ $prefix . $key ] = SpacingFields::padding( $side, array_merge( $overwrite, [ 'device_type' => 'Mobile' ], $per_field[ $key ] ?? [] ) );
 		}
 
-		// Desktop (_lg) variants
 		foreach ( $side_map as $key => $side ) {
-			$this->fields[ $key . '_lg' ] = SpacingFields::padding( $side, array_merge( $overwrite, [ 'device_type' => 'Desktop' ] ) );
+			$this->fields[ $prefix . $key . '_md' ] = SpacingFields::padding( $side, array_merge( $overwrite, [ 'device_type' => 'Tablet' ], $per_field[ $key . '_md' ] ?? [] ) );
+		}
+
+		foreach ( $side_map as $key => $side ) {
+			$this->fields[ $prefix . $key . '_lg' ] = SpacingFields::padding( $side, array_merge( $overwrite, [ 'device_type' => 'Desktop' ], $per_field[ $key . '_lg' ] ?? [] ) );
 		}
 
 		return $this;
@@ -343,39 +361,67 @@ class BlockArguments {
 	 * @param array  $field_overwrites Per-field overwrite map merged on top of $overwrite for individual sub-fields.
 	 *                                 Valid keys: 'color', 'font_size', 'font_weight', 'font_case', 'font_italic',
 	 *                                 'line_height', 'text_justify', 'text_align'.
-	 *                                 Example: [ 'font_size' => [ 'default' => 'h2' ], 'color' => [ 'default' => 'primary' ] ]
+	 *                                 Pass false as a value to omit that sub-field entirely.
+	 *                                 Example: [ 'font_size' => false, 'color' => [ 'default' => 'primary' ] ]
 	 * @return static
 	 */
 	public function add_typography_group( string $prefix = '', array $overwrite = [], array $field_overwrites = [] ): self {
 		$fo = $field_overwrites;
 
-		return $this
-			->add_fields( TypographyFields::text_color_group(
+		if ( ( $fo['color'] ?? null ) !== false ) {
+			$this->add_fields( TypographyFields::text_color_group(
 				$prefix . 'text_color',
-				array_merge( $overwrite, $fo['color'] ?? [] )
-			) )
-			->add_fields( TypographyFields::font_size_group(
+				array_merge( $overwrite, is_array( $fo['color'] ?? null ) ? $fo['color'] : [] )
+			) );
+		}
+
+		if ( ( $fo['font_size'] ?? null ) !== false ) {
+			$this->add_fields( TypographyFields::font_size_group(
 				$prefix . 'font_size',
-				array_merge( $overwrite, $fo['font_size'] ?? [] )
-			) )
-			->add_field( $prefix . 'font_weight',
-				TypographyFields::font_weight( array_merge( $overwrite, $fo['font_weight'] ?? [] ) ) )
-			->add_field( $prefix . 'font_case',
-				TypographyFields::font_case( array_merge( $overwrite, $fo['font_case'] ?? [] ) ) )
-			->add_field( $prefix . 'font_italic',
-				TypographyFields::font_italic( array_merge( $overwrite, $fo['font_italic'] ?? [] ) ) )
-			->add_field( $prefix . 'font_line_height',
-				TypographyFields::line_height( array_merge( $overwrite, $fo['line_height'] ?? [] ) ) )
-			->add_field( $prefix . 'text_justify',
-				TypographyFields::text_justify( array_merge( $overwrite, $fo['text_justify'] ?? [] ) ) )
-			->add_fields( TypographyFields::text_align_group(
+				array_merge( $overwrite, is_array( $fo['font_size'] ?? null ) ? $fo['font_size'] : [] )
+			) );
+		}
+
+		if ( ( $fo['font_weight'] ?? null ) !== false ) {
+			$this->add_field( $prefix . 'font_weight',
+				TypographyFields::font_weight( array_merge( $overwrite, is_array( $fo['font_weight'] ?? null ) ? $fo['font_weight'] : [] ) ) );
+		}
+
+		if ( ( $fo['font_case'] ?? null ) !== false ) {
+			$this->add_field( $prefix . 'font_case',
+				TypographyFields::font_case( array_merge( $overwrite, is_array( $fo['font_case'] ?? null ) ? $fo['font_case'] : [] ) ) );
+		}
+
+//		if ( ( $fo['font_italic'] ?? null ) !== false ) {
+//			$this->add_field( $prefix . 'font_italic',
+//				TypographyFields::font_italic( array_merge( $overwrite, is_array( $fo['font_italic'] ?? null ) ? $fo['font_italic'] : [] ) ) );
+//		}
+
+		if ( ( $fo['line_height'] ?? null ) !== false ) {
+			$this->add_field( $prefix . 'font_line_height',
+				TypographyFields::line_height( array_merge( $overwrite, is_array( $fo['line_height'] ?? null ) ? $fo['line_height'] : [] ) ) );
+		}
+
+		$has_justify = ( $fo['text_justify'] ?? null ) !== false;
+		$has_align   = ( $fo['text_align']   ?? null ) !== false;
+
+		if ( $has_justify ) {
+			$this->add_field( $prefix . 'text_justify',
+				TypographyFields::text_justify( array_merge( $overwrite, is_array( $fo['text_justify'] ?? null ) ? $fo['text_justify'] : [] ) ) );
+		}
+
+		if ( $has_align ) {
+			$this->add_fields( TypographyFields::text_align_group(
 				$prefix . 'text_align',
 				array_merge(
 					$overwrite,
-					$fo['text_align'] ?? [],
-					[ 'element_require' => '[%' . $prefix . 'text_justify%]==""' ] // always last — prevents callers from breaking the text_justify condition
+					is_array( $fo['text_align'] ?? null ) ? $fo['text_align'] : [],
+					$has_justify ? [ 'element_require' => '[%' . $prefix . 'text_justify%]==""' ] : [] // only wire when text_justify is present
 				)
 			) );
+		}
+
+		return $this;
 	}
 
 	/**

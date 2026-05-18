@@ -3,7 +3,7 @@
  * Plugin Name: WP Super Duper
  * Plugin URI: https://ayecode.io/
  * Description: A WordPress framework to build a widget, shortcode and Gutenberg block all from a single class.
- * Version: 3.0.7-beta
+ * Version: 3.0.8-beta
  * Author: AyeCode Ltd
  * Author URI: https://ayecode.io/
  * License: GPL-3.0-or-later

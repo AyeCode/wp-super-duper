@@ -57,19 +57,21 @@ final class TypographyFields {
 		$defaults = [
 			'type'     => 'select',
 			'title'    => __( 'Appearance', 'ayecode-connect' ),
-			'options'  => [
-				''                                => __( 'Inherit', 'ayecode-connect' ),
-				'font-weight-bold'                => 'bold',
-				'font-weight-bolder'              => 'bolder',
-				'font-weight-normal'              => 'normal',
-				'font-weight-light'               => 'light',
-				'font-weight-lighter'             => 'lighter',
-				'font-italic'                     => 'italic',
-				'font-weight-bold font-italic'    => 'bold italic',
-				'font-weight-bolder font-italic'  => 'bolder italic',
-				'font-weight-normal font-italic'  => 'normal italic',
-				'font-weight-light font-italic'   => 'light italic',
-				'font-weight-lighter font-italic' => 'lighter italic',
+			'options' => [
+				''                       => __( 'Inherit', 'ayecode-connect' ),
+				'fw-bold'                => 'bold',
+				'fw-bolder'              => 'bolder',
+				'fw-semibold'            => 'semibold',
+				'fw-normal'              => 'normal',
+				'fw-light'               => 'light',
+				'fw-lighter'             => 'lighter',
+				'fst-italic'            => 'italic',
+				'fw-bold fst-italic'     => 'bold italic',
+				'fw-bolder fst-italic'   => 'bolder italic',
+				'fw-semibold fst-italic' => 'semibold italic',
+				'fw-normal fst-italic'   => 'normal italic',
+				'fw-light fst-italic'    => 'light italic',
+				'fw-lighter fst-italic'  => 'lighter italic',
 			],
 			'default'  => '',
 			'desc_tip' => true,
@@ -121,6 +123,8 @@ final class TypographyFields {
 
 	/**
 	 * Font italic select field.
+	 *
+	 * This is included in add_typography_group() as TypographyFields::font_weight().
 	 *
 	 * @param array $overwrite Field config overrides.
 	 * @return array

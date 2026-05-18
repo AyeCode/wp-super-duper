@@ -23,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	$registry_key = 'ayecode_super_duper_registry';
 
 	// Must match the Version header in wp-super-duper.php. This drives negotiation.
-	$this_version = '3.0.7-beta';
+	$this_version = '3.0.8-beta';
 
 	$this_path = dirname( __FILE__ );
 

@@ -38,15 +38,17 @@ function ayecode_sd_register( string $base_id, string $class_name, array $output
  *
  * @param array $types   Types to include: 'none', 'transparent', 'core', 'subtle', 'emphasis',
  *                       'outline', 'outline_btn_text', 'branding'. Defaults to ['core'].
- * @param bool  $flatten When true returns a flat key => label array (default). False returns optgroups.
+ * @param bool  $flatten When true returns a flat key => label array. False returns optgroups (default).
  * @return array
  */
-function ayecode_get_sd_colors( array $types = [ 'core' ], bool $flatten = true ): array {
+function ayecode_get_sd_colors( array $types = [ 'core' ], bool $flatten = false ): array {
 	return \AyeCode\SuperDuper\Helpers\ColorOptions::aui( $types, $flatten );
 }
 
 /**
  * Build AUI classes from settings.
+ *
+ * This needs to be kept in sync with the JS version in includes/helpers/gutenberg-block-helpers.php
  *
  * @param array $args
  * @return string
@@ -57,6 +59,8 @@ function sd_build_aui_class( $args ) {
 
 /**
  * Build Style output from arguments.
+ *
+ * This needs to be kept in sync with the JS version in includes/helpers/gutenberg-block-helpers.php
  *
  * @param array $args
  * @return string
@@ -95,4 +99,29 @@ function sd_get_color_from_var( $var ) {
  */
 function sd_sanitize_html_classes( $classes, $sep = ' ' ) {
 	return \AyeCode\SuperDuper\Utils::sanitize_html_classes( $classes, $sep );
+}
+
+/**
+ * Get the current URL as a raw (un-HTML-escaped) string,
+ * safe for redirects, DB storage, HTTP requests, etc.
+ */
+function ayecode_get_current_url( $with_query_string = true ) {
+	if ( ! empty( $_SERVER['REQUEST_URI'] ) ) {
+		$request_uri = wp_unslash( $_SERVER['REQUEST_URI'] );
+	} elseif ( ! empty( $_SERVER['SCRIPT_NAME'] ) ) {
+		$request_uri = wp_unslash( $_SERVER['SCRIPT_NAME'] );
+		if ( ! empty( $_SERVER['QUERY_STRING'] ) ) {
+			$request_uri .= '?' . wp_unslash( $_SERVER['QUERY_STRING'] );
+		}
+	} else {
+		$request_uri = '/';
+	}
+
+	if ( ! $with_query_string ) {
+		$request_uri = wp_parse_url( $request_uri, PHP_URL_PATH );
+	}
+
+	// esc_url_raw sanitizes (strips invalid protocols, control chars, etc.)
+	// without HTML-encoding ampersands — correct for non-display contexts.
+	return esc_url_raw( home_url( $request_uri ) );
 }

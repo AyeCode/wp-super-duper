@@ -606,6 +606,10 @@ final class StyleFields {
 		$ow_gradient = array_key_exists( 'gradient', $field_overwrites )
 			? ( false === $field_overwrites['gradient'] ? false : array_merge( $overwrite, (array) $field_overwrites['gradient'] ) )
 			: $overwrite;
+		// on_text defaults to following gradient — disabling gradient also disables on_text unless explicitly set.
+		$ow_on_text  = array_key_exists( 'on_text', $field_overwrites )
+			? ( false === $field_overwrites['on_text']  ? false : array_merge( $overwrite, (array) $field_overwrites['on_text'] ) )
+			: $ow_gradient;
 		$ow_image    = array_key_exists( 'image', $field_overwrites )
 			? ( false === $field_overwrites['image']    ? false : array_merge( $overwrite, (array) $field_overwrites['image'] ) )
 			: $overwrite;
@@ -672,16 +676,18 @@ final class StyleFields {
 				]
 			);
 
-			$fields[ $prefix . '_on_text' ] = [
-				'type'            => 'checkbox',
-				'title'           => __( 'Background on text', 'ayecode-connect' ),
-				'default'         => '',
-				'value'           => '1',
-				'desc_tip'        => false,
-				'desc'            => __( 'This will show the background on the text.', 'ayecode-connect' ),
-				'group'           => 'wrapper-styles',
-				'element_require' => '[%' . $prefix . '%]=="custom-gradient"',
-			];
+			if ( false !== $ow_on_text ) {
+				$fields[ $prefix . '_on_text' ] = [
+					'type'            => 'checkbox',
+					'title'           => __( 'Background on text', 'ayecode-connect' ),
+					'default'         => '',
+					'value'           => '1',
+					'desc_tip'        => false,
+					'desc'            => __( 'This will show the background on the text. To apply to child elements like p or h, give them the class .position-static', 'ayecode-connect' ),
+					'group'           => ! empty( $ow_on_text['group'] ) ? $ow_on_text['group'] : 'wrapper-styles',
+					'element_require' => '[%' . $prefix . '%]=="custom-gradient"',
+				];
+			}
 		}
 
 		if ( false !== $ow_image ) {

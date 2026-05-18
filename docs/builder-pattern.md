@@ -86,7 +86,7 @@ class My_Widget extends WP_Super_Duper {
 | Method | Description |
 |---|---|
 | `add_margins( array $overwrite = [], bool $include_negatives = true ): self` | Add `mt`/`mr`/`mb`/`ml` margin selects |
-| `add_responsive_margins( array $overwrite = [], bool $include_negatives = true, string $mb_lg_default = '3' ): self` | Add margins for mobile, tablet (`_md`), and desktop (`_lg`) breakpoints. `mb_lg` defaults to `'3'`; pass `''` to leave unset |
+| `add_responsive_margins( array $overwrite = [], bool $include_negatives = true, array $per_field = [] ): self` | Add margins for mobile, tablet (`_md`), and desktop (`_lg`) breakpoints. `mb_lg` defaults to `'3'`; pass `array( 'mb_lg' => array( 'default' => '' ) )` to clear it |
 | `add_padding( array $overwrite = [] ): self` | Add `pt`/`pr`/`pb`/`pl` padding selects |
 | `add_responsive_paddings( array $overwrite = [] ): self` | Add paddings for mobile, tablet (`_md`), and desktop (`_lg`) breakpoints |
 
