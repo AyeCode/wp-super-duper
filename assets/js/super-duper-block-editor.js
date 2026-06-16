@@ -40,6 +40,31 @@ window.sdDependentFieldCache = window.sdDependentFieldCache || {};
 	const { InspectorControls, BlockControls, RichText, useBlockProps, MediaUpload, MediaUploadCheck, InnerBlocks } = blockEditor;
 	const { PanelBody, TabPanel, TextControl, InputControl, TextareaControl, SelectControl, RangeControl, CheckboxControl, ToggleControl, Button, ColorPicker, Notice, BaseControl, ResponsiveWrapper, ToolbarGroup, ToolbarButton, FocalPointPicker, GradientPicker } = components;
 
+	// Hide WP's BlockInspector "Advanced" PanelBody for SD blocks. We render our own
+	// "Additional CSS" textarea inside SD's tabbed inspector that writes to the same
+	// attributes.style.css path, so WP's duplicate would otherwise sit at the bottom
+	// of the inspector. We can't selectively disable just the UI HOC — the customCSS
+	// supports flag also gates the useStyleOverride live-preview HOC — so we keep WP's
+	// UI registered (for live preview) and visually hide it.
+	window.sdRegisteredBlocks = window.sdRegisteredBlocks || new Set();
+	(function setupSDAdvancedHide() {
+		if (window.sdAdvancedHideInstalled) return;
+		window.sdAdvancedHideInstalled = true;
+		const style = document.createElement('style');
+		style.setAttribute('data-sd', 'hide-wp-advanced');
+		style.textContent = 'body.sd-block-selected .block-editor-block-inspector__advanced{display:none!important;}';
+		document.head.appendChild(style);
+		if (wp.data && wp.data.subscribe) {
+			wp.data.subscribe(() => {
+				const sel = wp.data.select('core/block-editor');
+				if (!sel) return;
+				const block = sel.getSelectedBlock();
+				const isSD = !!(block && window.sdRegisteredBlocks.has(block.name));
+				document.body.classList.toggle('sd-block-selected', isSD);
+			});
+		}
+	})();
+
 	/**
 	 * Utility Functions for Dependent Fields
 	 */
@@ -381,6 +406,50 @@ window.sdDependentFieldCache = window.sdDependentFieldCache || {};
 				);
 		}
 	}
+
+	const SDCustomCSSControl = ({ arg, attributes, setAttributes }) => {
+		const cssValue = (attributes.style && attributes.style.css) || '';
+		const [cssError, setCssError] = useState(null);
+
+		const handleChange = (newCss) => {
+			// Block HTML tags — matches WP's validateCSS regex (and the PHP custom-css.php check on save).
+			if (typeof newCss === 'string' && /<\/?\w/.test(newCss)) { return; }
+			const newStyle = { ...(attributes.style || {}) };
+			if (newCss && newCss.trim()) {
+				newStyle.css = newCss;
+			} else {
+				delete newStyle.css;
+			}
+			setAttributes({ style: Object.keys(newStyle).length ? newStyle : undefined });
+			setCssError(null);
+		};
+
+		const handleBlur = () => {
+			if (!cssValue || !cssValue.trim()) { setCssError(null); return; }
+			if (wp.blockEditor.transformStyles) {
+				try {
+					const [transformed] = wp.blockEditor.transformStyles([{ css: cssValue }], '.sd-css-validation');
+					setCssError(transformed === null
+						? __('There is an error with your CSS structure.', 'ayecode-connect')
+						: null
+					);
+				} catch (e) {
+					setCssError(__('There is an error with your CSS structure.', 'ayecode-connect'));
+				}
+			}
+		};
+
+		return el(BaseControl, { label: arg.title, help: cssError ? null : (arg.desc || null) },
+			el(TextareaControl, {
+				value: cssValue,
+				rows: arg.rows || 6,
+				placeholder: arg.placeholder || '',
+				onChange: handleChange,
+				onBlur: handleBlur,
+			}),
+			cssError ? el(Notice, { status: 'warning', isDismissible: false }, cssError) : null
+		);
+	};
 
 	function renderControl(config, props, deviceType, dependentFieldOptions = {}, dependentFieldLoading = {}) {
 		if (config.device_type && config.device_type !== deviceType) {
@@ -788,8 +857,14 @@ window.sdDependentFieldCache = window.sdDependentFieldCache || {};
 				if (optionsToUse && typeof optionsToUse === 'object') {
 					// Check if it's an array (from API) or object (from PHP config)
 					if (Array.isArray(optionsToUse)) {
-						// Already in correct format from API
-						selectOptions = optionsToUse;
+						// API format: [{label, value}] — use directly.
+						// PHP sequential arrays (e.g. array_merge with range()) also land here as
+						// JS arrays; convert them the same way as the object branch below.
+						if (optionsToUse.length > 0 && typeof optionsToUse[0] === 'object' && optionsToUse[0] !== null && 'value' in optionsToUse[0]) {
+							selectOptions = optionsToUse;
+						} else {
+							selectOptions = Object.keys(optionsToUse).map(key => ({ label: String(optionsToUse[key]), value: key }));
+						}
 					} else {
 						// Check if any option value is an object (optgroup) - PHP arrays become objects in JS
 						hasOptgroups = Object.keys(optionsToUse).some(key =>
@@ -922,6 +997,13 @@ window.sdDependentFieldCache = window.sdDependentFieldCache || {};
 					el(TextControl, { value: value, disabled: true, style: { marginBottom: '8px' } }),
 					el(Button, { isPrimary: true, onClick: () => openVisibilityModal() }, rest.button_title || controlLabel)
 				);
+			case 'custom_css':
+				return el(SDCustomCSSControl, {
+					key: name,
+					arg: config,
+					attributes: props.attributes,
+					setAttributes: props.setAttributes,
+				});
 			default:
 				return null;
 		}
@@ -953,6 +1035,14 @@ window.sdDependentFieldCache = window.sdDependentFieldCache || {};
 
 		hydratedArgsConfig.forEach(arg => {
 			if (arg.advanced) hasAdvancedFields = true;
+
+			// Custom CSS: register attributes.style as an object so our textarea can write
+			// into attributes.style.css — the same path WP's customCSS support reads for
+			// its useStyleOverride live preview.
+			if (arg.type === 'custom_css') {
+				blockAttributes.style = { type: 'object' };
+				return;
+			}
 
 			let attrType = 'string';
 			let attrDefault = arg.default !== undefined ? arg.default : '';
@@ -1039,6 +1129,7 @@ window.sdDependentFieldCache = window.sdDependentFieldCache || {};
 		}
 		// ++ END: Block Transforms Implementation
 
+		window.sdRegisteredBlocks.add(name);
 		registerBlockType(name, {
 			apiVersion: blockOptions['block-api-version'],
 			title, description, icon: blockIcon, category, keywords,

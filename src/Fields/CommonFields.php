@@ -76,6 +76,29 @@ final class CommonFields {
 	}
 
 	/**
+	 * Additional CSS textarea — stores into attributes.style.css (the same path WP's
+	 * native customCSS support uses). We render our own textarea inside SD's Advanced
+	 * tab; WP's editor.BlockEdit HOC still mounts its own copy in the BlockInspector
+	 * (it can't be disabled without also killing the useStyleOverride live-preview
+	 * HOC, which shares the same supports flag). The duplicate is hidden via CSS.
+	 *
+	 * @param array $overwrite Field config overrides.
+	 * @return array
+	 */
+	public static function custom_css( array $overwrite = [] ): array {
+		$defaults = [
+			'type'  => 'custom_css',
+			'title' => __( 'Additional CSS', 'ayecode-connect' ),
+			'desc'  => __( 'Styles are scoped to this block.', 'ayecode-connect' ),
+			'placeholder'  => 'background:red;',
+			'group' => 'advanced',
+			'rows'  => 5,
+		];
+
+		return wp_parse_args( $overwrite, $defaults );
+	}
+
+	/**
 	 * Custom block name text input.
 	 *
 	 * @param array $overwrite Field config overrides.

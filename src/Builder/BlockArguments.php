@@ -556,6 +556,7 @@ class BlockArguments {
 	public function add_advanced_group( string $prefix = '', array $overwrite = [] ): self {
 		$this->fields[ $prefix . 'css_class' ]     = CommonFields::css_class( $overwrite );
 		$this->fields[ $prefix . 'metadata_name' ] = CommonFields::metadata_name( $overwrite );
+		$this->fields[ $prefix . 'custom_css' ]    = CommonFields::custom_css( $overwrite );
 		return $this;
 	}
 
