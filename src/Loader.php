@@ -68,5 +68,7 @@ class Loader {
 		// factory at priority 100) so lazy shortcode closures and widget registrations
 		// are in place before any rendering begins.
 		add_action( 'widgets_init', [ 'AyeCode\\SuperDuper\\Registry', 'boot' ], 99 );
+
+		add_action( 'rest_api_init', [ 'AyeCode\\SuperDuper\\RestApi', 'register_routes' ] );
 	}
 }

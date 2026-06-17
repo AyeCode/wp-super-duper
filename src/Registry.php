@@ -61,7 +61,7 @@ class Registry {
 	 * instantiation when a sidebar is rendered.
 	 */
 	public static function boot(): void {
-		$eager = is_admin() || wp_doing_ajax();
+		$eager = is_admin() || wp_doing_ajax() || ( defined( 'REST_REQUEST' ) && REST_REQUEST );
 
 		foreach ( self::$entries as $base_id => $entry ) {
 			$class_name   = $entry['class_name'];
@@ -106,6 +106,28 @@ class Registry {
 			// render_shortcode() calls wp_die(), so execution stops here.
 		}
 		// Unknown base_id: fall through to handlers registered by eagerly-loaded blocks.
+	}
+
+	/**
+	 * Return all registered entries keyed by base_id.
+	 *
+	 * @return array<string, array{class_name: string, output_types: string[], file_path: string}>
+	 */
+	public static function get_entries(): array {
+		return self::$entries;
+	}
+
+	/**
+	 * Get the cached instance for a given base_id, or null if not registered.
+	 *
+	 * @param string $base_id The block base ID.
+	 * @return object|null
+	 */
+	public static function get_instance_public( string $base_id ): ?object {
+		if ( ! isset( self::$entries[ $base_id ] ) ) {
+			return null;
+		}
+		return self::get_instance( $base_id );
 	}
 
 	/**

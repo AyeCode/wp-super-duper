@@ -3,6 +3,7 @@
 ## [3.0.9-beta] — 2026-06-TBD
 - Additional CSS field added by WP is breaking out of our tabs - FIXED
 - Bug with some select items rendering as an array in JSON instead of object - FIXED
+- Added API endpoint for discovering blocks and getting block details - ADDED
 
 ## [3.0.8-beta] — 2026-05-18
 - font_italic field removed from add_typography_group() as it is part for font_weight field - CHANGED
