@@ -1,3 +1,6 @@
+= 1.2.33 - 2026-06-TBD =
+* Fusion Builder tab errors when SD block group name contains special characters (like \/' etc) - FIXED
+
 = 1.2.32 - 2026-06-10 =
 * Disable additional CSS option for SD blocks - CHANGED
 
