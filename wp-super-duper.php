@@ -1805,8 +1805,8 @@ if ( ! class_exists( 'WP_Super_Duper' ) ) {
 			$show_advanced     = $this->block_show_advanced();
 			$block_api_version = version_compare( $wp_version, '6.9', '>=' ) ? 3 : 2; // Block apiVersion
 
-			if ( isset( $this->options['block-api-version'] ) && (int) $this->options['block-api-version'] > 0 ) {
-				$block_api_version = (int) $this->options['block-api-version'];
+			if ( isset( $this->options['block-api-version'] ) && absint( $this->options['block-api-version'] ) > 0 ) {
+				$block_api_version = absint( $this->options['block-api-version'] );
 			}
 
 			ob_start();
@@ -2570,7 +2570,7 @@ jQuery(function() {
 					 *                             registered; otherwise `undefined`.
 					 */
 					registerBlockType('<?php echo str_replace( "_", "-", sanitize_title_with_dashes( $this->options['textdomain'] ) . '/' . sanitize_title_with_dashes( $this->options['class_name'] ) );  ?>', { // Block name. Block names must be string that contains a namespace prefix. Example: my-plugin/my-custom-block.
-						apiVersion: <?php echo (int) $block_api_version; ?>,
+						apiVersion: <?php echo absint( $block_api_version ); ?>,
 						title: '<?php echo addslashes( $this->options['name'] ); ?>', // Block title.
 						description: '<?php echo addslashes( $this->options['widget_ops']['description'] )?>', // Block title.
 						icon: <?php echo $this->get_block_icon( $this->options['block-icon'] );?>,//'<?php echo isset( $this->options['block-icon'] ) ? esc_attr( $this->options['block-icon'] ) : 'shield-alt';?>', // Block icon from Dashicons → https://developer.wordpress.org/resource/dashicons/.
@@ -3144,7 +3144,7 @@ const { deviceType } = typeof wp.data.useSelect !== 'undefined' ? wp.data.useSel
 									if ( $show_advanced ) {
 									?>
 									el('div', {
-											style: {'padding-left': '16px','padding-right': '16px'}
+											style: {'paddingLeft': '16px','paddingRight': '16px'}
 										},
 										el(
 											wp.components.ToggleControl,
