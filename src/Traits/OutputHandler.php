@@ -18,6 +18,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 trait OutputHandler {
 
 	/**
+	 * Blocks whose enqueue_scripts() has already run, keyed by base_id.
+	 *
+	 * Static rather than per-instance: the Registry caches one instance per base_id, but
+	 * in widget mode WordPress's widget factory builds its own separate object, so a page
+	 * carrying both the block and the widget of one class would otherwise attach the same
+	 * inline script twice.
+	 *
+	 * @var array<string, bool>
+	 */
+	protected static $sd_scripts_done = array();
+
+	/**
 	 * Register the parent shortcode and its AJAX handler for block previews.
 	 */
 	public function register_shortcode() {
@@ -108,6 +120,10 @@ trait OutputHandler {
 		$no_wrap        = isset( $this->options['no_wrap'] ) && $this->options['no_wrap'] ? true : (isset( $args['no_wrap'] ) && $args['no_wrap']);
 		$main_content   = $this->output( $args, $shortcode_args, $content );
 
+		if ( $main_content ) {
+			$this->maybe_enqueue_scripts();
+		}
+
 		if ( $main_content && ! $no_wrap ) {
 			$output .= '<div class="' . esc_attr( $class ) . '" ' . $attrs . '>';
 			if ( ! empty( $args['title'] ) ) {
@@ -137,6 +153,10 @@ trait OutputHandler {
 		$argument_values = $this->argument_values( $instance );
 		$argument_values = \AyeCode\SuperDuper\Utils::string_to_bool( $argument_values );
 		$output = $this->output( $argument_values, $args );
+
+		if ( $output ) {
+			$this->maybe_enqueue_scripts();
+		}
 		$no_wrap = isset( $argument_values['no_wrap'] ) && $argument_values['no_wrap'];
 
 		ob_start();
@@ -187,6 +207,49 @@ trait OutputHandler {
 	public function output( $args = array(), $widget_args = array(), $content = '' ) {
 		// This method should be overridden by the child class.
 		return '';
+	}
+
+	/**
+	 * Enqueue the frontend assets this block needs. Override in the child class.
+	 *
+	 * The framework calls this only when the block has actually rendered output, so
+	 * anything enqueued here loads on those pages alone. Handles are registered by the
+	 * plugin; a block only enqueues them and attaches its inline script.
+	 *
+	 * @return void
+	 */
+	public function enqueue_scripts() {
+		// This method should be overridden by the child class.
+	}
+
+	/**
+	 * Call enqueue_scripts() once per block, at a point where the handles exist.
+	 *
+	 * A block theme renders the template before wp_head, so wp_enqueue_scripts has not
+	 * fired yet and the handles we depend on are not registered. A classic theme renders
+	 * during the_content or dynamic_sidebar, long after it fired and too late to hook.
+	 * Both cases fail silently, so the framework picks the right one rather than leaving
+	 * it to each block.
+	 *
+	 * @return void
+	 */
+	protected function maybe_enqueue_scripts() {
+		// An AJAX render — the block editor preview, or a page builder's — never reaches
+		// wp_footer, so nothing enqueued here would print. Page builder previews that render
+		// a full page are not skipped: the block has to look right in the editor too.
+		if ( isset( self::$sd_scripts_done[ $this->base_id ] ) || wp_doing_ajax() ) {
+			return;
+		}
+
+		self::$sd_scripts_done[ $this->base_id ] = true;
+
+		if ( did_action( 'wp_enqueue_scripts' ) ) {
+			$this->enqueue_scripts();
+		} else {
+			// Priority 20: core plugins register their handles from a wp_enqueue_scripts:10
+			// callback added on init:10, so 10 wins or loses on hook order alone.
+			add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ), 20 );
+		}
 	}
 
 	/**

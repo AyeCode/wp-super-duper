@@ -66,7 +66,7 @@ class SuperDuperWidget extends \WP_Widget {
 	 * Registers the widget with WordPress.
 	 */
 	public function _register() {
-		if ( empty( $this->options['output_types'] ) || in_array( 'widget', $this->options['output_types'] ) ) {
+		if ( ! empty( $this->options['output_types'] ) && in_array( 'widget', $this->options['output_types'], true ) ) {
 			parent::_register();
 		}
 	}

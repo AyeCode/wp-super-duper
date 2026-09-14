@@ -60,7 +60,7 @@ All modern classes live under `AyeCode\SuperDuper\` (mapped to `src/` by the SPL
 
 | Class | File | Role |
 |---|---|---|
-| `Builder\BlockArguments` | `src/Builder/BlockArguments.php` | Fluent field-definition builder (see `docs/builder-pattern.md`) |
+| `Builder\BlockArguments` | `src/Builder/BlockArguments.php` | Fluent field-definition builder (see `docs/dev/builder-pattern.md`) |
 
 **Fields — static factory classes** (replace deprecated `sd_get_*` global functions):
 
@@ -134,13 +134,19 @@ public function set_arguments(): array {
 }
 ```
 
-See `hello-world.php` for the canonical working example and `docs/builder-pattern.md` for the full `BlockArguments` API.
+Every block must then be registered with `ayecode_sd_register( $base_id, $class_name, $output_types )` — classes do not self-register, and `new My_Block()` is no longer the way. `output_types` defaults to `[ 'block', 'shortcode' ]`; adding `'widget'` is what forces the class to be instantiated on every page load.
+
+Frontend assets belong in an `enqueue_scripts()` override, which the framework calls only when the block has actually rendered. Never enqueue or hook `wp_enqueue_scripts` from `__construct()`.
+
+See `hello-world.php` for the canonical working example, `docs/dev/block-building.md` for the complete block-building reference (registration, fields, output modes, assets), and `docs/dev/builder-pattern.md` for the full `BlockArguments` API.
+
+Developer and AI-facing documentation lives under `docs/dev/` — that is the only path the docs scanner reads.
 
 ### Key `$options` keys
 
 `textdomain`, `base_id` (unique slug), `class_name` (`__CLASS__`), `name`, `block-icon`, `block-category`, `block-keywords`, `block-output`, `block-wrap`, `widget_ops`, `arguments`, `no_wrap`, `output_types`, `nested-block`.
 
-Field types in `arguments`: `text`, `select`, `checkbox`, `number`, `textarea`, and more. Fields support `depends_on` for dynamic Gutenberg dropdowns populated via REST API (see `docs/features/dependent-fields.md`).
+Field types in `arguments`: `text`, `select`, `checkbox`, `number`, `textarea`, and more. Fields support `depends_on` for dynamic Gutenberg dropdowns populated via REST API (see `docs/dev/features/dependent-fields.md`).
 
 ## AyeCode Standards (from `.aiassistant/rules/ayecode-standards.md`)
 

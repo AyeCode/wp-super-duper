@@ -14,12 +14,15 @@
  * @param string   $base_id      The shortcode / block base ID (e.g. 'bs_alert').
  * @param string   $class_name   The class name (e.g. 'BlockStrap_Widget_Alert').
  * @param string[] $output_types Supported output types: 'block', 'shortcode', 'widget'.
- *                               Omit 'widget' for blocks that never appear in sidebar widget areas.
+ *                               Defaults to block and shortcode. Widget support is opt-in because
+ *                               it is the only type that forces the class to be instantiated on
+ *                               every page load; block and shortcode stay fully lazy. Must match
+ *                               the 'output_types' key the class declares in its $options array.
  * @param string   $file_path    Absolute path to the class file. Required when the class is
  *                               not PSR-4 autoloadable (i.e. most non-Composer plugins).
  *                               Use __DIR__ . '/path/to/class-file.php'.
  */
-function ayecode_sd_register( string $base_id, string $class_name, array $output_types = [], string $file_path = '' ): void {
+function ayecode_sd_register( string $base_id, string $class_name, array $output_types = [ 'block', 'shortcode' ], string $file_path = '' ): void {
 	\AyeCode\SuperDuper\Registry::register( $base_id, $class_name, $output_types, $file_path );
 }
 

@@ -297,10 +297,18 @@ class My_Super_Widget extends WP_Super_Duper {
             . '</div>';
     }
 }
+
+// Register it — a class never registers itself, and `new My_Widget()` is not the way.
+add_action( 'widgets_init', function () {
+    ayecode_sd_register( 'my_widget', 'SD_My_Widget', array( 'block', 'shortcode' ) );
+} );
 ```
+
+See [Block Building → Registration](block-building.md#registration) for the full registration
+contract, including how addons add blocks through a filter and how any block can be disabled.
 
 ## See Also
 
 - [Dependent Fields](features/dependent-fields.md)
 - [Examples](examples.md)
-- [hello-world.php](../hello-world.php)
+- [hello-world.php](../../hello-world.php)

@@ -133,9 +133,11 @@ class SD_Hello_World extends WP_Super_Duper {
 
 }
 
-// register it.
+// Register it. Classes are never instantiated directly — Super Duper stores the
+// registration and builds the class only when a block, shortcode or widget is
+// actually rendered. Runs before the registry boots at widgets_init:99.
 add_action( 'widgets_init', function () {
-	register_widget( 'SD_Hello_World' );
+	ayecode_sd_register( 'hello_world', 'SD_Hello_World', array( 'block', 'shortcode', 'widget' ) );
 } );
 
 

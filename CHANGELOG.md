@@ -1,6 +1,13 @@
 # Changelog
 
-## [3.0.9-beta] — 2026-06-TBD
+## [3.0.9-beta] — 2026-09-14
+- enqueue_scripts() method added so a block loads its assets only when it actually renders - ADDED
+- ayecode_sd_registered_blocks filter added to allow any registered block to be disabled globally - ADDED
+- ayecode_sd_register() output_types now defaults to block and shortcode, widget support is opt-in - CHANGED
+- Standard block settings tab and field-group structure documented in docs/dev/block-building.md - ADDED
+- Block building reference moved from .claude/commands to docs/dev/block-building.md - CHANGED
+- Documentation moved under docs/dev/ so the AI docs scanner picks it up - CHANGED
+- hello-world.php and the doc examples now register via ayecode_sd_register() instead of register_widget()/new - CHANGED
 - Additional CSS field added by WP is breaking out of our tabs - FIXED
 - Bug with some select items rendering as an array in JSON instead of object - FIXED
 - Added API endpoint for discovering blocks and getting block details - ADDED

@@ -55,6 +55,280 @@ class My_Block extends WP_Super_Duper {
 }
 ```
 
+The class alone does nothing — it has to be registered. See the next section.
+
+---
+
+## Registration
+
+**Every block must be registered with `ayecode_sd_register()`. A class does not register itself, and `new My_Block()` is no longer the way.**
+
+```php
+ayecode_sd_register( $base_id, $class_name, $output_types, $file_path );
+```
+
+| Parameter | |
+|---|---|
+| `$base_id` | The shortcode / block base ID. Must match the `base_id` in the class `$options`. |
+| `$class_name` | Class name, e.g. `My_Block::class`. |
+| `$output_types` | Defaults to `[ 'block', 'shortcode' ]`. Add `'widget'` only if the block belongs in sidebar widget areas. Must match the `output_types` the class declares in its `$options`. |
+| `$file_path` | Absolute path to the class file. Required when the class is not PSR-4 autoloadable — use `__DIR__ . '/path/to/class-file.php'`. Omit it and the class is loaded by your autoloader. |
+
+### Why this matters — registration is what makes blocks lazy
+
+`ayecode_sd_register()` stores the registration without loading the class. What happens next depends entirely on `$output_types`:
+
+| Context | Instantiated | When the constructor runs |
+|---|---|---|
+| Frontend, `[ 'block', 'shortcode' ]` | Only a lightweight `add_shortcode()` closure is registered | Inside `do_shortcode()` — **only on pages that contain the block** |
+| Frontend, `output_types` includes `'widget'` | `register_widget()` → WordPress's widget factory at `widgets_init:100` | **Every page load** |
+| Admin / AJAX / REST | All entries, eagerly, so the block editor and AJAX handlers work | Every request |
+
+Widget support is the only thing that forces a class to be built on every page, which is why it is opt-in. Leave it out unless the block genuinely belongs in a sidebar.
+
+> A WP Super Duper block has no PHP `register_block_type()` — the block's `save` emits the shortcode, so on the frontend a block **is** a shortcode. That is why the lazy path only needs `add_shortcode()`, and why one asset rule (see [Assets](#assets--scripts-and-styles)) covers blocks, widgets and shortcodes alike.
+
+### The plugin-level pattern
+
+Registration belongs in one class per plugin, hooked to `widgets_init` at the default priority — it must run before the registry boots at priority 99. Put the blocks in an array behind a filter so addons can extend it:
+
+```php
+class My_Plugin_Register_Blocks {
+
+    public function __construct() {
+        add_action( 'widgets_init', array( $this, 'register_blocks' ) );
+    }
+
+    public function register_blocks(): void {
+        /**
+         * Filter the list of blocks to register.
+         *
+         * Each entry is [ base_id, class_name, output_types ].
+         *
+         * @param array $blocks
+         */
+        $blocks = apply_filters(
+            'my_plugin_get_blocks',
+            array(
+                array( 'my_alert', My_Widget_Alert::class, array( 'block', 'shortcode' ) ),
+                array( 'my_sidebar_cta', My_Widget_Cta::class, array( 'block', 'shortcode', 'widget' ) ),
+            )
+        );
+
+        foreach ( $blocks as $block ) {
+            list( $base_id, $class_name, $output_types ) = $block;
+            ayecode_sd_register( $base_id, $class_name, $output_types );
+        }
+    }
+}
+```
+
+An addon adds its own blocks through that filter. It must run before `widgets_init:10`:
+
+```php
+add_filter( 'my_plugin_get_blocks', function ( array $blocks ): array {
+    $blocks[] = array( 'my_addon_score', ScoreBlock::class, array( 'block', 'shortcode' ) );
+
+    return $blocks;
+} );
+```
+
+### Disabling blocks
+
+The per-plugin filter above only sees that plugin's blocks. To remove or alter **any** registered block, from any plugin, use `ayecode_sd_registered_blocks`. It runs after every plugin has registered and before anything is instantiated or hooked, so it is the one reliable off switch:
+
+```php
+add_filter( 'ayecode_sd_registered_blocks', function ( array $entries ): array {
+    // Drop a single block everywhere.
+    unset( $entries['my_alert'] );
+
+    // Or gate by context — nothing has been instantiated yet at this point.
+    if ( is_admin() ) {
+        unset( $entries['my_sidebar_cta'] );
+    }
+
+    return $entries;
+} );
+```
+
+Entries are keyed by `base_id`; each value is `[ 'class_name' => ..., 'output_types' => [...], 'file_path' => ... ]`.
+
+---
+
+## Standard Block Structure
+
+Blocks should look the same across every AyeCode product, so a site owner who learns one
+block already knows the next. This section is the shape to follow. It is **descriptive, not
+absolute** — it was derived by surveying the 82 shipped blocks in BlockStrap Page Builder
+Blocks (39) and GeoDirectory (43), of which 73 declare tabs and 67 use `BlockArguments`.
+Where a block genuinely does not need part of it, leave that part out; do not invent a
+different structure for the parts you do need.
+
+### The three tabs
+
+Every block uses the same three top-level tabs, in this order, with these exact keys:
+
+| Tab | Key | Holds |
+|---|---|---|
+| Content | `bs_tab_content` | What the block shows — the block's own fields |
+| Styles | `bs_tab_styles` | How its own elements look — typography, colors, block-specific design |
+| Advanced | `bs_tab_advanced` | The wrapper, visibility and escape hatches — near-identical in every block |
+
+Copy this scaffold verbatim and change only the `groups` arrays and the text domain. The
+`tab` sub-arrays are identical in all 73 blocks surveyed:
+
+```php
+'block_group_tabs' => array(
+    'content'  => array(
+        'groups' => array(
+            array( 'id' => 'general', 'title' => __( 'General', 'my-textdomain' ) ),
+        ),
+        'tab'    => array(
+            'title'     => __( 'Content', 'my-textdomain' ),
+            'key'       => 'bs_tab_content',
+            'tabs_open' => true,
+            'open'      => true,
+            'class'     => 'text-center flex-fill d-flex justify-content-center',
+        ),
+    ),
+    'styles'   => array(
+        'groups' => array(
+            array( 'id' => 'typography', 'title' => __( 'Typography', 'my-textdomain' ) ),
+        ),
+        'tab'    => array(
+            'title'     => __( 'Styles', 'my-textdomain' ),
+            'key'       => 'bs_tab_styles',
+            'tabs_open' => true,
+            'open'      => true,
+            'class'     => 'text-center flex-fill d-flex justify-content-center',
+        ),
+    ),
+    'advanced' => array(
+        'groups' => array(
+            array( 'id' => 'wrapper-styles',        'title' => __( 'Wrapper Styles', 'my-textdomain' ) ),
+            array( 'id' => 'visibility-conditions', 'title' => __( 'Visibility Conditions', 'my-textdomain' ) ),
+            array( 'id' => 'advanced',              'title' => __( 'Advanced', 'my-textdomain' ) ),
+        ),
+        'tab'    => array(
+            'title'     => __( 'Advanced', 'my-textdomain' ),
+            'key'       => 'bs_tab_advanced',
+            'tabs_open' => true,
+            'open'      => true,
+            'class'     => 'text-center flex-fill d-flex justify-content-center',
+        ),
+    ),
+),
+```
+
+A block with nothing to configure may drop the Content tab (7 blocks do) or the Styles tab
+(3 do). **Never drop the Advanced tab** — 71 of 72 blocks have it.
+
+### Advanced tab — the fixed spine
+
+This is the part that must not vary. The order is `wrapper-styles`, then any block-specific
+extras, then `visibility-conditions`, then `advanced` last (44 blocks match exactly; the rest
+insert an extra group before `visibility-conditions`).
+
+| Group id | Title | Produced by | Rule |
+|---|---|---|---|
+| `wrapper-styles` | Wrapper Styles | `add_responsive_margins()`, `add_responsive_paddings()`, `add_border_group()`, `add_shadow_group()`, `add_background_group()`, `add_responsive_display_group()`, `add_position()`, `add_sticky_offset_group()` | Always, unless the block renders no wrapper at all |
+| `visibility-conditions` | Visibility Conditions | `add_visibility_conditions()` | Always, unless the block is a structural child that cannot be conditionally hidden on its own |
+| `advanced` | Advanced | `add_advanced_group()` | Always — CSS class, block name, custom CSS |
+
+Optional extras that belong in this tab when the block needs them: `hover-animations`,
+`image-mask`.
+
+### Styles tab
+
+`typography` is the common group (30 blocks) and is produced by `add_typography_group()`.
+Everything else here is block-specific — `design`, `background`, `button`, `card-design`,
+`grid-visibility` and so on. Name a group for the element it styles, and if the block styles
+several elements give each its own group rather than one long list.
+
+### Content tab
+
+Almost entirely block-specific — this is where custom fields live. The recurring names, in
+rough order of use, are `general`, `title`, `link`, `output`, `filters`, `image`, `icon` and
+`sorting`. Reuse one of those when it fits rather than coining a synonym.
+
+### The canonical `set_arguments()` order
+
+Call the group methods in this order. It is not arbitrary — it is the order the surveyed
+blocks already use, and it produces the settings panel reading top to bottom. "Used" is how
+many of the 73 builder-based blocks call it.
+
+| Order | Method | Used | Lands in |
+|---|---|---|---|
+| 1 | your own `add_field()` / `add_fields()` calls | — | Content tab groups |
+| 2 | `add_typography_group()` | 19 | `typography` |
+| 3 | `add_background_group()` | 48 | `wrapper-styles` |
+| 4 | `add_responsive_margins()` | 69 | `wrapper-styles` |
+| 5 | `add_responsive_paddings()` | 66 | `wrapper-styles` |
+| 6 | `add_border_group()` | 63 | `wrapper-styles` |
+| 7 | `add_shadow_group()` | 65 | `wrapper-styles` |
+| 8 | `add_position()` | 23 | `wrapper-styles` |
+| 9 | `add_sticky_offset_group()` | 21 | `wrapper-styles` |
+| 10 | `add_responsive_display_group()` | 44 | `wrapper-styles` |
+| 11 | `add_visibility_conditions()` | 55 | `visibility-conditions` |
+| 12 | `add_advanced_group()` | 64 | `advanced` |
+
+The most common complete shape, and the one to start from:
+
+```php
+public function set_arguments(): array {
+    return ( new \AyeCode\SuperDuper\Builder\BlockArguments() )
+        ->add_field( 'title', array(
+            'type'  => 'text',
+            'title' => __( 'Title', 'my-textdomain' ),
+            'group' => 'general',
+        ) )
+        ->add_background_group()
+        ->add_responsive_margins()
+        ->add_responsive_paddings()
+        ->add_border_group()
+        ->add_shadow_group()
+        ->add_responsive_display_group()
+        ->add_visibility_conditions()
+        ->add_advanced_group()
+        ->get();
+}
+```
+
+Add `->add_typography_group()` before `->add_background_group()` when the block renders text
+it owns. Add `->add_position()` and `->add_sticky_offset_group()` after `->add_shadow_group()`
+when the block can be positioned independently.
+
+### Group is set by the method, not by you
+
+Each group method already assigns its fields to the right group, so you do not pass `'group'`
+to them — you only pass `'group'` on your own `add_field()` calls, and the value must match an
+`id` declared in `block_group_tabs`.
+
+| Method | Group its fields land in |
+|---|---|
+| `add_typography_group()`, `add_colors_group()` | `typography` |
+| `add_responsive_margins()`, `add_responsive_paddings()`, `add_shadow_group()`, `add_background_group()`, `add_display_group()`, `add_responsive_display_group()`, `add_position()`, `add_sticky_offset_group()` | `wrapper-styles` |
+| `add_visibility_conditions()` | `visibility-conditions` |
+| `add_advanced_group()`, `add_class_and_anchor()`, `add_style_id()` | `advanced` |
+| `add_icon_group()`, `add_icon_class()`, `add_icon_position()` | `icon` |
+| `add_layout_group()` | `container` + `wrapper-styles` |
+| `add_margins()`, `add_padding()`, `add_border_group()` | inherit the group of the preceding `add_field()` |
+
+That last row is the one that catches people: `add_margins()`, `add_padding()` and
+`add_border_group()` inherit whatever group was last set, so call them after the design
+methods that set it — which the canonical order above already does.
+
+### When to deviate
+
+Drop a group when the block genuinely cannot use it, not to save effort:
+
+- **No wrapper** (a structural child rendered inside a parent's markup) → no `wrapper-styles`.
+- **Cannot be independently hidden** (a nav item, an accordion item) → no `visibility-conditions`.
+- **Renders no text of its own** → no `typography`.
+
+Adding a *new* group is fine and expected on the Content and Styles tabs. Adding one to the
+Advanced tab, or renaming any of its three standard groups, is not.
+
 ---
 
 ## Conversion Rules (When Editing or Converting Existing Blocks)
@@ -221,7 +495,7 @@ Pass to `parent::__construct()`:
 | `block-wrap` | string | No | Wrapper element for PHP output: `'div'`, `'span'`, or `''` for none |
 | `no_wrap` | bool | No | Set `true` with empty `block-wrap` to prevent wrapper div |
 | `block_group_tabs` | array | No | Tab structure for block inspector (see below) |
-| `output_types` | array | No | Output types: `['block', 'shortcode', 'widget']` (default: all three) |
+| `output_types` | array | No | Output types (default: `['block', 'shortcode']`). Add `'widget'` only for blocks that belong in sidebar widget areas — it is the only type that forces the class to be built on every page load. Must match the tuple passed to `ayecode_sd_register()`. |
 | `block-output` | array | No | **Mode 1**: Auto-compiled static block output (see Output Modes) |
 | `block-edit-return` | string | No | **Mode 2**: Custom JS for edit component (see Output Modes) |
 | `block-save-return` | string | No | **Mode 2**: Custom JS for save component (see Output Modes) |
@@ -1013,6 +1287,56 @@ public function block_global_js(): string {
 
 ---
 
+## Assets — Scripts and Styles
+
+**The plugin registers the handles. The block overrides `enqueue_scripts()`. The framework calls it only when the block has actually rendered.**
+
+That is the whole rule. Assets load on pages where the block appears, and nowhere else.
+
+```php
+public function enqueue_scripts() {
+    wp_enqueue_script( 'my-plugin-frontend' );
+
+    wp_add_inline_script(
+        'my-plugin-frontend',
+        'var myBlockL10n = ' . wp_json_encode( $this->l10n() ) . ';',
+        'before'
+    );
+
+    wp_add_inline_script( 'my-plugin-frontend', $this->my_js() );
+}
+```
+
+Registering the handle itself is the plugin's job, done once in its own asset bootstrap — not in a block.
+
+### Do not
+
+| | Why |
+|---|---|
+| Anything asset-related in `__construct()` | In widget mode the class is built on every page load, so constructor assets load site-wide. It also runs in admin, where frontend assets have no business. |
+| `add_action( 'wp_enqueue_scripts', … )` of your own | The framework already does this, at the right moment. Yours will fire at the wrong one — see below. |
+| `wp_register_script()` inside a block | Handles belong to the plugin. A block that registers its own cannot be deduplicated or reused. |
+| Hardcoded `<script>` / `<link>` tags | Standard WordPress rule — always enqueue. |
+
+### Why the framework owns the timing
+
+Blocks, widgets and shortcodes all render at different points, on either side of `wp_enqueue_scripts`, and **both** failure modes are silent — `wp_add_inline_script()` returns `false` on an unregistered handle and logs nothing.
+
+| Render context | `output()` runs | Doing it by hand |
+|---|---|---|
+| Block theme template | *before* `wp_enqueue_scripts` | A direct `wp_add_inline_script()` finds no registered handle — dropped |
+| Classic theme, `the_content` | *after* it | `add_action( 'wp_enqueue_scripts', … )` attaches to a hook that never fires again — dropped |
+| Classic theme, sidebar widget | *after* it, later still | Same |
+
+`enqueue_scripts()` sidesteps all of it: the framework checks whether `wp_enqueue_scripts` has already fired and either calls your method immediately or defers it to priority 20. You never have to know which case you are in.
+
+Two further guarantees, so you do not have to code around them:
+
+- **Called once per block**, keyed by `base_id`, even when the block appears several times on a page or as both a block and a widget. No static guard needed in your class.
+- **Skipped when the block produced no output**, and skipped in the block editor preview — that renders over AJAX where there is no footer, so nothing would print anyway.
+
+---
+
 ## Output Format Decision Guide
 
 ```
@@ -1031,7 +1355,8 @@ Shared JS helpers needed in editor    →  add block_global_js()
 - [ ] All user-facing strings wrapped in `__()` or `esc_html__()` with correct textdomain
 - [ ] `wp_unslash()` before sanitizing any `$_POST`/`$_GET` input
 - [ ] AJAX handlers verify nonce + `current_user_can()` before processing
-- [ ] No hardcoded `<script>` or `<link>` tags — use `wp_enqueue_script`/`wp_enqueue_style`
+- [ ] Registered with `ayecode_sd_register()`; `output_types` omits `'widget'` unless the block belongs in a sidebar
+- [ ] Frontend assets enqueued by overriding `enqueue_scripts()` — never from `__construct()`, never a `wp_enqueue_scripts` hook of your own
 - [ ] Public-facing icons use `ayecode_get_icon()`, not raw `<i>` tags
 - [ ] No version number bumps during development
 - [ ] No global PHP functions — all code inside the class

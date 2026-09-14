@@ -39,10 +39,15 @@ class Registry {
 	 * @param string   $base_id      The shortcode / block base ID.
 	 * @param string   $class_name   The fully-qualified class name (no namespace required).
 	 * @param string[] $output_types Supported output types: 'block', 'shortcode', 'widget'.
+	 *                               Defaults to block and shortcode; widget is opt-in.
 	 * @param string   $file_path    Absolute path to the class file. Required if the class is
 	 *                               not already loaded or PSR-4 autoloadable.
 	 */
-	public static function register( string $base_id, string $class_name, array $output_types = [], string $file_path = '' ): void {
+	public static function register( string $base_id, string $class_name, array $output_types = [ 'block', 'shortcode' ], string $file_path = '' ): void {
+		if ( empty( $output_types ) ) {
+			$output_types = [ 'block', 'shortcode' ];
+		}
+
 		self::$entries[ $base_id ] = [
 			'class_name'   => $class_name,
 			'output_types' => $output_types,
@@ -61,12 +66,25 @@ class Registry {
 	 * instantiation when a sidebar is rendered.
 	 */
 	public static function boot(): void {
+		/**
+		 * Filter every registered block/shortcode/widget before booting.
+		 *
+		 * Runs after all plugins have registered and before anything is instantiated or
+		 * hooked, so it is the single point at which any entry from any plugin can be
+		 * removed or altered — a global or context-specific off switch.
+		 *
+		 * @since 3.0.9
+		 *
+		 * @param array<string, array{class_name: string, output_types: string[], file_path: string}> $entries Registered entries keyed by base_id.
+		 */
+		self::$entries = apply_filters( 'ayecode_sd_registered_blocks', self::$entries );
+
 		$eager = is_admin() || wp_doing_ajax() || ( defined( 'REST_REQUEST' ) && REST_REQUEST );
 
 		foreach ( self::$entries as $base_id => $entry ) {
 			$class_name   = $entry['class_name'];
 			$output_types = $entry['output_types'];
-			$needs_widget = empty( $output_types ) || in_array( 'widget', $output_types, true );
+			$needs_widget = in_array( 'widget', $output_types, true );
 
 			if ( $eager ) {
 				self::get_instance( $base_id );

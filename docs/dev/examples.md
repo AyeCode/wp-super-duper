@@ -4,7 +4,7 @@
 
 ### Hello World
 
-See [hello-world.php](../hello-world.php) for the most basic working example.
+See [hello-world.php](../../hello-world.php) for the most basic working example.
 
 ### Simple Text Widget
 
@@ -51,8 +51,10 @@ class SD_Simple_Text extends WP_Super_Duper {
     }
 }
 
-// Register
-new SD_Simple_Text();
+// Register — never instantiate the class yourself.
+add_action( 'widgets_init', function () {
+    ayecode_sd_register( 'simple_text', 'SD_Simple_Text', array( 'block', 'shortcode' ) );
+} );
 ```
 
 ## Dependent Fields Examples
@@ -140,7 +142,9 @@ class SD_Post_Selector extends WP_Super_Duper {
     }
 }
 
-new SD_Post_Selector();
+add_action( 'widgets_init', function () {
+    ayecode_sd_register( 'post_selector', 'SD_Post_Selector', array( 'block', 'shortcode' ) );
+} );
 ```
 
 ### Custom Taxonomy Dependent Fields
@@ -298,38 +302,48 @@ public function output($args = array(), $widget_args = array(), $content = '') {
 
 ## Integration Examples
 
-### Register Multiple Widgets
+### Registering Multiple Blocks
+
+Put the list behind a filter so addons can extend it, and pass `$file_path` when the classes
+are not autoloadable — the registry then requires the file only if the class is ever built.
 
 ```php
 // In your plugin main file
-add_action('plugins_loaded', function() {
-    if (class_exists('WP_Super_Duper')) {
-        require_once plugin_dir_path(__FILE__) . 'widgets/class-widget-one.php';
-        require_once plugin_dir_path(__FILE__) . 'widgets/class-widget-two.php';
-        require_once plugin_dir_path(__FILE__) . 'widgets/class-widget-three.php';
+add_action( 'widgets_init', function () {
+    $blocks = apply_filters( 'my_plugin_get_blocks', array(
+        array( 'widget_one',   'SD_Widget_One',   array( 'block', 'shortcode' ) ),
+        array( 'widget_two',   'SD_Widget_Two',   array( 'block', 'shortcode' ) ),
+        array( 'widget_three', 'SD_Widget_Three', array( 'block', 'shortcode', 'widget' ) ),
+    ) );
 
-        new SD_Widget_One();
-        new SD_Widget_Two();
-        new SD_Widget_Three();
+    foreach ( $blocks as $block ) {
+        list( $base_id, $class_name, $output_types ) = $block;
+
+        ayecode_sd_register(
+            $base_id,
+            $class_name,
+            $output_types,
+            plugin_dir_path( __FILE__ ) . 'widgets/class-' . str_replace( '_', '-', $base_id ) . '.php'
+        );
     }
-});
+} );
 ```
 
-### Conditional Loading (V1 vs V2)
+Nothing is loaded up front — no `require_once`, no `new`. See
+[Block Building → Registration](block-building.md#registration).
+
+### Disabling a Block
 
 ```php
-$widget = 'SD_My_Widget';
-if (is_subclass_of($widget, 'WP_Widget')) {
-    // SD V1 is loaded
-    register_widget($widget);
-} else {
-    // SD V2 is loaded
-    new $widget();
-}
+add_filter( 'ayecode_sd_registered_blocks', function ( array $entries ): array {
+    unset( $entries['widget_two'] );
+
+    return $entries;
+} );
 ```
 
 ## See Also
 
 - [API Reference](api-reference.md)
 - [Dependent Fields](features/dependent-fields.md)
-- [hello-world.php](../hello-world.php)
+- [hello-world.php](../../hello-world.php)

@@ -223,7 +223,7 @@ All methods delegate to `ColorOptions`. Do not use in new code.
 
 ---
 
-## Global function wrappers (`includes/functions.php`)
+## Global function wrappers (`includes/functions-deprecated.php`)
 
 All `sd_get_*` global functions are deprecated since 3.1.0. They keep the same external names for backward compatibility but now delegate to the new static methods.
 

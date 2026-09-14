@@ -207,4 +207,4 @@ All `sd_get_*` global functions are soft-deprecated since 3.1.0. They still work
 
 - [API Reference](api-reference.md)
 - [Examples](examples.md)
-- [hello-world.php](../hello-world.php)
+- [hello-world.php](../../hello-world.php)

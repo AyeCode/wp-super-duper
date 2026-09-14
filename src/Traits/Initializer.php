@@ -28,10 +28,17 @@ trait Initializer {
 	public function initialize_super_duper( $options, $is_widget_context ) {
 		global $sd_widgets;
 
+		// Block and shortcode are the default. Widget is opt-in: it is the only output type
+		// that forces WordPress to instantiate the class on every page load, so a class has
+		// to ask for it. Keep this in sync with the tuple passed to ayecode_sd_register().
+		if ( empty( $options['output_types'] ) ) {
+			$options['output_types'] = array( 'block', 'shortcode' );
+		}
+
 		$sd_widgets[ $options['base_id'] ] = array(
 			'name'       => $options['name'],
 			'class_name' => $options['class_name'],
-			'output_types' => !empty($options['output_types']) ? $options['output_types'] : array()
+			'output_types' => $options['output_types']
 		);
 		$this->base_id = $options['base_id'];
 

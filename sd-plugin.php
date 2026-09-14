@@ -11,7 +11,7 @@
  * Text Domain: super-duper
  * Domain Path: /languages
  * Requires at least: 5.0
- * Tested up to: 6.8
+ * Tested up to: 7.1
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
