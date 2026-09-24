@@ -1863,6 +1863,29 @@ class Utils {
 	}
 
 	/**
+	 * Reads the attributes out of a full "[tag a='1' b='2']" string.
+	 *
+	 * @param string $str A shortcode string, or a bare tag name.
+	 * @return array Attribute key/value pairs; empty when there are none.
+	 */
+	public static function get_shortcode_atts( $str ) {
+		if ( ! is_string( $str ) || ! isset( $str[0] ) || '[' !== $str[0] ) {
+			return array();
+		}
+
+		$inner = trim( $str, '[]' );
+		$inner = trim( substr( $inner, strlen( strtok( $inner, ' ' ) ) ) );
+
+		if ( '' === $inner ) {
+			return array();
+		}
+
+		$atts = shortcode_parse_atts( $inner );
+
+		return is_array( $atts ) ? $atts : array();
+	}
+
+	/**
 	 * Build a shortcode string from a tag name, attributes array, and optional content.
 	 *
 	 * @param string $name    Shortcode tag name (or full "[tag …]" string — slug is extracted).
@@ -1875,12 +1898,21 @@ class Utils {
 			return '';
 		}
 
+		// A full "[tag a='1']" string carries attributes of its own. A block saved before
+		// those attributes moved onto the block itself has them here and nowhere else, so
+		// they stand as the defaults and anything in $args wins over them. Without this the
+		// slug is taken and the rest of the stored string is thrown away, and every such
+		// block silently loses its settings.
+		$stored = self::get_shortcode_atts( $name );
+
 		$name       = self::get_shortcode_slug( $name );
 		$attributes = '';
 
-		if ( ! empty( $args ) ) {
-			unset( $args['content'], $args['sd_shortcode'], $args['sd_shortcode_close'] );
+		unset( $args['content'], $args['sd_shortcode'], $args['sd_shortcode_close'] );
 
+		$args = array_merge( $stored, (array) $args );
+
+		if ( ! empty( $args ) ) {
 			foreach ( $args as $key => $value ) {
 				if ( is_array( $value ) ) {
 					$value = implode( ',', $value );
