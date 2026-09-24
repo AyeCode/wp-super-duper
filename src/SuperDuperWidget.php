@@ -83,6 +83,14 @@ class SuperDuperWidget extends \WP_Widget {
 	 * @return string
 	 */
 	public function get_field_name( $field_name ): string {
+		// A registered widget instance has a number and must use WP_Widget's own two-level
+		// field name, because WP_Widget::update_callback() reads $_POST['widget-{id_base}']
+		// keyed by that number. The shortcode inserter has no number, and its JS reads the
+		// attribute name with indexOf('[') and lastIndexOf(']'), which needs a single level.
+		if ( false !== $this->number && '' !== $this->number && null !== $this->number ) {
+			return parent::get_field_name( $field_name );
+		}
+
 		return 'widget-' . $this->id_base . '[' . $field_name . ']';
 	}
 
@@ -94,6 +102,14 @@ class SuperDuperWidget extends \WP_Widget {
 	 * @return string
 	 */
 	public function get_field_id( $field_name ): string {
+		// A registered widget instance has a number and must use WP_Widget's own two-level
+		// field name, because WP_Widget::update_callback() reads $_POST['widget-{id_base}']
+		// keyed by that number. The shortcode inserter has no number, and its JS reads the
+		// attribute name with indexOf('[') and lastIndexOf(']'), which needs a single level.
+		if ( false !== $this->number && '' !== $this->number && null !== $this->number ) {
+			return parent::get_field_id( $field_name );
+		}
+
 		$field_name = ltrim( str_replace( array( '[]', '[', ']' ), array( '', '-', '' ), $field_name ), '-' );
 		return 'widget-' . $this->id_base . '--' . $field_name;
 	}
