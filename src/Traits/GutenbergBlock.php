@@ -108,6 +108,16 @@ trait GutenbergBlock {
         $arguments = $this->get_arguments();
         $arguments = self::parse_block_components( $arguments );
 
+		// Both were package-wide defaults before 3.0, and a block that never asked for them
+		// should not gain them on upgrade.
+		$supports = isset( $this->options['block-supports'] ) ? $this->options['block-supports'] : array();
+		if ( ! isset( $supports['renaming'] ) ) {
+			$supports['renaming'] = false;
+		}
+		if ( ! isset( $supports['customCSS'] ) ) {
+			$supports['customCSS'] = false;
+		}
+
         $config = [
                 'name'        => $block_name,
                 'base_id'     => $this->id_base,
@@ -118,7 +128,7 @@ trait GutenbergBlock {
                 'keywords'    => isset( $this->options['block-keywords'] ) ? json_decode(str_replace("'", '"', $this->options['block-keywords']), true) : [],
                 'arguments'   => $arguments,
                 'options'     => [
-                        'supports'           => isset($this->options['block-supports']) ? $this->options['block-supports'] : [],
+                        'supports'           => $supports,
                         'block_group_tabs'   => isset($this->options['block_group_tabs']) ? $this->options['block_group_tabs'] : [],
                         'block-edit-return'  => isset($this->options['block-edit-return']) ? $this->options['block-edit-return'] : null,
                         'block-save-return'  => isset($this->options['block-save-return']) ? $this->options['block-save-return'] : null,
