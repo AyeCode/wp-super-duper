@@ -2766,15 +2766,14 @@ function sd_build_aui_class( $args ) {
  * @return array
  */
 function sd_build_aui_styles( $args ) {
-
 	$styles = array();
 
 	// background color
 	if ( ! empty( $args['bg'] ) && $args['bg'] !== '' ) {
 		if ( $args['bg'] == 'custom-color' ) {
-			$styles['background-color'] = $args['bg_color'];
+			$styles['background-color'] = sd_sanitize_css_color( $args['bg_color'] );
 		} elseif ( $args['bg'] == 'custom-gradient' ) {
-			$styles['background-image'] = $args['bg_gradient'];
+			$styles['background-image'] = sd_sanitize_css_color( $args['bg_gradient'] );
 
 			// use background on text.
 			if ( ! empty( $args['bg_on_text'] ) && $args['bg_on_text'] ) {
@@ -2830,7 +2829,7 @@ function sd_build_aui_styles( $args ) {
 
 	// font color
 	if ( ! empty( $args['text_color_custom'] ) && $args['text_color_custom'] !== '' ) {
-		$styles['color'] = esc_attr( $args['text_color_custom'] );
+		$styles['color'] = sd_sanitize_css_color( $args['text_color_custom'] );
 	}
 
 	// font line height
