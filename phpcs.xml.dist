@@ -2,7 +2,30 @@
 <ruleset name="AyeCode Package Coding Standards">
     <description>WordPress coding standards for AyeCode v3 Composer packages.</description>
 
-    <rule ref="WordPress-Extra" />
+    <!--
+        GENERATED FILE. DO NOT HAND-EDIT.
+
+        This file is written by the AyeCode Standards distribution and is replaced in
+        full on every standards release, so local edits are silently lost and this repo
+        then drifts from every other one.
+
+        A wrong rule here is wrong for 100+ repos: fix it in the ayecode-standards
+        repository instead, and never silence a sniff locally to make a file pass.
+
+        Nothing here survives a push, including text_domain: package rulesets are
+        copied verbatim.
+    -->
+
+    <!--
+        Short array syntax. WordPress-Extra pulls in
+        Universal.Arrays.DisallowShortArraySyntax, which forces array(); we use
+        [] instead, so that sniff is excluded and the Generic long-array sniff
+        enforces the opposite. Both are auto-fixable with phpcbf.
+    -->
+    <rule ref="WordPress-Extra">
+        <exclude name="Universal.Arrays.DisallowShortArraySyntax" />
+    </rule>
+    <rule ref="Generic.Arrays.DisallowLongArraySyntax" />
 
     <!-- Scan all PHP files in the project tree -->
     <arg name="extensions" value="php"/>
