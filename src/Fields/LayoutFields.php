@@ -385,4 +385,31 @@ final class LayoutFields {
 
 		return $input;
 	}
+
+	/**
+	 * Aspect-ratio select field — the Bootstrap `.ratio` responsive embed wrapper.
+	 * The stored value is the ratio suffix (`16x9`); the block emits
+	 * `ratio ratio-16x9`.
+	 *
+	 * @param array $overwrite Field config overrides.
+	 * @return array
+	 */
+	public static function ratio( array $overwrite = [] ): array {
+		$defaults = [
+			'type'     => 'select',
+			'title'    => __( 'Aspect ratio', 'ayecode-connect' ),
+			'options'  => [
+				''     => __( 'None', 'ayecode-connect' ),
+				'1x1'  => __( '1x1 (square)', 'ayecode-connect' ),
+				'4x3'  => __( '4x3', 'ayecode-connect' ),
+				'16x9' => __( '16x9 (widescreen)', 'ayecode-connect' ),
+				'21x9' => __( '21x9 (ultrawide)', 'ayecode-connect' ),
+			],
+			'default'  => '',
+			'desc_tip' => true,
+			'group'    => 'wrapper-styles',
+		];
+
+		return wp_parse_args( $overwrite, $defaults );
+	}
 }

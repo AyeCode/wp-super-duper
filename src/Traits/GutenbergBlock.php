@@ -48,14 +48,21 @@ trait GutenbergBlock {
                 true // Load in footer
         );
 
-        // visibility conditions
-        require_once SUPER_DUPER_INCLUDES_PATH . 'helpers/visibility-conditions-js.php';
+        // Attach the universal editor scripts and styles once per request, even when
+        // multiple Super Duper blocks are present on the same screen.
+        static $sd_editor_assets_loaded = false;
+        if ( ! $sd_editor_assets_loaded ) {
+            $sd_editor_assets_loaded = true;
 
-        // include helper JS functions
-        require_once SUPER_DUPER_INCLUDES_PATH . 'helpers/gutenberg-block-helpers.php'; //sd_get_block_editor_global_js();
+            // visibility conditions
+            wp_add_inline_script( 'super-duper-universal-block-editor', \AyeCode\SuperDuper\Assets\BlockEditorAssets::visibility_conditions_script() );
 
-        // editor styles
-        require_once SUPER_DUPER_INCLUDES_PATH . 'helpers/gutenberg-editor-styles.php';;
+            // universal helper JS functions
+            wp_add_inline_script( 'super-duper-universal-block-editor', \AyeCode\SuperDuper\Assets\BlockEditorAssets::block_editor_global_js() );
+
+            // editor styles
+            add_action( 'admin_head', array( '\AyeCode\SuperDuper\Assets\BlockEditorAssets', 'inline_editor_styles' ) );
+        }
 
 
 

@@ -57,6 +57,7 @@ class Loader {
 		add_action( 'widgets_init', [ 'AyeCode\\SuperDuper\\Registry', 'boot' ], 99 );
 
 		add_action( 'rest_api_init', [ 'AyeCode\\SuperDuper\\RestApi', 'register_routes' ] );
+		add_action( 'rest_api_init', [ 'AyeCode\\SuperDuper\\Ai\\RestApi', 'register_routes' ] );
 
 		// Registered here rather than from a block constructor. On the lazy frontend path
 		// a constructor does not run until a shortcode renders during the_content, by which

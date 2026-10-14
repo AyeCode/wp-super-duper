@@ -114,11 +114,11 @@ final class FlexFields {
 			'title'           => __( 'Align Self', 'ayecode-connect' ),
 			'options'         => [
 				''                                         => __( 'Default', 'ayecode-connect' ),
-				'align-items' . $device_size . '-start'    => 'align-items-start',
-				'align-items' . $device_size . '-end'      => 'align-items-end',
-				'align-items' . $device_size . '-center'   => 'align-items-center',
-				'align-items' . $device_size . '-baseline' => 'align-items-baseline',
-				'align-items' . $device_size . '-stretch'  => 'align-items-stretch',
+				'align-self' . $device_size . '-start'    => 'align-self-start',
+				'align-self' . $device_size . '-end'      => 'align-self-end',
+				'align-self' . $device_size . '-center'   => 'align-self-center',
+				'align-self' . $device_size . '-baseline' => 'align-self-baseline',
+				'align-self' . $device_size . '-stretch'  => 'align-self-stretch',
 			],
 			'default'         => '',
 			'desc_tip'        => true,
@@ -208,6 +208,66 @@ final class FlexFields {
 		}
 
 		return $input;
+	}
+
+	/**
+	 * Flex direction select field (single breakpoint).
+	 *
+	 * Pass 'device_type' => 'Tablet' or 'Desktop' in $overwrite for responsive variants.
+	 *
+	 * @param array $overwrite Field config overrides.
+	 * @return array
+	 */
+	public static function flex_direction( array $overwrite = [] ): array {
+		$device_size = self::_device_size( $overwrite );
+
+		$defaults = [
+			'type'     => 'select',
+			'title'    => __( 'Flex direction', 'ayecode-connect' ),
+			'options'  => [
+				''                                        => __( 'Default', 'ayecode-connect' ),
+				'flex' . $device_size . '-row'            => 'row',
+				'flex' . $device_size . '-row-reverse'    => 'row reverse',
+				'flex' . $device_size . '-column'         => 'column',
+				'flex' . $device_size . '-column-reverse' => 'column reverse',
+			],
+			'default'  => '',
+			'desc_tip' => true,
+			'group'    => 'wrapper-styles',
+		];
+
+		return wp_parse_args( $overwrite, $defaults );
+	}
+
+	/**
+	 * Gap select field (single breakpoint) — the flex/grid gutter (gap-0 … gap-5).
+	 *
+	 * Pass 'device_type' => 'Tablet' or 'Desktop' in $overwrite for responsive variants.
+	 *
+	 * @param array $overwrite Field config overrides.
+	 * @return array
+	 */
+	public static function gap( array $overwrite = [] ): array {
+		$device_size = self::_device_size( $overwrite );
+
+		$defaults = [
+			'type'     => 'select',
+			'title'    => __( 'Gap', 'ayecode-connect' ),
+			'options'  => [
+				''                          => __( 'Default', 'ayecode-connect' ),
+				'gap' . $device_size . '-0' => '0',
+				'gap' . $device_size . '-1' => '1',
+				'gap' . $device_size . '-2' => '2',
+				'gap' . $device_size . '-3' => '3',
+				'gap' . $device_size . '-4' => '4',
+				'gap' . $device_size . '-5' => '5',
+			],
+			'default'  => '',
+			'desc_tip' => true,
+			'group'    => 'wrapper-styles',
+		];
+
+		return wp_parse_args( $overwrite, $defaults );
 	}
 
 	/**
@@ -303,6 +363,28 @@ final class FlexFields {
 	 */
 	public static function flex_wrap_group( string $prefix = 'flex_wrap', array $overwrite = [] ): array {
 		return self::_responsive_group( [ self::class, 'flex_wrap' ], $prefix, $overwrite );
+	}
+
+	/**
+	 * Return responsive flex-direction fields keyed by argument name.
+	 *
+	 * @param string $prefix   Base key (default 'flex_direction').
+	 * @param array  $overwrite Per-field overwrite config.
+	 * @return array<string, array>
+	 */
+	public static function flex_direction_group( string $prefix = 'flex_direction', array $overwrite = [] ): array {
+		return self::_responsive_group( [ self::class, 'flex_direction' ], $prefix, $overwrite );
+	}
+
+	/**
+	 * Return responsive gap fields keyed by argument name.
+	 *
+	 * @param string $prefix   Base key (default 'gap' → 'gap', 'gap_md', 'gap_lg').
+	 * @param array  $overwrite Per-field overwrite config.
+	 * @return array<string, array>
+	 */
+	public static function gap_group( string $prefix = 'gap', array $overwrite = [] ): array {
+		return self::_responsive_group( [ self::class, 'gap' ], $prefix, $overwrite );
 	}
 
 	/**

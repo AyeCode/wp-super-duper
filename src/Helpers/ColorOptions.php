@@ -85,6 +85,7 @@ final class ColorOptions {
 				'info-emphasis'      => __( 'Info Emphasis', 'ayecode-connect' ),
 				'light-emphasis'     => __( 'Light Emphasis', 'ayecode-connect' ),
 				'dark-emphasis'      => __( 'Dark Emphasis', 'ayecode-connect' ),
+				'body-emphasis'      => __( 'Body Emphasis', 'ayecode-connect' ),
 				'body-secondary'     => __( 'Body Secondary', 'ayecode-connect' ),
 				'body-tertiary'      => __( 'Body Tertiary', 'ayecode-connect' ),
 				'body'               => __( 'Body', 'ayecode-connect' ),

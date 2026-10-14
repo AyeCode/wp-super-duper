@@ -28,6 +28,69 @@
 - Template page query now runs through $wpdb->prepare() on both branches - FIXED
 - Class build key list is memoised instead of rebuilt and filtered on every block render - CHANGED
 - Widget admin JS buffer built once instead of twice per request - CHANGED
+- Block editor deprecation notices from the unfinished BlockEditorAssets migration - FIXED
+- Added AI schema API endpoints (ayecode/v3/ai): /catalog and /schemas - ADDED
+- Added ai-hint, ai-context and ai-nesting block options for AI schema metadata - ADDED
+- Added AI HTML-to-blocks endpoint (ayecode/v3/ai/convert) that maps Bootstrap 5.3 HTML to a native block tree with a loss report - ADDED
+- Added AI vocabulary endpoint (ayecode/v3/ai/vocabulary) listing authoring rules and custom-element blocks - ADDED
+- Added dev-gated AI render endpoint (ayecode/v3/ai/render) for the conversion fidelity harness - ADDED
+- Added class_prefix metadata to token-enum style attributes in the AI schema - ADDED
+- Added ai-html block option so blocks can claim native HTML elements for conversion - ADDED
+- AI convert depth limit raised to 12 so ordinary nested sections are not truncated - FIXED
+- AI render endpoint renders blocks via shortcode output instead of do_blocks, which produced empty HTML - FIXED
+- AI convert keeps a class in css_class instead of dropping it when its block condition cannot be met - FIXED
+- AI convert keeps spacing shorthand and lg-only responsive classes verbatim so they render as authored - FIXED
+- AI convert now maps text-bearing inline elements and unmapped wrappers instead of dropping their content and classes - FIXED
+- AI convert decomposes icon+text items into an icon-box, splitting classes across icon/title attributes and forcing link type none - FIXED
+- AI render separates sibling blocks with whitespace so adjacent text no longer fuses - FIXED
+- AI convert pins neutral values for block styling defaults so conversions no longer inject margins, container widths, or icon-box scale the design never specified - FIXED
+- AI convert decomposes button variant classes (btn-*, btn-lg/sm) into the block's link fields instead of doubling the btn class - FIXED
+- AI convert expands spacing shorthands (p-4, py-5, px-4) to per-side attributes - CHANGED
+- bs_container renders its html_tag (defaulting to div) instead of a hardcoded section - CHANGED
+- bs_iconbox no longer forces h-100 or a duplicate physical margin on the icon wrapper - FIXED
+- bs_button no longer double-prints css_class - FIXED
+- AI convert wraps loose text nodes and keeps empty-but-styled elements (decorative dots) instead of dropping them - FIXED
+- AI convert preserves an icon-item's inner text-element classes via the title attributes and css_class - FIXED
+- AI convert maps hr to a border-top divider and decomposes span.badge into bs_badge - ADDED
+- AI convert decomposes icon chips (a coloured/rounded wrapper around an icon) into a single icon-box - ADDED
+- AI convert infers the column role from any col-* breakpoint variant, not only a bare col - FIXED
+- Added ai-html-fallback block option and form to bs_contact safety-net claim; bs_contact authoring args promoted to content tier - ADDED
+- Added class_prefix bg- to badge_bg and included badge styling defaults in AI convert neutralization - FIXED
+- AI convert folds the media-object pattern (icon chip + heading + paragraph) into one bs_iconbox with title and description populated - ADDED
+- Promoted the bs_iconbox description argument to content tier in the AI schema - CHANGED
+- bs_iconbox output separates its icon, title and description with whitespace so adjacent copy no longer fuses - FIXED
+- AI convert maps a media object's text alignment (text-start/center/end) to the icon-box icon/title/desc text-align attributes so left-aligned cards no longer render centered - FIXED
+- AI convert maps an icon chip's fs-* to icon_size, and bs_iconbox renders icon_size for filled chips - FIXED
+- AI convert maps flex utilities (align-items-*, justify-content-*) to the flex attributes when display is set on the same element, instead of spilling them to css_class - FIXED
+- AI convert maps responsive variants (mt-lg-3, text-lg-start, d-lg-flex) to their _md/_lg attributes instead of keeping them verbatim in css_class - CHANGED
+- AI convert absorbs an icon chip's p-* into the icon-box per-side padding, maps an explicit mb-0 to mb/title_pb/desc_pb "0", and maps a bare small to the target font-size attribute as fs-sm - FIXED
+- Added body-emphasis to the shared AUI emphasis colour options - ADDED
+- AI convert folds the media object for any adjacent caption (inline span/small/strong labels and div caption rows, and a bare icon), not only a heading/paragraph stack - CHANGED
+- AI convert preserves trailing content (a feature list, a CTA) after a folded caption instead of abandoning the fold, so feature cards no longer strand their copy beside an icon-only box - FIXED
+- AI convert decomposes an inline icon+text row whose icon is not the first child (a status pill led by a spinner) into a single titled icon-box - FIXED
+- AI convert folds a br inside a text run or caption into the copy (space or line break) and never reports it as dropped - FIXED
+- AI convert maps the border border-{token} combo to the container border attribute and absorbs the bare border marker instead of spilling it - FIXED
+- AI convert never folds interactive or claimed elements (a.btn, button, img, badges, custom elements) into an icon composite, so a CTA button group converts as separate bs_button blocks instead of one fused icon-box - FIXED
+- AI convert no longer folds a multi-run inline row (a trust line of bullet-separated spans) into one fused-title icon-box - FIXED
+- AI convert counts a label unit that carries its own icon as a text run, so a two-label justify row is not folded into one icon-box - FIXED
+- AI convert strips any stray Font Awesome identity class from css_class, so an icon never leaks into a block's class list - FIXED
+- Added a bs-post-content vocabulary element that converts to core/post-content, the first core-block exception, so a single-post template can render the post body - ADDED
+- AI convert treats an icon-only a.btn/button as a bs_button with icon_class instead of an icon-box, even with a rounded-circle marker - FIXED
+- AI convert splits a bold-lead caption (strong/b prefix) into title and description instead of fusing it into one over-long title - FIXED
+- AI convert absorbs a folded icon item's own flex/gap layout classes like chip internals instead of spilling them to css_class - FIXED
+- AI convert folds a heading followed by a trailing decorative icon (a verified badge) into one titled icon-box instead of stranding the icon - FIXED
+- AI convert keeps a border-radius (rounded/rounded_size) as an attribute on a borderless element instead of spilling it, since the radius renders independent of the border - FIXED
+- AI vocabulary marks a container widget (a block that accepts inner blocks) as leaf false with a derived children list, replacing the blanket leaf rule that made the model avoid the navbar and accordion families - CHANGED
+- AI convert recurses into container custom elements (navbar, nav, accordion, tabs, modal, offcanvas), converting listed child elements into inner blocks so a nested bs-navbar becomes the proper nested block tree - ADDED
+- AI convert maps the bare .small class to the fs-sm font-size attribute universally, not only on badge and composite paths - FIXED
+- Added flex_direction, flex_wrap, gap and ratio field families to the container so the flex/gap/aspect-ratio utilities map to attributes instead of spilling - ADDED
+- Added the fw-medium token to the shared font_weight enum - ADDED
+- Fixed the flex_align_self enum, which listed align-items-* values instead of align-self-*, and mapped it independent of the editor container gate - FIXED
+- Enabled the font_size control on the container so container font-size utilities map to an attribute - CHANGED
+- AI convert absorbs a chip's align-self-* utility when folding an icon composite - FIXED
+- AI convert consumes background declarations from inline style (gradient, custom color, image, and the gradient-text combo) into the bg attribute family instead of dropping them, mapping only where the block declares the field and rejecting unsafe values - ADDED
+- AI convert consumes a non-transparent inline color into the text_color custom pair, ordered after the gradient-text combo so a combo's transparent color stays a companion - ADDED
+- AI convert repairs invalid flex gap utilities on a row by rewriting them to the gutter family (gap to g, row-gap to gy, column-gap to gx), reported under a repairs key instead of as loss - ADDED
 
 ## [3.0.9-beta] — 2026-09-14
 - enqueue_scripts() method added so a block loads its assets only when it actually renders - ADDED

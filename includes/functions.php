@@ -51,7 +51,7 @@ function ayecode_get_sd_colors( array $types = [ 'core' ], bool $flatten = false
 /**
  * Build AUI classes from settings.
  *
- * This needs to be kept in sync with the JS version in includes/helpers/gutenberg-block-helpers.php
+ * This needs to be kept in sync with the JS version in src/Assets/BlockEditorAssets.php
  *
  * @param array $args
  * @return string
@@ -63,7 +63,7 @@ function sd_build_aui_class( $args ) {
 /**
  * Build Style output from arguments.
  *
- * This needs to be kept in sync with the JS version in includes/helpers/gutenberg-block-helpers.php
+ * This needs to be kept in sync with the JS version in src/Assets/BlockEditorAssets.php
  *
  * @param array $args
  * @return string

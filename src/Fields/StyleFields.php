@@ -684,6 +684,7 @@ final class StyleFields {
 					'value'           => '1',
 					'desc_tip'        => false,
 					'desc'            => __( 'This will show the background on the text. To apply to child elements like p or h, give them the class .position-static', 'ayecode-connect' ),
+					'ai-desc'         => 'Gradient text effect: clips the gradient to the letters themselves (background-clip: text) instead of painting it behind them. For a "gradient text" request set ' . $prefix . ' to custom-gradient, provide ' . $prefix . '_gradient, and set this to 1. When set on a container, child text elements need the class position-static.',
 					'group'           => ! empty( $ow_on_text['group'] ) ? $ow_on_text['group'] : 'wrapper-styles',
 					'element_require' => '[%' . $prefix . '%]=="custom-gradient"',
 				];

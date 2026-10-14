@@ -22,6 +22,8 @@ CLAUDE.md           export-ignore
 
 # Developer documentation
 /docs/              export-ignore
+/tests/             export-ignore
+AI-TODO.md          export-ignore
 
 # Examples. sd-plugin.php carries a second WordPress plugin header, so shipping it
 # makes a phantom "Super Duper - Examples" entry appear in the Plugins list.

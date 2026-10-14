@@ -1,10 +1,8 @@
 <?php
 /**
- * WP Super Duper Gutenberg Block Editor Universal Script Helper
+ * WP Super Duper Gutenberg Block Editor Inline Styles.
  *
- * This file contains the universal JavaScript logic that is shared across all
- * Super Duper blocks, such as utility functions and auto-recovery scripts.
- *
+ * @deprecated 3.1.0 Logic moved to AyeCode\SuperDuper\Assets\BlockEditorAssets.
  * @version 1.2.25
  */
 
@@ -12,20 +10,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+if ( ! function_exists( 'super_duper_inline_editor_styles' ) ) {
+	/**
+	 * Adds an inline style to the main editor stylesheet.
+	 *
+	 * @deprecated 3.1.0 Use AyeCode\SuperDuper\Assets\BlockEditorAssets::inline_editor_styles instead.
+	 *
+	 * @return void
+	 */
+	function super_duper_inline_editor_styles() {
+		_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Assets\\BlockEditorAssets::inline_editor_styles' );
 
-/**
- * Adds an inline style to the main editor stylesheet.
- */
-function super_duper_inline_editor_styles() {
-	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Assets\\BlockEditorAssets::inline_editor_styles' );
-
-	echo "
-    <style>
-        .bsui label.components-base-control__label {
-            width: 100%;
-        }
-    </style>
-    ";
+		\AyeCode\SuperDuper\Assets\BlockEditorAssets::inline_editor_styles();
+	}
 }
-
-add_action( 'admin_head', 'super_duper_inline_editor_styles' );

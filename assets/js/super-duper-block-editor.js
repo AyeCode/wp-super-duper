@@ -634,7 +634,7 @@ window.sdDependentFieldCache = window.sdDependentFieldCache || {};
 								zIndex: 1,
 							}
 						}));
-						const controlElement = el('div', { style: { display: 'flex', alignItems: 'stretch' } },
+						const controlElement = el('div', { className: 'mb-2', style: { display: 'flex', alignItems: 'stretch' } },
 							el('div', { style: { flex: 1 } }, textInputElement),
 							styledButtons
 						);
