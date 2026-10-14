@@ -35,7 +35,6 @@ trait GutenbergBlock {
      * configuration data to it.
      */
     public function enqueue_block_assets() {
-        global $sd_enqueued_block_components;
         // 1. Enqueue the main universal JS file (this will only run once).
         // This assumes your JS file is located at 'assets/js/super-duper-block-editor.js'.
         // You may need to adjust the path.
@@ -168,16 +167,15 @@ trait GutenbergBlock {
     }
 
     public static function parse_block_components($arguments) {
-        global $sd_enqueued_block_components;
         if(!empty($arguments)) {
             foreach($arguments as $key => $arg) {
                 if ( ! empty( $arg['block_component'] )  ) {
 
                     // if not built then build
-                    if ( empty( $sd_enqueued_block_components[ $arg['block_component'] ] ) ) {
+                    if ( empty( \AyeCode\SuperDuper\State::$enqueued_block_components[ $arg['block_component'] ] ) ) {
                         $component = self::build_block_component($arg);
                         wp_add_inline_script( 'super-duper-universal-block-editor', $component );
-                        $sd_enqueued_block_components[ $arg['block_component'] ] = true;
+                        \AyeCode\SuperDuper\State::$enqueued_block_components[ $arg['block_component'] ] = true;
                     }
 
                     $new_args = [

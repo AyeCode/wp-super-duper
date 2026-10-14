@@ -16,6 +16,37 @@ class Utils {
 	 *
 	 * @return bool True if a builder preview is detected, false otherwise.
 	 */
+	/**
+	 * Output the package version as a meta tag in the head.
+	 *
+	 * Static so Loader can register it at plugins_loaded, independent of whether
+	 * any block is ever instantiated — on the lazy path a block constructor runs
+	 * during the_content, long after wp_head has fired.
+	 */
+	public static function generator(): void {
+		$file        = str_replace( array( "/", "\\" ), "/", realpath( __FILE__ ) );
+		$plugins_dir = str_replace( array( "/", "\\" ), "/", realpath( WP_PLUGIN_DIR ) );
+
+		// Find source plugin/theme of SD
+		$source = array();
+		if ( strpos( $file, $plugins_dir ) !== false ) {
+			$source = explode( "/", plugin_basename( $file ) );
+		} elseif ( function_exists( 'get_theme_root' ) ) {
+			$themes_dir = str_replace( array( "/", "\\" ), "/", realpath( get_theme_root() ) );
+
+			if ( strpos( $file, $themes_dir ) !== false ) {
+				$source = explode( "/", ltrim( str_replace( $themes_dir, "", $file ), "/" ) );
+			}
+		}
+
+		echo '<meta name="generator" content="WP Super Duper v' . esc_attr( SUPER_DUPER_VER ) . '"' . ( ! empty( $source[0] ) ? ' data-sd-source="' . esc_attr( $source[0] ) . '"' : '' ) . ' />';
+	}
+
+	/**
+	 * Detect whether we are inside a page-builder preview/editor context.
+	 *
+	 * @return bool
+	 */
 	public static function is_preview(): bool {
 		// Check for Elementor
 		if ( isset( $_REQUEST['elementor-preview'] ) || ( is_admin() && isset( $_REQUEST['action'] ) && $_REQUEST['action'] == 'elementor' ) || ( isset( $_REQUEST['action'] ) && $_REQUEST['action'] == 'elementor_ajax' ) ) {
@@ -809,7 +840,7 @@ class Utils {
 								break;
 							case 'request_parameter':
 								if ( ! empty( $filters[0] ) && isset( $_REQUEST[ $filters[0] ] ) ) {
-									$raw_value = sanitize_text_field( $_REQUEST[ $filters[0] ] );
+									$raw_value = sanitize_text_field( wp_unslash( $_REQUEST[ $filters[0] ] ) );
 								}
 								break;
 						}
@@ -1055,6 +1086,11 @@ class Utils {
 	 * @return array
 	 */
 	public static function get_class_build_keys() {
+		static $cached = null;
+		if ( null !== $cached ) {
+			return $cached;
+		}
+
 		$keys = array(
 			'container',
 			'position',
@@ -1088,7 +1124,9 @@ class Utils {
 			'width-MTD',
 		);
 
-		return apply_filters( 'sd_class_build_keys', $keys );
+		$cached = apply_filters( 'sd_class_build_keys', $keys );
+
+		return $cached;
 	}
 
 	// -------------------------------------------------------------------------
@@ -1320,9 +1358,11 @@ class Utils {
 			$sql .= ' LIMIT ' . $limit;
 		}
 
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $sql is built above from
+		// literals plus %d placeholders; prepare() is applied here in both branches.
 		$pages = $exclude_pages_placeholders
 			? $wpdb->get_results( $wpdb->prepare( $sql, ...$exclude_pages ) )
-			: $wpdb->get_results( $sql );
+			: $wpdb->get_results( $wpdb->prepare( $sql ) );
 
 		$options = ! empty( $args['default_label'] ) ? array( '' => $args['default_label'] ) : array();
 

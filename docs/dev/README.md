@@ -10,6 +10,7 @@ A WordPress Class to build a widget, shortcode and Gutenberg block at once.
 - [API Reference](api-reference.md) — constructor options and field arguments
 - [Examples](examples.md) — working block classes, start to finish
 - [REST API](rest-api.md) — block discovery endpoints
+- [Roadmap](roadmap.md) — deferred work, with the measurements behind each decision
 - [Features](features/)
   - [Block Output Formats](features/block-output-formats.md)
   - [Dependent Fields](features/dependent-fields.md)

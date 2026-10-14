@@ -18,7 +18,7 @@ use AyeCode\SuperDuper\Fields\TypographyFields;
  *
  *   public function set_arguments(): array {
  *       return ( new BlockArguments() )
- *           ->add_field( 'title', [ 'type' => 'text', 'title' => __( 'Title', 'my-domain' ) ] )
+ *           ->add_field( 'title', [ 'type' => 'text', 'title' => __( 'Title', 'ayecode-connect' ) ] )
  *           ->add_margins()
  *           ->add_padding()
  *           ->add_border_group()

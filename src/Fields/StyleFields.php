@@ -749,6 +749,27 @@ final class StyleFields {
 			);
 		}
 
+		// Tag the sub-fields for the editor's component dedupe. build_block_component()
+		// emits a named component the first time it is seen and every later block reuses
+		// it, so two blocks sharing a name must produce byte-identical config. That is
+		// only guaranteed when the caller took every default, so bail out on any
+		// overwrite; $prefix and $include_button_colors still vary, so both go in the name.
+		$can_dedupe = is_array( $overwrite ) && empty( $field_overwrites );
+
+		if ( $can_dedupe ) {
+			$clean = $overwrite;
+			unset( $clean['device_type'] );
+			$can_dedupe = empty( $clean );
+		}
+
+		if ( $can_dedupe ) {
+			$component = 'sd_get_background_inputs_' . $prefix . ( $include_button_colors ? '_btn' : '' );
+
+			foreach ( $fields as $field_key => $field ) {
+				$fields[ $field_key ]['block_component'] = $component . '_' . $field_key;
+			}
+		}
+
 		return $fields;
 	}
 }

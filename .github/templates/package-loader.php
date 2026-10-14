@@ -1,19 +1,28 @@
 <?php
 /**
- * AyeCode Package Loader (v1.0.0)
+ * AyeCode Package Loader (v1.0.1)
  *
  * Handles version negotiation, PSR-4 autoloading, and bootstrapping for AyeCode packages.
  * Shared across all copies of the package (standalone plugin install + composer dependency).
  *
  * Do NOT edit below the configuration block.
+ *
+ * @since 1.0.0 Initial release.
+ * @since 1.0.1 Bail with `return` instead of `exit`, so composer CLI tooling survives.
  */
 
-// Exit if accessed directly.
+// Bail if accessed directly.
+//
+// `return`, not `exit`: this file is a composer `autoload.files` entry, so it runs
+// on every `require vendor/autoload.php` including CLI tooling (phpcs, phpunit,
+// phpstan) where ABSPATH is undefined. `exit` there terminates the calling tool
+// with status 0 and no output, so the run looks clean while doing nothing. A
+// top-level `return` still halts this file when it is requested directly.
 if ( ! defined( 'ABSPATH' ) ) {
-	exit;
+	return;
 }
 
-// AyeCode Package Loader (v1.0.0)
+// AyeCode Package Loader (v1.0.1)
 ( function () {
 	// -------------------------------------------------------------------------
 	// CONFIGURATION — update these values for each new package.

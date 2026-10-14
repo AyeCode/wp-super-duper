@@ -19,8 +19,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  * registration, but is needed on the editor screen.
  */
 function sd_get_block_editor_global_js() {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Assets\\BlockEditorAssets::block_editor_global_js' );
-    global $sd_is_js_functions_loaded, $wp_version;
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Assets\\BlockEditorAssets::block_editor_global_js' );
+    global $wp_version;
 
     ob_start();
     ?>
@@ -28,8 +28,6 @@ function sd_get_block_editor_global_js() {
         <?php
 
 
-        //if ( ! $sd_is_js_functions_loaded ) {
-        $sd_is_js_functions_loaded = true;
         ?>
 
 

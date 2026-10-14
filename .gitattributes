@@ -1,13 +1,30 @@
-# Items to ignore when downloading release
+# Files excluded from release archives (git archive / Composer dist).
+# The repo keeps all of these; they just have no business in a customer install.
 
-.gitattributes export-ignore
-.gitignore export-ignore
-.scrutinizer.yml export-ignore
-composer.json export-ignore
-composer.lock export-ignore
-CONTRIBUTING.md export-ignore
-phpunit.xml export-ignore
-README.md export-ignore
-/tests/ export-ignore
-/vendor/ export-ignore
-/.idea/ export-ignore
+# Repo plumbing
+.gitattributes      export-ignore
+.gitignore          export-ignore
+/.idea/             export-ignore
+/vendor/            export-ignore
+
+# Package metadata and dev config
+composer.json       export-ignore
+composer.lock       export-ignore
+README.md           export-ignore
+.editorconfig       export-ignore
+phpcs.xml.dist      export-ignore
+
+# AI assistant and contributor tooling
+/.github/           export-ignore
+/.claude/           export-ignore
+/.aiassistant/      export-ignore
+CLAUDE.md           export-ignore
+
+# Developer documentation
+/docs/              export-ignore
+
+# Examples. sd-plugin.php carries a second WordPress plugin header, so shipping it
+# makes a phantom "Super Duper - Examples" entry appear in the Plugins list.
+sd-plugin.php       export-ignore
+hello-world.php     export-ignore
+map.php             export-ignore

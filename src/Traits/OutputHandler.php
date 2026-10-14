@@ -92,6 +92,29 @@ trait OutputHandler {
 	 * @return string The rendered HTML.
 	 */
 	public function shortcode_output( $args = array(), $content = '' ) {
+		// Registry caches a single instance per base_id, and a block may render another
+		// block of the same type inside its own output(). argument_values() writes
+		// $this->instance, which get_instance_hash() and get_instance_style() read back,
+		// so without this save/restore a nested render would leave the outer render
+		// reading the inner one's state and emitting the wrong sdel- hash.
+		$previous_instance = $this->instance;
+
+		try {
+			return $this->render_shortcode_output( $args, $content );
+		} finally {
+			$this->instance = $previous_instance;
+		}
+	}
+
+	/**
+	 * The body of shortcode_output(). Split out so the public method can guarantee
+	 * $this->instance is restored on every exit path, including the early return.
+	 *
+	 * @param array  $args    The shortcode attributes.
+	 * @param string $content The enclosed content, if any.
+	 * @return string The rendered HTML.
+	 */
+	private function render_shortcode_output( $args = array(), $content = '' ) {
 		$_instance = $args;
 		$args = $this->argument_values( $args );
 		$args = \AyeCode\SuperDuper\Utils::string_to_bool( $args );

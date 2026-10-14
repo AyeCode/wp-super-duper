@@ -20,7 +20,7 @@ vendor/bin/phpcbf --standard=phpcs.xml.dist   # auto-fix
 
 Standards enforced: `WordPress-Extra`, PHP ≥ 7.4, WordPress ≥ 5.0, text domain `ayecode-connect`.
 
-There are no automated tests or a build step for PHP. The JS at `assets/js/super-duper-block-editor.js` has a pre-minified companion (`*.min.js`) — update both when editing JS.
+There are no automated tests or a build step for PHP. The JS at `assets/js/super-duper-block-editor.js` is the file that is actually enqueued. A `*.min.js` companion exists but is stale and referenced by nothing — do not rely on it.
 
 ## Architecture
 
@@ -28,21 +28,20 @@ There are no automated tests or a build step for PHP. The JS at `assets/js/super
 
 `wp-super-duper.php` is the WordPress plugin header file. It simply requires `package-loader.php`.
 
-`package-loader.php` is the **AyeCode Double Negotiation loader** — the real bootstrap. It has four phases:
-
-**Step 0 — Early Claim (direct-load time, before `plugins_loaded`)**
-Defines `SUPER_DUPER_VER` and `SUPER_DUPER_PLUGIN_URL`, registers the PSR-4 SPL autoloader (`AyeCode\SuperDuper\` → `src/`), requires the global function files (`includes/functions.php`, `includes/functions-deprecated.php`, `includes/helpers.php`) and all legacy trait files (`includes/traits/`), then sets `class_alias('AyeCode\SuperDuper\SuperDuper', 'WP_Super_Duper')`. This early-claim prevents older bundled copies (loaded alphabetically before this file) from winning the class-definition race.
+`package-loader.php` is the **AyeCode Double Negotiation loader** — the real bootstrap. It matches `.github/templates/package-loader.php` exactly below the configuration block, and has three phases, all on `plugins_loaded`:
 
 **Step 1 — Version Registration (priority 1)**
-Registers this copy's version in `$GLOBALS['ayecode_super_duper_registry']`. The copy with the highest version wins subsequent steps.
+Every installed copy registers its version and path in `$GLOBALS['ayecode_super_duper_registry']`. The highest version wins the subsequent steps; losing copies bail out.
 
-**Step 2 — Class Loading (priority 2)**
-Only the winning copy runs this. Re-registers the SPL autoloader and reloads function files if needed.
+**Step 2 — Autoloader Registration (priority 2)**
+Only the winning copy runs this. Registers the PSR-4 SPL autoloader mapping `AyeCode\SuperDuper\` → `src/`.
 
 **Step 3 — Loader Instantiation (priority 10)**
-Only the winning copy runs this. Instantiates `AyeCode\SuperDuper\Loader`, which registers all WordPress hooks.
+Only the winning copy runs this. Defines `SUPER_DUPER_VER`, `SUPER_DUPER_PLUGIN_URL` and `SUPER_DUPER_INCLUDES_PATH`, then instantiates `AyeCode\SuperDuper\Loader`.
 
-`includes/loader.php` — legacy loader, still present for backward compatibility with any composer dependency copies that do not use `package-loader.php`. Not called by the standalone plugin.
+`src/Loader.php` is where the remaining bootstrap happens, in its constructor: it requires the global function files that cannot be autoloaded (`includes/functions.php`, `includes/helpers.php`, `includes/functions-deprecated.php`), sets `class_alias()` so `WP_Super_Duper` resolves to `SuperDuper` (or `SuperDuperWidget` when `SUPER_DUPER_LOAD_WIDGET` is true), and registers `Registry::boot()` on `widgets_init` priority 99 plus `RestApi::register_routes()` on `rest_api_init`.
+
+Because `class_alias()` happens at `plugins_loaded` priority 10, any consuming plugin that declares `class X extends WP_Super_Duper` earlier than that will fatal. Blocks must be registered via `ayecode_sd_register()`, not declared at file scope on an early hook.
 
 ### PSR-4 Namespace (`src/`)
 
@@ -55,6 +54,8 @@ All modern classes live under `AyeCode\SuperDuper\` (mapped to `src/` by the SPL
 | `BricksElement` | `src/BricksElement.php` | Bricks Builder adapter |
 | `Loader` | `src/Loader.php` | Hook-registration entry point (constructor only) |
 | `Utils` | `src/Utils.php` | Static utilities: `is_preview()`, `string_to_bool()`, `encode_shortcodes()`, `decode_shortcodes()`, `replace_variables()`, `element_require()` |
+| `Registry` | `src/Registry.php` | Lazy block/shortcode/widget registry — backs `ayecode_sd_register()`, boots on `widgets_init` 99 |
+| `RestApi` | `src/RestApi.php` | Read-only block discovery endpoints under `ayecode/v3` |
 
 **Builder:**
 
@@ -78,7 +79,7 @@ All modern classes live under `AyeCode\SuperDuper\` (mapped to `src/` by the SPL
 
 ### Trait Breakdown
 
-All traits exist in two locations: the canonical `src/Traits/` (PSR-4 autoloaded) and legacy copies in `includes/traits/` (required directly by `package-loader.php` Step 0 for backward compat). The two are kept in sync.
+All traits live in `src/Traits/` and are PSR-4 autoloaded. There is no second copy — the legacy global-name duplicates in `includes/traits/` were retired in 3.0.9-beta; nothing composed them and they were being loaded on every request. Edit the trait once, in `src/Traits/`.
 
 | Trait | Responsibility |
 |---|---|

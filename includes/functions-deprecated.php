@@ -1056,11 +1056,26 @@ if ( ! function_exists( 'sd_blocks_render_blocks' ) ) {
 		if ( ! empty( $parsed_block['attrs']['sd_shortcode_close'] ) ) {
 			$content = isset( $parsed_block['attrs']['html'] ) ? $parsed_block['attrs']['html'] : $block_content;
 
+			// The plugin that registered this shortcode is gone (deactivated or removed).
+			// do_shortcode() would leave the raw [tag ...] text in the page, so drop the
+			// missing wrapper but keep whatever it was wrapping — those children may come
+			// from plugins that are still active.
+			if ( ! shortcode_exists( $parsed_block['attrs']['sd_shortcode'] ) ) {
+				return sd_missing_shortcode_notice( $parsed_block['attrs']['sd_shortcode'] ) . $content;
+			}
+
 			$block_content = sd_build_shortcode( $parsed_block['attrs']['sd_shortcode'], $parsed_block['attrs'], $content );
 
 			$block_content = do_shortcode( $block_content );
 
 		} elseif ( ! empty( $parsed_block['attrs']['sd_shortcode'] ) ) {
+
+			// As above, but there is nothing to preserve here: $block_content is just the
+			// saved wrapper, and it carries the block's utility classes (background,
+			// padding and so on), so returning it would leave a visibly styled empty box.
+			if ( ! shortcode_exists( $parsed_block['attrs']['sd_shortcode'] ) ) {
+				return sd_missing_shortcode_notice( $parsed_block['attrs']['sd_shortcode'] );
+			}
 
 			$shortcode = sd_build_shortcode( $parsed_block['attrs']['sd_shortcode'], $parsed_block['attrs'] );
 
@@ -1086,6 +1101,26 @@ if ( ! function_exists( 'sd_blocks_render_blocks' ) ) {
 		}
 
 		return $block_content;
+	}
+}
+
+if ( ! function_exists( 'sd_missing_shortcode_notice' ) ) {
+	/**
+	 * A debug-only marker left where a block could not render.
+	 *
+	 * A block whose plugin has been deactivated simply disappears from the page, which is
+	 * correct but hard to diagnose. Under WP_DEBUG leave an HTML comment naming the missing
+	 * shortcode so it can be identified from view-source. Returns nothing in production.
+	 *
+	 * @param string $shortcode The shortcode that is not registered.
+	 * @return string
+	 */
+	function sd_missing_shortcode_notice( $shortcode ) {
+		if ( ! defined( 'WP_DEBUG' ) || ! WP_DEBUG ) {
+			return '';
+		}
+
+		return '<!-- Super Duper: shortcode "' . esc_html( $shortcode ) . '" is not registered; its plugin may be deactivated. -->';
 	}
 }
 

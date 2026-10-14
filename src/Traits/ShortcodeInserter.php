@@ -24,6 +24,16 @@ trait ShortcodeInserter {
 	 * @return string The picker HTML.
 	 */
 	public static function get_picker( $editor_id = '' ) {
+		// The picker lists every registered shortcode, so it is editor-only. The JS
+		// has always sent a super_duper_picker nonce; it just was never checked.
+		if ( wp_doing_ajax() ) {
+			check_ajax_referer( 'super_duper_picker', '_ajax_nonce' );
+		}
+
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			wp_die( -1, 403 );
+		}
+
 		ob_start();
 		if ( isset( $_POST['editor_id'] ) ) {
 			$editor_id = esc_attr( wp_unslash( $_POST['editor_id'] ) );
@@ -31,17 +41,29 @@ trait ShortcodeInserter {
 			$editor_id = 'main_content_content_vb_tiny_mce';
 		}
 
-		global $sd_widgets;
+		// Sourced from the Registry rather than the $sd_widgets global: the global only
+		// contains blocks whose constructor has already run, so on a lazy request it
+		// would list a fraction of what is actually registered.
+		$entries = \AyeCode\SuperDuper\Registry::get_entries();
+		ksort( $entries );
 		?>
 		<div class="sd-shortcode-left-wrap">
 			<?php
-			ksort( $sd_widgets );
-			if ( ! empty( $sd_widgets ) ) {
+			if ( ! empty( $entries ) ) {
 				echo '<select class="widefat" onchange="sd_get_shortcode_options(this);">';
-				echo "<option>" . __( 'Select shortcode', 'ayecode-connect' ) . "</option>";
-				foreach ( $sd_widgets as $shortcode => $class ) {
-					if ( ! empty( $class['output_types'] ) && ! in_array( 'shortcode', $class['output_types'] ) ) { continue; }
-					echo "<option value='" . esc_attr( $shortcode ) . "'>" . esc_html( $shortcode ) . " (" . esc_html( $class['name'] ) . ")</option>";
+				echo '<option>' . esc_html__( 'Select shortcode', 'ayecode-connect' ) . '</option>';
+				foreach ( $entries as $shortcode => $entry ) {
+					if ( ! empty( $entry['output_types'] ) && ! in_array( 'shortcode', $entry['output_types'], true ) ) {
+						continue;
+					}
+
+					// The display name lives on the instance, not the registration, so it has
+					// to be resolved here. Registry caches instances and opening the picker is
+					// an explicit user action, so this cost is paid on click, not on page load.
+					$instance = \AyeCode\SuperDuper\Registry::get_instance_public( $shortcode );
+					$name     = ( $instance && ! empty( $instance->options['name'] ) ) ? $instance->options['name'] : $shortcode;
+
+					echo "<option value='" . esc_attr( $shortcode ) . "'>" . esc_html( $shortcode ) . ' (' . esc_html( $name ) . ')</option>';
 				}
 				echo "</select>";
 			}
@@ -82,15 +104,27 @@ trait ShortcodeInserter {
 	 * Get widget settings via AJAX for the shortcode inserter.
 	 */
 	public static function get_widget_settings() {
-		global $sd_widgets;
 		check_ajax_referer( 'super_duper_output_shortcode', '_ajax_nonce' ); // Nonce check for security
 
+		// A valid nonce is not authorisation — form() renders a widget's admin settings.
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			wp_die( -1, 403 );
+		}
+
 		$shortcode = isset( $_REQUEST['shortcode'] ) ? sanitize_title_with_dashes( wp_unslash( $_REQUEST['shortcode'] ) ) : '';
-		if ( ! $shortcode || ! isset( $sd_widgets[ $shortcode ] ) || ! isset( $sd_widgets[ $shortcode ]['class_name'] ) ) {
+		$entry     = \AyeCode\SuperDuper\Registry::get_entries()[ $shortcode ] ?? array();
+
+		if ( ! $shortcode || empty( $entry['class_name'] ) ) {
 			wp_die();
 		}
 
-		$class_name = $sd_widgets[ $shortcode ]['class_name'];
+		$class_name = $entry['class_name'];
+
+		// The class may not be autoloadable; Registry records where it lives.
+		if ( ! class_exists( $class_name ) && ! empty( $entry['file_path'] ) && file_exists( $entry['file_path'] ) ) {
+			require_once $entry['file_path'];
+		}
+
 		if ( ! class_exists( $class_name ) ) {
 			wp_die();
 		}
@@ -115,11 +149,10 @@ trait ShortcodeInserter {
 	 * Insert the shortcode builder button next to the media button.
 	 */
 	public static function shortcode_insert_button( $editor_id = '', $insert_shortcode_function = '' ) {
-		global $shortcode_insert_button_once;
-		if ( $shortcode_insert_button_once ) {
+		if ( \AyeCode\SuperDuper\State::$insert_button_done ) {
 			return;
 		}
-		$shortcode_insert_button_once = true;
+		\AyeCode\SuperDuper\State::$insert_button_done = true;
 
 		add_thickbox();
 

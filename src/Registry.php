@@ -6,9 +6,10 @@ namespace AyeCode\SuperDuper;
  * WP Super Duper Registry
  *
  * Stores block/shortcode/widget registrations without instantiating classes.
- * On the frontend, classes are only instantiated when their shortcode actually
- * fires. On admin and AJAX requests, all registered classes are instantiated
- * eagerly so block editor configuration and AJAX handlers are available.
+ * On the frontend and on admin-ajax, classes are only instantiated when actually
+ * needed. On admin screens and REST requests all registered classes are built up
+ * front, because the block editor and page-builder integrations hook from inside
+ * a block's constructor. See request_needs_all_blocks().
  *
  * @version 3.0.4-beta
  */
@@ -58,12 +59,12 @@ class Registry {
 	/**
 	 * Boot the registry. Hooked to widgets_init at priority 99.
 	 *
-	 * Admin / AJAX: instantiates all registered classes eagerly so block editor
-	 * configuration, widget admin forms, and AJAX handlers are all available.
+	 * Eager (admin screens, REST): instantiates every registered class so block editor
+	 * configuration, widget admin forms and page-builder elements are all available.
 	 *
-	 * Frontend: registers lightweight shortcode closures for non-widget classes.
-	 * Widget-type classes are passed to register_widget() — WordPress handles
-	 * instantiation when a sidebar is rendered.
+	 * Lazy (frontend, admin-ajax): registers lightweight shortcode closures for
+	 * non-widget classes. Widget-type classes go to register_widget(), which builds
+	 * them immediately — that is WordPress's behaviour, not a lazy path.
 	 */
 	public static function boot(): void {
 		/**
@@ -79,7 +80,7 @@ class Registry {
 		 */
 		self::$entries = apply_filters( 'ayecode_sd_registered_blocks', self::$entries );
 
-		$eager = is_admin() || wp_doing_ajax() || ( defined( 'REST_REQUEST' ) && REST_REQUEST );
+		$eager = self::request_needs_all_blocks();
 
 		foreach ( self::$entries as $base_id => $entry ) {
 			$class_name   = $entry['class_name'];
@@ -111,6 +112,55 @@ class Registry {
 	}
 
 	/**
+	 * Whether this request has to have every registered class instantiated up front.
+	 *
+	 * Admin screens still do: the block editor, the Classic Editor shortcode button and
+	 * the Fusion/Bricks element registrations are all hooked from inside a block's
+	 * constructor, so nothing would register if the classes were never built.
+	 *
+	 * Admin screens with no use for blocks at all are skipped via Utils::pagenow_exclude().
+	 *
+	 * admin-ajax.php is the exception. is_admin() is true there, which previously made
+	 * every AJAX request on the site — WooCommerce cart fragments, Heartbeat, any other
+	 * plugin's — build all registered blocks for nothing. Our own three AJAX actions now
+	 * resolve the single block they need through this Registry, and third-party handlers
+	 * that render a shortcode are served by the lazy closures registered in boot().
+	 *
+	 * @return bool
+	 */
+	private static function request_needs_all_blocks(): bool {
+		// Must be tested before is_admin(), which is also true on admin-ajax.php.
+		if ( wp_doing_ajax() ) {
+			/**
+			 * Filter whether an AJAX request should instantiate every registered block.
+			 *
+			 * Escape hatch for a handler that depends on a hook registered from a block
+			 * constructor rather than going through the Registry.
+			 *
+			 * @since 3.0.10
+			 *
+			 * @param bool $eager Defaults to false.
+			 */
+			return (bool) apply_filters( 'ayecode_sd_eager_on_ajax', false );
+		}
+
+		if ( is_admin() ) {
+			// Utils::pagenow_exclude() is the long-standing list of admin screens that have
+			// no use for Super Duper at all — Dashboard, Users, Media, Comments and friends.
+			// It predates the registry and was written to skip widget registration; skipping
+			// the whole instantiation pass is the same intent applied one level up. The
+			// editor screens (post.php, post-new.php, widgets.php, customize.php) are
+			// deliberately absent from it, so they stay eager and keep the block editor,
+			// the Classic Editor button and the page-builder element hooks working.
+			global $pagenow;
+
+			return ! in_array( $pagenow, \AyeCode\SuperDuper\Utils::pagenow_exclude(), true );
+		}
+
+		return defined( 'REST_REQUEST' ) && REST_REQUEST;
+	}
+
+	/**
 	 * Route a block-preview AJAX request to the correct class instance.
 	 *
 	 * Fires at priority 1 on wp_ajax_super_duper_output_shortcode. Instantiates
@@ -118,7 +168,15 @@ class Registry {
 	 * render_shortcode() handler which handles auth, output, and wp_die().
 	 */
 	public static function handle_ajax_shortcode(): void {
-		$base_id = sanitize_key( wp_unslash( $_POST['shortcode'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification
+		// Authenticate before touching the registry: resolving an entry loads a class
+		// file and runs its constructor, so it must not happen on an unverified request.
+		// render_shortcode() checks again, which is harmless and keeps it safe standalone.
+		check_ajax_referer( 'super_duper_output_shortcode', '_ajax_nonce', true );
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			wp_die( -1, 403 );
+		}
+
+		$base_id = sanitize_key( wp_unslash( $_POST['shortcode'] ?? '' ) );
 		if ( isset( self::$entries[ $base_id ] ) ) {
 			self::get_instance( $base_id )->render_shortcode();
 			// render_shortcode() calls wp_die(), so execution stops here.

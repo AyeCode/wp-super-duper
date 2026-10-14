@@ -18,24 +18,11 @@ trait Utilities {
 
 	/**
 	 * Output the version in the header as a meta tag.
+	 *
+	 * @deprecated Registered by Loader as Utils::generator(); kept for callers.
 	 */
 	public function generator() {
-		$file = str_replace( array( "/", "\\" ), "/", realpath( __FILE__ ) );
-		$plugins_dir = str_replace( array( "/", "\\" ), "/", realpath( WP_PLUGIN_DIR ) );
-
-		// Find source plugin/theme of SD
-		$source = array();
-		if ( strpos( $file, $plugins_dir ) !== false ) {
-			$source = explode( "/", plugin_basename( $file ) );
-		} else if ( function_exists( 'get_theme_root' ) ) {
-			$themes_dir = str_replace( array( "/", "\\" ), "/", realpath( get_theme_root() ) );
-
-			if ( strpos( $file, $themes_dir ) !== false ) {
-				$source = explode( "/", ltrim( str_replace( $themes_dir, "", $file ), "/" ) );
-			}
-		}
-
-		echo '<meta name="generator" content="WP Super Duper v' . esc_attr( $this->version ) . '"' . ( ! empty( $source[0] ) ? ' data-sd-source="' . esc_attr( $source[0] ) . '"' : '' ) . ' />';
+		\AyeCode\SuperDuper\Utils::generator();
 	}
 
 	/**
@@ -237,9 +224,8 @@ trait Utilities {
 	 * Handle media_buttons hook to prevent conflicts.
 	 */
 	public function wp_media_buttons() {
-		global $shortcode_insert_button_once;
 		if ( defined( 'US_CORE_DIR' ) && ! empty( $_REQUEST['action'] ) && $_REQUEST['action'] == 'us_ajax_hb_get_ebuilder_html' ) {
-			$shortcode_insert_button_once = true;
+			\AyeCode\SuperDuper\State::$insert_button_done = true;
 		}
 	}
 

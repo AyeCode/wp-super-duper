@@ -321,18 +321,16 @@ final class CommonFields {
 	/**
 	 * Title HTML tag select field.
 	 *
-	 * Note: intentionally uses the 'geodirectory' text domain to match the original source.
-	 *
 	 * @param array $overwrite Field config overrides.
 	 * @return array
 	 */
 	public static function title_tag( array $overwrite = [] ): array {
 		$defaults = [
-			'title'    => __( 'Title HTML tag', 'geodirectory' ),
-			'desc'     => __( 'Set the HTML tag for the title.', 'geodirectory' ),
+			'title'    => __( 'Title HTML tag', 'ayecode-connect' ),
+			'desc'     => __( 'Set the HTML tag for the title.', 'ayecode-connect' ),
 			'type'     => 'select',
 			'options'  => [
-				''   => __( 'Default (theme widget default)', 'geodirectory' ),
+				''   => __( 'Default (theme widget default)', 'ayecode-connect' ),
 				'h1' => 'h1',
 				'h2' => 'h2',
 				'h3' => 'h3',
@@ -352,18 +350,16 @@ final class CommonFields {
 	/**
 	 * HTML wrapper element select field.
 	 *
-	 * Note: intentionally uses the 'geodirectory' text domain to match the original source.
-	 *
 	 * @param array $overwrite Field config overrides.
 	 * @return array
 	 */
 	public static function html_tag( array $overwrite = [] ): array {
 		$defaults = [
-			'title'    => __( 'HTML Element', 'geodirectory' ),
-			'desc'     => __( 'The <div> element should only be used if the block is a design element with no semantic meaning.', 'geodirectory' ),
+			'title'    => __( 'HTML Element', 'ayecode-connect' ),
+			'desc'     => __( 'The <div> element should only be used if the block is a design element with no semantic meaning.', 'ayecode-connect' ),
 			'type'     => 'select',
 			'options'  => [
-				''        => __( 'Default (<div>)', 'geodirectory' ),
+				''        => __( 'Default (<div>)', 'ayecode-connect' ),
 				'header'  => '<header>',
 				'main'    => '<main>',
 				'section' => '<section>',
@@ -447,7 +443,7 @@ final class CommonFields {
 				'group'           => 'title',
 				'element_require' => $er,
 				'row'             => [
-					'title'           => __( 'Margins', 'geodirectory' ),
+					'title'           => __( 'Margins', 'ayecode-connect' ),
 					'desc_tip'        => true,
 					'key'             => 'title-margins',
 					'open'            => true,
@@ -491,7 +487,7 @@ final class CommonFields {
 				'group'           => 'title',
 				'element_require' => $er,
 				'row'             => [
-					'title'           => __( 'Padding', 'geodirectory' ),
+					'title'           => __( 'Padding', 'ayecode-connect' ),
 					'desc_tip'        => true,
 					'key'             => 'title-padding',
 					'open'            => true,

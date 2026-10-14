@@ -1,5 +1,34 @@
 # Changelog
 
+## [3.0.10-beta] — 2026-09-TBD
+- Blocks whose plugin is deactivated printed their raw shortcode text on the frontend; they now render nothing, and nested blocks keep their children - FIXED
+- docs/dev/roadmap.md added recording deferred work and the measurements behind each decision - ADDED
+- Stale minified block editor JS removed; it was referenced by nothing and was missing the dependent-fields subsystem - REMOVED
+- Unused icons/placeholder.png removed - REMOVED
+- Release archives no longer ship developer tooling (.github, .claude, .aiassistant, CLAUDE.md, docs, phpcs config) or the example files - CHANGED
+- sd-plugin.php excluded from release archives; its second plugin header made a phantom "Super Duper - Examples" entry appear in the Plugins list - FIXED
+- .gitattributes no longer lists four paths that do not exist (.scrutinizer.yml, phpunit.xml, CONTRIBUTING.md, tests/) - FIXED
+- Background field group now participates in the block editor component dedupe, collapsing 298 repeated field configs into 9 shared components - CHANGED
+- Admin screens with no use for blocks (Dashboard, Users, Media, Comments, post list and similar) no longer instantiate every registered block, reusing the existing sd_pagenow_exclude list - CHANGED
+- admin-ajax requests no longer instantiate every registered block; WooCommerce fragments, Heartbeat and other plugins' AJAX calls save ~14MB and ~37ms each - CHANGED
+- ayecode_sd_eager_on_ajax filter added to force eager block loading on AJAX if a handler needs it - ADDED
+- $sd_widgets global removed; the block registry is now the single source of truth - REMOVED
+- Per-request guard flags moved from globals to static properties on a new State class - CHANGED
+- Shortcode picker and widget settings now read from the block registry instead of the $sd_widgets global, so they list every registered block rather than only those already instantiated - FIXED
+- Generator meta tag and the two AJAX handlers now register at plugins_loaded instead of from a block constructor, so they no longer depend on a block having rendered - FIXED
+- Nested blocks of the same type overwrote each other's instance state, producing a duplicate sdel- style hash - FIXED
+- Legacy global-name trait copies in includes/traits/ no longer loaded; ~105KB less PHP parsed per request - CHANGED
+- Dead legacy files (includes/loader.php, class-wp-super-duper-base/-widget, bricks element, empty helper) no longer referenced - REMOVED
+- Shortcode picker AJAX endpoint now verifies its nonce and checks edit_posts - FIXED
+- Widget settings AJAX endpoint now checks edit_posts as well as the nonce - FIXED
+- Block preview AJAX proxy now authenticates before instantiating a block class - FIXED
+- Deprecation notices for three internal editor-asset helpers named a class that was never created - FIXED
+- Common field labels were using the geodirectory text domain instead of ayecode-connect - FIXED
+- Request parameter dynamic value now runs wp_unslash() before sanitizing - FIXED
+- Template page query now runs through $wpdb->prepare() on both branches - FIXED
+- Class build key list is memoised instead of rebuilt and filtered on every block render - CHANGED
+- Widget admin JS buffer built once instead of twice per request - CHANGED
+
 ## [3.0.9-beta] — 2026-09-14
 - enqueue_scripts() method added so a block loads its assets only when it actually renders - ADDED
 - ayecode_sd_registered_blocks filter added to allow any registered block to be disabled globally - ADDED

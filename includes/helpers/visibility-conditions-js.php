@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Outputs the JavaScript for the VisibilityConditionsModal React component.
  */
 function sd_get_visibility_conditions_script() {
-	_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Assets\\BlockEditorAssets::visibility_conditions_script' );
+	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Assets\\BlockEditorAssets::visibility_conditions_script' );
     // --- START: Data Configuration ---
 
     // Rule Options

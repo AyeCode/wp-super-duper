@@ -26,8 +26,6 @@ trait Initializer {
 	 * @param bool  $is_widget_context True if the class is being used as a widget.
 	 */
 	public function initialize_super_duper( $options, $is_widget_context ) {
-		global $sd_widgets;
-
 		// Block and shortcode are the default. Widget is opt-in: it is the only output type
 		// that forces WordPress to instantiate the class on every page load, so a class has
 		// to ask for it. Keep this in sync with the tuple passed to ayecode_sd_register().
@@ -35,11 +33,6 @@ trait Initializer {
 			$options['output_types'] = array( 'block', 'shortcode' );
 		}
 
-		$sd_widgets[ $options['base_id'] ] = array(
-			'name'       => $options['name'],
-			'class_name' => $options['class_name'],
-			'output_types' => $options['output_types']
-		);
 		$this->base_id = $options['base_id'];
 
 		// FIX: Set the id_base property to prevent undefined property errors.
@@ -103,13 +96,14 @@ trait Initializer {
 
 		}
 
-		// Add global scripts and styles only once.
-		global $sd_widget_scripts;
-		if ( ! $sd_widget_scripts ) {
-			$sd_widget_scripts = true;
+		// Add the shared admin scripts and styles only once per request.
+		if ( ! \AyeCode\SuperDuper\State::$widget_scripts_done ) {
+			\AyeCode\SuperDuper\State::$widget_scripts_done = true;
 
-			wp_add_inline_script( 'admin-widgets', $this->widget_js() );
-			wp_add_inline_script( 'customize-controls', $this->widget_js() );
+			// Same script on both handles — build the buffer once, not twice.
+			$widget_js = $this->widget_js();
+			wp_add_inline_script( 'admin-widgets', $widget_js );
+			wp_add_inline_script( 'customize-controls', $widget_js );
 			wp_add_inline_style( 'widgets', $this->widget_css() );
 
 			add_action( 'elementor/editor/after_enqueue_styles', array( $this, 'elementor_editor_styles' ) );
@@ -133,13 +127,8 @@ trait Initializer {
 
 			add_action( 'wp_print_footer_scripts', array( __CLASS__, 'maybe_cornerstone_builder' ) );
 
-			// AJAX hooks.
-			add_action( 'wp_ajax_super_duper_get_widget_settings', array( __CLASS__, 'get_widget_settings' ) );
-			add_action( 'wp_ajax_super_duper_get_picker', array( __CLASS__, 'get_picker' ) );
-
-			// Generator meta tag.
-			add_action( 'admin_head', array( $this, 'generator' ), 99 );
-			add_action( 'wp_head', array( $this, 'generator' ), 99 );
+			// The AJAX handlers and the generator meta tag are registered by Loader at
+			// plugins_loaded — they must not depend on a block having been instantiated.
 		}
 
 		do_action( 'wp_super_duper_widget_init', $options, $this );

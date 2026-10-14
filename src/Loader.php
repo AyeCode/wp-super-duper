@@ -22,8 +22,8 @@ class Loader {
 	 * Boot the framework.
 	 *
 	 * At this stage all classes are autoloadable and constants are defined.
-	 * Loads the global function/trait files that cannot be autoloaded, then
-	 * ensures WP_Super_Duper resolves to the winning copy's class.
+	 * Loads the global function files that cannot be autoloaded, then ensures
+	 * WP_Super_Duper resolves to the winning copy's class.
 	 */
 	public function __construct() {
 		$includes = SUPER_DUPER_INCLUDES_PATH;
@@ -40,22 +40,9 @@ class Loader {
 			require_once $includes . 'functions-deprecated.php';
 		}
 
-		// Legacy global-name trait files so plugins referencing WP_Super_Duper_Initializer
-		// etc. by their old names continue to work.
-		if ( ! trait_exists( 'WP_Super_Duper_Utilities' ) ) {
-			require_once $includes . 'traits/trait-utilities.php';
-			require_once $includes . 'traits/trait-page-builders.php';
-			require_once $includes . 'traits/trait-shortcode-inserter.php';
-			require_once $includes . 'traits/trait-widget-form.php';
-			require_once $includes . 'traits/trait-output-handler.php';
-			require_once $includes . 'traits/trait-gutenberg-block.php';
-			require_once $includes . 'traits/trait-initializer.php';
-		}
-
 		// Map WP_Super_Duper → the winning copy's class so all existing
 		// `class MyWidget extends WP_Super_Duper` code continues to work.
-		// Step 0 may have set this alias from a losing copy; we cannot change
-		// an existing alias, so the guard prevents a duplicate-alias error.
+		// The guard prevents a duplicate-alias error if another copy got here first.
 		if ( ! class_exists( 'WP_Super_Duper' ) ) {
 			if ( defined( 'SUPER_DUPER_LOAD_WIDGET' ) && SUPER_DUPER_LOAD_WIDGET === true ) {
 				class_alias( 'AyeCode\\SuperDuper\\SuperDuperWidget', 'WP_Super_Duper' );
@@ -70,5 +57,14 @@ class Loader {
 		add_action( 'widgets_init', [ 'AyeCode\\SuperDuper\\Registry', 'boot' ], 99 );
 
 		add_action( 'rest_api_init', [ 'AyeCode\\SuperDuper\\RestApi', 'register_routes' ] );
+
+		// Registered here rather than from a block constructor. On the lazy frontend path
+		// a constructor does not run until a shortcode renders during the_content, by which
+		// point wp_head has already fired and admin-ajax has already dispatched.
+		add_action( 'wp_head', [ 'AyeCode\\SuperDuper\\Utils', 'generator' ], 99 );
+		add_action( 'admin_head', [ 'AyeCode\\SuperDuper\\Utils', 'generator' ], 99 );
+
+		add_action( 'wp_ajax_super_duper_get_widget_settings', [ 'AyeCode\\SuperDuper\\SuperDuper', 'get_widget_settings' ] );
+		add_action( 'wp_ajax_super_duper_get_picker', [ 'AyeCode\\SuperDuper\\SuperDuper', 'get_picker' ] );
 	}
 }
