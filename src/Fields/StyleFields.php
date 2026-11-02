@@ -554,6 +554,49 @@ final class StyleFields {
 		return $input;
 	}
 
+	/**
+	 * Bootstrap color mode select field.
+	 *
+	 * Bootstrap 5.3 scopes its color variables to the nearest data-bs-theme
+	 * attribute, so setting it on a wrapper pins that element and everything
+	 * inside it to one mode regardless of the mode set on the html element.
+	 * The empty value inherits. There is deliberately no auto option: auto is
+	 * resolved to light or dark by script on the html element, and an element
+	 * that follows the page is exactly what inherit already does.
+	 *
+	 * The value is an attribute, not a class, so sd_build_aui_class() does not
+	 * output it. A block opts in by passing it through its blockProps, e.g.
+	 * 'if_data-bs-theme' => '["light","dark"].includes(props.attributes.color_mode) ? props.attributes.color_mode : undefined'
+	 *
+	 * @param array $overwrite Field config overrides.
+	 * @return array
+	 */
+	public static function color_mode( array $overwrite = [] ): array {
+		$defaults = [
+			'type'     => 'select',
+			'title'    => __( 'Color mode', 'ayecode-connect' ),
+			'desc'     => __( 'Force this element and its contents to always display in light or dark mode.', 'ayecode-connect' ),
+			'options'  => [
+				''      => __( 'Inherit', 'ayecode-connect' ),
+				'light' => __( 'Light', 'ayecode-connect' ),
+				'dark'  => __( 'Dark', 'ayecode-connect' ),
+			],
+			'default'  => '',
+			'desc_tip' => true,
+			'group'    => 'background',
+		];
+
+		$input = wp_parse_args( $overwrite, $defaults );
+
+		$clean = $overwrite;
+		unset( $clean['device_type'] );
+		if ( empty( $clean ) ) {
+			$input['block_component'] = 'sd_get_color_mode_input';
+		}
+
+		return $input;
+	}
+
 	// -------------------------------------------------------------------------
 	// Group methods
 	// -------------------------------------------------------------------------

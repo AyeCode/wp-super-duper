@@ -979,6 +979,7 @@ return ( new BlockArguments() )
 | `zindex()` | `zindex( array $overwrite = [] )` | Z-index select |
 | `overflow()` | `overflow( array $overwrite = [] )` | Overflow select |
 | `scrollbars()` | `scrollbars( array $overwrite = [] )` | Scrollbar style select |
+| `color_mode()` | `color_mode( array $overwrite = [] )` | Bootstrap color mode select (Inherit, Light, Dark), output as a `data-bs-theme` attribute |
 
 Pass `false` as a value in `$field_overwrites` to omit that sub-field: `background_group( 'bg', [], [ 'image' => false ] )`.
 

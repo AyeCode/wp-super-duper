@@ -63,6 +63,7 @@ When using `border_group()` with a prefix, the condition is updated automaticall
 | `zindex( array $overwrite = [] )` | Z-index select |
 | `overflow( array $overwrite = [] )` | Overflow select |
 | `scrollbars( array $overwrite = [] )` | Scrollbar style select |
+| `color_mode( array $overwrite = [] )` | Bootstrap color mode select (Inherit, Light, Dark). Outputs a `data-bs-theme` attribute, not a class, so the block passes it through its blockProps itself |
 
 ### Group methods
 

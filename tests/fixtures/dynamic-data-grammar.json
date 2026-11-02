@@ -1,0 +1,54 @@
+{
+	"_comment": "Shared by the PHP (src/DynamicData/Grammar.php) and JS dynamic data parsers. parse: a null expect means the string is not a tag. build: the shortest form the picker should write. find: tags located in running text.",
+	"parse": [
+		{ "input": "{post_title}", "expect": { "name": "post_title", "primary": null, "args": {} } },
+		{ "input": "{current_date:Y}", "expect": { "name": "current_date", "primary": "Y", "args": {} } },
+		{ "input": "{current_date:g:i A}", "expect": { "name": "current_date", "primary": "g:i A", "args": {} } },
+		{ "input": "{post_date:F j, Y @link}", "expect": { "name": "post_date", "primary": "F j, Y", "args": { "link": true } } },
+		{ "input": "{current_date:d/m/Y}", "expect": { "name": "current_date", "primary": "d/m/Y", "args": {} } },
+		{ "input": "{post_title @link @new_tab}", "expect": { "name": "post_title", "primary": null, "args": { "link": true, "new_tab": true } } },
+		{ "input": "{post_excerpt @words:20 @fallback:'No excerpt yet'}", "expect": { "name": "post_excerpt", "primary": null, "args": { "words": "20", "fallback": "No excerpt yet" } } },
+		{ "input": "{post_meta:price @fallback:'POA'}", "expect": { "name": "post_meta", "primary": "price", "args": { "fallback": "POA" } } },
+		{ "input": "{current_date @format:'g:i A'}", "expect": { "name": "current_date", "primary": null, "args": { "format": "g:i A" } } },
+		{ "input": "{post_title @fallback:'It\\'s new'}", "expect": { "name": "post_title", "primary": null, "args": { "fallback": "It's new" } } },
+		{ "input": "{post_title @fallback:'a \\\\ b'}", "expect": { "name": "post_title", "primary": null, "args": { "fallback": "a \\ b" } } },
+		{ "input": "{post_title @fallback:'{ok} | @here'}", "expect": { "name": "post_title", "primary": null, "args": { "fallback": "{ok} | @here" } } },
+		{ "input": "{post_terms:'odd @key' @link}", "expect": { "name": "post_terms", "primary": "odd @key", "args": { "link": true } } },
+		{ "input": "{post_terms:category   @separator:' / '}", "expect": { "name": "post_terms", "primary": "category", "args": { "separator": " / " } } },
+		{ "input": "{post_title @fallback:''}", "expect": { "name": "post_title", "primary": null, "args": { "fallback": "" } } },
+		{ "input": "{site_title:}", "expect": { "name": "site_title", "primary": "", "args": {} } },
+		{ "input": "{color:red}", "expect": { "name": "color", "primary": "red", "args": {} } },
+
+		{ "input": "{Post_title}", "expect": null },
+		{ "input": "{ post_title }", "expect": null },
+		{ "input": "{post title}", "expect": null },
+		{ "input": "{post_title @}", "expect": null },
+		{ "input": "{post_title @Link}", "expect": null },
+		{ "input": "{post_title @fallback:'open}", "expect": null },
+		{ "input": "{post_title @fallback:don't}", "expect": null },
+		{ "input": "{post_title:it's}", "expect": null },
+		{ "input": "{post_title @link extra}", "expect": null },
+		{ "input": "{}", "expect": null },
+		{ "input": "post_title", "expect": null }
+	],
+	"build": [
+		{ "name": "post_title", "primary": null, "args": {}, "expect": "{post_title}" },
+		{ "name": "current_date", "primary": "Y", "args": {}, "expect": "{current_date:Y}" },
+		{ "name": "current_date", "primary": "g:i A", "args": {}, "expect": "{current_date:g:i A}" },
+		{ "name": "post_date", "primary": "F j, Y", "args": { "link": true, "new_tab": true }, "expect": "{post_date:F j, Y @link @new_tab}" },
+		{ "name": "post_excerpt", "primary": null, "args": { "words": "20", "fallback": "No excerpt yet" }, "expect": "{post_excerpt @words:20 @fallback:'No excerpt yet'}" },
+		{ "name": "post_title", "primary": null, "args": { "fallback": "It's new" }, "expect": "{post_title @fallback:'It\\'s new'}" },
+		{ "name": "post_terms", "primary": "odd @key", "args": {}, "expect": "{post_terms:'odd @key'}" },
+		{ "name": "post_terms", "primary": " padded", "args": {}, "expect": "{post_terms:' padded'}" },
+		{ "name": "post_title", "primary": null, "args": { "link": false, "fallback": "" }, "expect": "{post_title @fallback:''}" }
+	],
+	"find": [
+		{ "input": "Copyright {site_title} {current_date:Y}.", "expect": [ "{site_title}", "{current_date:Y}" ] },
+		{ "input": ".a{color:red} {post_title}", "expect": [ "{color:red}", "{post_title}" ] },
+		{ "input": "{\"a\":1} {post_title}", "expect": [ "{post_title}" ] },
+		{ "input": "{foo:it's} then {post_title}", "expect": [ "{post_title}" ] },
+		{ "input": "{{post_title}}", "expect": [ "{post_title}" ] },
+		{ "input": "{post_title\n} {site_title}", "expect": [ "{site_title}" ] },
+		{ "input": "{post_title @fallback:'a}b'} done", "expect": [ "{post_title @fallback:'a}b'}" ] }
+	]
+}

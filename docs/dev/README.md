@@ -15,6 +15,7 @@ A WordPress Class to build a widget, shortcode and Gutenberg block at once.
 - [Features](features/)
   - [Block Output Formats](features/block-output-formats.md)
   - [Dependent Fields](features/dependent-fields.md)
+  - [Dynamic Data](features/dynamic-data.md)
 
 ## Quick Start
 

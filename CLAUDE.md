@@ -56,6 +56,7 @@ All modern classes live under `AyeCode\SuperDuper\` (mapped to `src/` by the SPL
 | `Utils` | `src/Utils.php` | Static utilities: `is_preview()`, `string_to_bool()`, `encode_shortcodes()`, `decode_shortcodes()`, `replace_variables()`, `element_require()` |
 | `Registry` | `src/Registry.php` | Lazy block/shortcode/widget registry — backs `ayecode_sd_register()`, boots on `widgets_init` 99 |
 | `RestApi` | `src/RestApi.php` | Read-only block discovery endpoints under `ayecode/v3` |
+| `DynamicData\*` | `src/DynamicData/` | Dynamic data tags: `Grammar`, `Registry`, `CoreTags`, `Renderer`, `Context`, `RestApi`. See `docs/dev/features/dynamic-data.md` |
 
 **Builder:**
 
@@ -68,7 +69,7 @@ All modern classes live under `AyeCode\SuperDuper\` (mapped to `src/` by the SPL
 | Class | File | Methods |
 |---|---|---|
 | `Fields\SpacingFields` | `src/Fields/SpacingFields.php` | `margin( $side, $overwrite, $include_negatives )`, `padding( $side, $overwrite )`, `margin_group()`, `padding_group()` |
-| `Fields\StyleFields` | `src/Fields/StyleFields.php` | `border_show()`, `border_style()`, `border_width()`, `border_opacity()`, `border_radius()`, `border_radius_size()`, `border_group( $prefix )`, `shadow()`, `background()`, `background_group( $prefix )`, `display()`, `opacity()`, `hover_animation()`, `hover_icon_animation()`, `zindex()`, `overflow()`, `scrollbars()` |
+| `Fields\StyleFields` | `src/Fields/StyleFields.php` | `border_show()`, `border_style()`, `border_width()`, `border_opacity()`, `border_radius()`, `border_radius_size()`, `border_group( $prefix )`, `shadow()`, `background()`, `background_group( $prefix )`, `display()`, `opacity()`, `hover_animation()`, `hover_icon_animation()`, `zindex()`, `overflow()`, `scrollbars()`, `color_mode()` |
 | `Fields\TypographyFields` | `src/Fields/TypographyFields.php` | `font_size()`, `font_size_custom()`, `font_weight()`, `font_case()`, `font_italic()`, `line_height()`, `text_justify()`, `text_align()`, `text_color()`, `text_color_custom()`, `font_size_group( $prefix, $overwrite, $overwrite_custom )`, `text_align_group( $prefix, $overwrite )`, `text_color_group( $prefix, $overwrite, $overwrite_custom )` |
 | `Fields\LayoutFields` | `src/Fields/LayoutFields.php` | `container()`, `position()`, `sticky_offset( $side )`, `col()`, `row_cols()`, `absolute_position()`, `width()`, `height()`, `max_height()` |
 | `Fields\CommonFields` | `src/Fields/CommonFields.php` | `css_class()`, `anchor()`, `metadata_name()`, `visibility_conditions()`, `new_window()`, `nofollow()`, `attributes()`, `title_tag()`, `html_tag()`, `title_group()` |

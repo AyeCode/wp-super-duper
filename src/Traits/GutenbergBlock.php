@@ -360,7 +360,7 @@ JS;
                     // Internationalization
                     __,
                     // Custom State & Handlers
-                    isModalOpen,setModalOpen,handleTextChange,handleSelect,updateCaret,blockWrapperRef,previewHtml,
+                    isModalOpen,setModalOpen,handleTextChange,handleSelect,updateCaret,dynamicDataInitialTag,blockWrapperRef,previewHtml,
                     // The rest are your global functions from sdBlockFunctions
                     ...customFunctions
                 } = props;
@@ -861,7 +861,12 @@ JS;
                             $new_args = str_replace( '[%WrapClass%]"', '" + sd_build_aui_class(props.attributes)', $new_args );
                             $new_args = str_replace( '[%WrapClass%]', '+ sd_build_aui_class(props.attributes)', $new_args );
                         }
-                        echo str_replace( "if_", "", $element ) . ": " . $this->block_props_replace( $new_args, true ) . ",";
+                        // Keys such as data-bs-theme are not valid bare JS identifiers, so quote them.
+                        $prop_key = substr( $element, 3 );
+                        if ( ! preg_match( '/^[A-Za-z_$][A-Za-z0-9_$]*$/', $prop_key ) ) {
+                            $prop_key = wp_json_encode( $prop_key );
+                        }
+                        echo $prop_key . ": " . $this->block_props_replace( $new_args, true ) . ",";
                     } elseif ( $element == 'style' && strpos( $new_args, '[%WrapStyle%]' ) !== false ) {
                         $new_args = str_replace( '[%WrapStyle%]', '', $new_args );
                         echo $element . ": {..." . $this->block_props_replace( $new_args ) . " , ...sd_build_aui_styles(props.attributes) },";

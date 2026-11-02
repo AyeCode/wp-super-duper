@@ -1,6 +1,19 @@
 # Changelog
 
 ## [3.0.10-beta] — 2026-09-TBD
+- StyleFields::color_mode() field added for pinning a block to Bootstrap light or dark mode via data-bs-theme - ADDED
+- block-output props with hyphenated names, such as if_data-bs-theme, produced invalid editor JS; their keys are now quoted - FIXED
+- Dynamic data tags rebuilt around a registry: addons register tags, groups and option sources on sd_dynamic_data_register - ADDED
+- Dynamic data syntax is now {name:primary @key:'value' @flag}; date formats with colons, spaces, commas and slashes work, and fallback is @fallback:'text' - CHANGED
+- {post_meta} tag added; protected and non-scalar meta keys are refused unless allowed with sd_dynamic_data_meta_key_allowed - ADDED
+- Text that is not a registered tag, such as inline CSS or JSON, is no longer blanked by dynamic data replacement - FIXED
+- {post_content} no longer double escapes its HTML and cannot render itself recursively - FIXED
+- REST endpoints ayecode/v3/dynamic-data and ayecode/v3/dynamic-data/options/{source} added for the editor picker - ADDED
+- REST endpoint ayecode/v3/dynamic-data/preview renders a tag against the post being edited, for users who can edit that post - ADDED
+- Dynamic data button on text fields reopens the tag at the caret for editing and replaces it on insert - ADDED
+- Dynamic data modal on RichText blocks reopens the tag at the caret, exposed to edit components as dynamicDataInitialTag - ADDED
+- {author_meta}, {user_meta} and {term_meta} tags added; user meta is limited to an allowlist (first_name, last_name, nickname, description) extended with sd_dynamic_data_meta_key_allowed - ADDED
+- Typing { in a RichText dynamic data block opens the picker, and the chosen tag replaces the brace - ADDED
 - Blocks whose plugin is deactivated printed their raw shortcode text on the frontend; they now render nothing, and nested blocks keep their children - FIXED
 - docs/dev/roadmap.md added recording deferred work and the measurements behind each decision - ADDED
 - Stale minified block editor JS removed; it was referenced by nothing and was missing the dependent-fields subsystem - REMOVED

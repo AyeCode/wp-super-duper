@@ -31,6 +31,36 @@ window.sdDependentFieldCache = window.sdDependentFieldCache || {};
 		name: null,
 	};
 
+	/**
+	 * The dynamic data tag the caret of a text field sits in or right after, if any,
+	 * so the picker can open it for editing and replace it rather than insert.
+	 */
+	const dynamicTagAtCaret = (name) => {
+		const input = lastFocusedInput.element;
+		const grammar = window.sdDynamicDataGrammar;
+		if (!grammar || !input || lastFocusedInput.name !== name || input.selectionStart !== input.selectionEnd) {
+			return null;
+		}
+		return grammar.findAt(input.value, input.selectionStart);
+	};
+
+	/**
+	 * Put a tag from the picker into a text field: over the tag at the caret, over the
+	 * selection, or at the end when the field was never focused.
+	 */
+	const insertDynamicTag = (name, dataTag, attributes, setAttributes) => {
+		const input = lastFocusedInput.element;
+		if (!input || lastFocusedInput.name !== name) {
+			const currentValue = attributes[name] || '';
+			setAttributes({ [name]: (currentValue ? currentValue + ' ' : '') + dataTag });
+			return;
+		}
+		const match = dynamicTagAtCaret(name);
+		const start = match ? match.offset : input.selectionStart;
+		const end = match ? match.offset + match.length : input.selectionEnd;
+		setAttributes({ [name]: input.value.substring(0, start) + dataTag + input.value.substring(end) });
+	};
+
 	// CSS class constants
 	const HELP_CLASS = 'components-base-control__help fs-xs text-muted mt-n2';
 
@@ -492,20 +522,8 @@ window.sdDependentFieldCache = window.sdDependentFieldCache || {};
 
 					dynamicDataButton = el(window.sdBlockTools.DynamicDataButton, {
 						style: buttonStyle,
-						onSelect: (dataTag) => {
-							if (!lastFocusedInput.element || lastFocusedInput.name !== name) {
-								const currentValue = attributes[name] || '';
-								const newValue = (currentValue ? currentValue + ' ' : '') + dataTag;
-								setAttributes({ [name]: newValue });
-								return;
-							}
-							const input = lastFocusedInput.element;
-							const start = input.selectionStart;
-							const end = input.selectionEnd;
-							const currentValue = input.value;
-							const newValue = currentValue.substring(0, start) + dataTag + currentValue.substring(end);
-							setAttributes({ [name]: newValue });
-						}
+						getInitialTag: () => dynamicTagAtCaret(name)?.raw,
+						onSelect: (dataTag) => insertDynamicTag(name, dataTag, attributes, setAttributes)
 					});
 				}
 
@@ -566,20 +584,8 @@ window.sdDependentFieldCache = window.sdDependentFieldCache || {};
 							key: 'dynamic-data',
 							variant: 'tertiary',
 							isSmall: true,
-							onSelect: (dataTag) => {
-								if (!lastFocusedInput.element || lastFocusedInput.name !== name) {
-									const currentValue = attributes[name] || '';
-									const newValue = (currentValue ? currentValue + ' ' : '') + dataTag;
-									setAttributes({ [name]: newValue });
-									return;
-								}
-								const input = lastFocusedInput.element;
-								const start = input.selectionStart;
-								const end = input.selectionEnd;
-								const currentValue = input.value;
-								const newValue = currentValue.substring(0, start) + dataTag + currentValue.substring(end);
-								setAttributes({ [name]: newValue });
-							}
+							getInitialTag: () => dynamicTagAtCaret(name)?.raw,
+							onSelect: (dataTag) => insertDynamicTag(name, dataTag, attributes, setAttributes)
 						})
 					);
 				}
@@ -1227,6 +1233,9 @@ window.sdDependentFieldCache = window.sdDependentFieldCache || {};
 
 				let updateCaret = () => {};
 				let handleSelect = (dataTag) => {};
+				let dynamicDataInitialTag;
+				let closeDynamicDataModal = () => setDynamicDataModalOpen(false);
+				let setDynamicDataModalOpenFromBlock = setDynamicDataModalOpen;
 				let handleTextChange = (newHtmlString) => {
 					if (dynamicDataField) {
 						setAttributes({ [dynamicDataField]: newHtmlString });
@@ -1235,6 +1244,11 @@ window.sdDependentFieldCache = window.sdDependentFieldCache || {};
 
 				if (dynamicDataField) {
 					const [caretOffset, setCaretOffset] = useState(null);
+					// The editable's text when the caret was measured; caretOffset counts into this, not into the attribute's HTML.
+					const caretTextRef = useRef('');
+					const caretCollapsedRef = useRef(true);
+					// True while the modal is open because "{" was typed; that brace is replaced by the chosen tag.
+					const braceTypedRef = useRef(false);
 
 					useEffect(() => {
 						if (blockProps.id) {
@@ -1249,7 +1263,7 @@ window.sdDependentFieldCache = window.sdDependentFieldCache || {};
 						}
 					}, [attributes, blockProps.id]);
 
-					updateCaret = () => {
+					updateCaret = (event) => {
 						const node = blockWrapperRef.current;
 						if (!node) return;
 						const sel = node.ownerDocument.defaultView.getSelection();
@@ -1260,17 +1274,82 @@ window.sdDependentFieldCache = window.sdDependentFieldCache || {};
 						const pre = range.cloneRange();
 						pre.selectNodeContents(editableEl);
 						pre.setEnd(range.endContainer, range.endOffset);
+						caretTextRef.current = editableEl.textContent;
+						caretCollapsedRef.current = range.collapsed;
 						setCaretOffset(pre.toString().length);
+
+						// Typing "{" opens the picker, as in Bricks. Closing it leaves the brace as typed.
+						if (event && event.type === 'keyup' && event.key === '{' && range.collapsed && !isDynamicDataModalOpen) {
+							braceTypedRef.current = true;
+							setDynamicDataModalOpen(true);
+						}
 					};
+
+					// Blocks open the modal from their toolbar, which is never the brace path. The flag is
+					// cleared here rather than on close because the picker closes before it selects.
+					setDynamicDataModalOpenFromBlock = (open) => {
+						if (open) {
+							braceTypedRef.current = false;
+						}
+						setDynamicDataModalOpen(open);
+					};
+
+					/**
+					 * Offset in the attribute's HTML of the same occurrence of needle that sits at
+					 * textOffset in the editable's text, or -1.
+					 */
+					const htmlOffsetOf = (needle, textOffset, html) => {
+						const text = caretTextRef.current;
+						let nth = 0;
+						for (let i = text.indexOf(needle); i !== -1 && i < textOffset; i = text.indexOf(needle, i + 1)) {
+							nth++;
+						}
+						let at = -1;
+						for (let k = 0; k <= nth; k++) {
+							at = html.indexOf(needle, at + 1);
+							if (at === -1) break;
+						}
+						return at;
+					};
+
+					const replaceInField = (html, at, length, dataTag) => {
+						setAttributes({ [dynamicDataField]: html.slice(0, at) + dataTag + html.slice(at + length) });
+						braceTypedRef.current = false;
+						closeDynamicDataModal();
+						setCaretOffset(null);
+					};
+
+					// A selection is replaced as before; only a plain caret opens a tag for editing.
+					const tagAtCaret = () => (window.sdDynamicDataGrammar && caretOffset !== null && caretCollapsedRef.current && !braceTypedRef.current
+						? window.sdDynamicDataGrammar.findAt(caretTextRef.current, caretOffset)
+						: null);
+
+					// Read by the modal when it opens, so a tag at the caret opens for editing.
+					dynamicDataInitialTag = isDynamicDataModalOpen ? tagAtCaret()?.raw : undefined;
 
 					handleSelect = (dataTag) => {
 						const existingText = attributes[dynamicDataField] || '';
+
+						// The "{" that opened the picker sits just before the caret.
+						if (braceTypedRef.current && caretOffset > 0 && caretTextRef.current[caretOffset - 1] === '{') {
+							const at = htmlOffsetOf('{', caretOffset - 1, existingText);
+							if (at !== -1) {
+								replaceInField(existingText, at, 1, dataTag);
+								return;
+							}
+						}
+
+						const match = tagAtCaret();
+						if (match) {
+							const at = htmlOffsetOf(match.raw, match.offset, existingText);
+							if (at !== -1) {
+								replaceInField(existingText, at, match.raw.length, dataTag);
+								return;
+							}
+						}
+
 						const offset = caretOffset !== null ? caretOffset : existingText.length;
-						const before = existingText.slice(0, offset);
-						const after = existingText.slice(offset);
-						setAttributes({ [dynamicDataField]: before + dataTag + after });
-						setDynamicDataModalOpen(false);
-						setCaretOffset(null);
+						replaceInField(existingText, offset, 0, dataTag);
 					};
 				}
 				const { content, sd_shortcode, sd_shortcode_close, styleid, ...watchedAttributes } = attributes;
@@ -1621,7 +1700,7 @@ window.sdDependentFieldCache = window.sdDependentFieldCache || {};
 				}, [deviceType, activeTab, JSON.stringify(attributes), groupedArgs]);
 
 				const advancedToggle = hasAdvancedFields ? el('div', { style: { padding: '0 16px 16px' } }, el(ToggleControl, { label: "Show Advanced Settings", checked: !!attributes.show_advanced, onChange: () => setAttributes({ show_advanced: !attributes.show_advanced }) })) : null;
-				const tools = { props, ...props, el, blockProps, blockWrapperRef,parentBlocks, childBlocks, __, Fragment, BlockControls, ToolbarGroup, ToolbarButton, RichText, InnerBlocks, isModalOpen: isDynamicDataModalOpen, setModalOpen: setDynamicDataModalOpen, handleTextChange, handleSelect, updateCaret, previewHtml, ...window.sdBlockFunctions, };
+				const tools = { props, ...props, el, blockProps, blockWrapperRef,parentBlocks, childBlocks, __, Fragment, BlockControls, ToolbarGroup, ToolbarButton, RichText, InnerBlocks, isModalOpen: isDynamicDataModalOpen, setModalOpen: setDynamicDataModalOpenFromBlock, handleTextChange, handleSelect, updateCaret, dynamicDataInitialTag, previewHtml, ...window.sdBlockFunctions, };
 
 				let mainContent;
 				const editComponentKey = blockOptions['editComponent'];
@@ -1641,7 +1720,7 @@ window.sdDependentFieldCache = window.sdDependentFieldCache || {};
 					el(InspectorControls, { key: 'inspector' }, advancedToggle, inspectorPanels),
 					mainContent,
 					isVisibilityModalOpen && window.sdBlockTools?.VisibilityConditionsModal ? el(window.sdBlockTools.VisibilityConditionsModal, { isOpen: isVisibilityModalOpen, onClose: () => setVisibilityModalOpen(false), value: attributes.visibility_conditions, onSave: (newValue) => { setAttributes({ visibility_conditions: newValue }); setVisibilityModalOpen(false); } }) : null,
-					isDynamicDataModalOpen && window.sdBlockTools?.DynamicDataModal ? el(window.sdBlockTools.DynamicDataModal, { isOpen: isDynamicDataModalOpen, onSelect: handleSelect, onClose: () => setDynamicDataModalOpen(false) }) : null
+					isDynamicDataModalOpen && window.sdBlockTools?.DynamicDataModal ? el(window.sdBlockTools.DynamicDataModal, { isOpen: isDynamicDataModalOpen, initialTag: dynamicDataInitialTag, onSelect: handleSelect, onClose: closeDynamicDataModal }) : null
 				);
 			},
 			save: function(props) {
