@@ -88,6 +88,10 @@ class Utils {
 		if ( wp_doing_ajax() && isset( $_REQUEST['action'] ) && $_REQUEST['action'] == 'super_duper_output_shortcode' ) {
 			return true;
 		}
+		// Check for the dynamic data picker's REST preview
+		if ( State::$dynamic_data_preview ) {
+			return true;
+		}
 
 		return false;
 	}

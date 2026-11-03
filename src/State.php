@@ -43,4 +43,11 @@ class State {
 	 * @var array<string, bool>
 	 */
 	public static array $enqueued_block_components = [];
+
+	/**
+	 * Whether a dynamic data preview is rendering for the editor picker.
+	 *
+	 * @var bool
+	 */
+	public static bool $dynamic_data_preview = false;
 }

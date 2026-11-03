@@ -34,6 +34,21 @@ SD_DD_Test::same( 'renders against the post', 'Preview &amp; test ' . get_the_da
 $res = $preview( $admin->ID, array( 'text' => "{post_title @fallback:'none'}" ) );
 SD_DD_Test::same( 'no post uses the fallback', 'none', $res->get_data()['html'] ?? null );
 
+// A tag that reports what the preview environment looks like while it renders.
+\AyeCode\SuperDuper\DynamicData\Registry::register(
+	'test_is_preview',
+	array(
+		'label'    => 'Is preview',
+		'group'    => 'site',
+		'callback' => static fn() => \AyeCode\SuperDuper\Utils::is_preview() ? 'yes' : 'no',
+	)
+);
+SD_DD_Test::same( 'is_preview() is false on the frontend', 'no', \AyeCode\SuperDuper\DynamicData\Renderer::render( '{test_is_preview}' ) );
+$res = $preview( $admin->ID, array( 'text' => '{test_is_preview}' ) );
+SD_DD_Test::same( 'is_preview() is true while the preview renders', 'yes', $res->get_data()['html'] ?? null );
+SD_DD_Test::same( 'is_preview() is false again afterwards', false, \AyeCode\SuperDuper\Utils::is_preview() );
+\AyeCode\SuperDuper\DynamicData\Registry::unregister( 'test_is_preview' );
+
 SD_DD_Test::same( 'contributor cannot preview a post they cannot edit', 403, $preview( $contrib, array( 'text' => '{post_title}', 'post_id' => $post_id ) )->get_status() );
 SD_DD_Test::same( 'contributor can preview without a post', 200, $preview( $contrib, array( 'text' => '{site_title}' ) )->get_status() );
 SD_DD_Test::same( 'visitor cannot preview', 401, $preview( 0, array( 'text' => '{site_title}' ) )->get_status() );

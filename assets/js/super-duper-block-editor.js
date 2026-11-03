@@ -487,7 +487,9 @@ window.sdDependentFieldCache = window.sdDependentFieldCache || {};
 		}
 
 		const { attributes, setAttributes, openVisibilityModal } = props;
-		const { type, name, label, title, help, desc, options, default: defaultValue, is_slug, ...rest } = config;
+		// The PHP 'value' key belongs to the classic widget form; kept out of rest, it would
+		// override the control's value and pin it to whatever PHP declared.
+		const { type, name, label, title, help, desc, options, default: defaultValue, is_slug, value: widgetValue, ...rest } = config;
 		const value = attributes[name] !== undefined ? attributes[name] : defaultValue;
 		const controlLabel = label || title;
 		const controlHelp = help || desc;
@@ -1184,6 +1186,9 @@ window.sdDependentFieldCache = window.sdDependentFieldCache || {};
 
 
 				const { attributes, setAttributes } = props;
+				// Values the editor fills in by itself (shortcode tag, styleid, preview cache) must not
+				// mark the post changed or add an undo step; the next real save still stores them.
+				const { __unstableMarkNextChangeAsNotPersistent: markNotPersistent = () => {} } = wp.data.useDispatch('core/block-editor');
 				const blockProps = useBlockProps();
 				const deviceType = wp.data.useSelect(select => select('core/editor')?.getDeviceType() || 'Desktop', []);
 				const [activeTab, setActiveTab] = useState(blockOptions.block_group_tabs && Object.keys(blockOptions.block_group_tabs).length ? Object.values(blockOptions.block_group_tabs)[0].tab.key : null);
@@ -1384,6 +1389,7 @@ window.sdDependentFieldCache = window.sdDependentFieldCache || {};
 					}
 
 					if (Object.keys(newAttrs).length > 0) {
+						markNotPersistent();
 						setAttributes(newAttrs);
 					}
 					const wantsAjaxPreview = blockOptions['ajaxPreviewInEditComponent'] === true;
@@ -1440,6 +1446,7 @@ window.sdDependentFieldCache = window.sdDependentFieldCache || {};
 								const contentToSet = newContent || `<div class="sd-placeholder">Empty ${title} block.</div>`;
 								setPreviewHtml(contentToSet);
 								if (contentToSet !== attributes.content) {
+									markNotPersistent();
 									setAttributes({ content: contentToSet });
 								}
 							})

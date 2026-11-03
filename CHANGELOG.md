@@ -1,6 +1,9 @@
 # Changelog
 
 ## [3.0.10-beta] — 2026-09-TBD
+- Utils::is_preview() is true while the dynamic data picker renders a preview, so tags can fall back to demo content as blocks do - ADDED
+- Values the block editor fills in by itself (shortcode tag, styleid, cached preview) no longer mark a post or template changed on open or add undo steps; they are still saved with the next real change - FIXED
+- Block settings whose field declared a widget 'value', such as BS Gallery's aspect ratio, stayed stuck on that value in the sidebar even though the change applied - FIXED
 - StyleFields::color_mode() field added for pinning a block to Bootstrap light or dark mode via data-bs-theme - ADDED
 - block-output props with hyphenated names, such as if_data-bs-theme, produced invalid editor JS; their keys are now quoted - FIXED
 - Dynamic data tags rebuilt around a registry: addons register tags, groups and option sources on sd_dynamic_data_register - ADDED

@@ -123,11 +123,17 @@ class RestApi {
 			$text = substr( $text, 0, Grammar::MAX_TAG_LENGTH * 4 );
 		}
 
-		return rest_ensure_response(
-			array(
-				'html' => Renderer::render( $text, new Context( $post_id ? $post_id : null ) ),
-			)
-		);
+		// Utils::is_preview() reports true while this renders, so tags that need a
+		// listing can fall back to a demo one, as blocks do in the editor.
+		\AyeCode\SuperDuper\State::$dynamic_data_preview = true;
+
+		try {
+			$html = Renderer::render( $text, new Context( $post_id ? $post_id : null ) );
+		} finally {
+			\AyeCode\SuperDuper\State::$dynamic_data_preview = false;
+		}
+
+		return rest_ensure_response( array( 'html' => $html ) );
 	}
 
 	public static function get_schema(): \WP_REST_Response {

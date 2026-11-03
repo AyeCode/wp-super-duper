@@ -164,6 +164,8 @@ POST /ayecode/v3/dynamic-data/preview { text, post_id }    { html } rendered as 
 
 Preview with a `post_id` needs `edit_post` on that post, since it prints the post's data. Without one, post tags render empty (or their fallback).
 
+While a preview renders, `Utils::is_preview()` returns true, the same as during a block's editor preview. A tag that needs an object the editor does not have (a listing, on a template) can check it and fall back to a demo one, the way blocks do.
+
 ## Editor
 
 The picker lives in wp-ayecode-ui (`dynamic-data-picker-react.js`, with `dynamic-data-grammar.js` as the JS parser). Super Duper's block editor wires it up:
