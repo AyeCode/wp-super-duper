@@ -25,7 +25,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 // AyeCode Package Loader (v1.0.1)
 ( function () {
 	// -------------------------------------------------------------------------
-	// CONFIGURATION — update these values for each new package.
+	// CONFIGURATION: update these values for each new package.
 	// -------------------------------------------------------------------------
 
 	// A unique key used to register this package in the global version registry.
