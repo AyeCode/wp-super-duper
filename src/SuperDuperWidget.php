@@ -38,6 +38,13 @@ class SuperDuperWidget extends \WP_Widget {
 	public $base_id;
 
 	/**
+	 * HTML for the end side of the title row, set from output() through set_title_actions().
+	 *
+	 * @var string
+	 */
+	public $title_actions = '';
+
+	/**
 	 * Explicitly declared to prevent undefined property errors.
 	 * Shadows the parent WP_Widget property but ensures consistency.
 	 *

@@ -70,6 +70,98 @@ window.sdDependentFieldCache = window.sdDependentFieldCache || {};
 	const { InspectorControls, BlockControls, RichText, useBlockProps, MediaUpload, MediaUploadCheck, InnerBlocks } = blockEditor;
 	const { PanelBody, TabPanel, TextControl, InputControl, TextareaControl, SelectControl, RangeControl, CheckboxControl, ToggleControl, Button, ColorPicker, Notice, BaseControl, ResponsiveWrapper, ToolbarGroup, ToolbarButton, FocalPointPicker, GradientPicker } = components;
 
+	// ++ START: Placeholder for blocks whose AyeCode plugin is not active
+	// WordPress swaps such a block for core/missing, whose edit view offers "Keep as HTML".
+	// That turns the block into static markup for good, so for blocks we can name we show
+	// what the block needs instead. Only the edit view is replaced: the save output of
+	// core/missing still returns the original markup untouched, so content never changes.
+	const { Placeholder } = components;
+	const { sprintf } = i18n;
+
+	/**
+	 * Match a missing block's original name against the plugin map localized from PHP.
+	 * Exact block names win over a namespace match, since some add-on blocks register
+	 * under another plugin's namespace. Returns null when no plugin claims the block.
+	 */
+	const findMissingBlockPlugin = (originalName) => {
+		const data = window.sdMissingBlockPlugins;
+		if (!data || !data.plugins || typeof originalName !== 'string' || originalName.indexOf('/') === -1) {
+			return null;
+		}
+		const namespace = originalName.split('/')[0];
+		let byNamespace = null;
+		for (const file of Object.keys(data.plugins)) {
+			const plugin = data.plugins[file];
+			if (plugin.blocks && Object.prototype.hasOwnProperty.call(plugin.blocks, originalName)) {
+				return { plugin, title: plugin.blocks[originalName] };
+			}
+			if (!byNamespace && (plugin.namespaces || []).indexOf(namespace) !== -1) {
+				byNamespace = plugin;
+			}
+		}
+		return byNamespace ? { plugin: byNamespace, title: '' } : null;
+	};
+
+	/**
+	 * A readable title from a block name such as geodirlocation/geodir-location-widget-locations.
+	 */
+	const tidyMissingBlockTitle = (originalName, prefixes) => {
+		let part = originalName.split('/')[1] || originalName;
+		for (const prefix of prefixes || []) {
+			if (prefix && part.indexOf(prefix) === 0) {
+				part = part.slice(prefix.length);
+				break;
+			}
+		}
+		return part.split('-').filter(Boolean).map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+	};
+
+	const MissingAyeCodeBlock = ({ clientId, originalName, plugin, title }) => {
+		const strings = (window.sdMissingBlockPlugins && window.sdMissingBlockPlugins.i18n) || {};
+		const blockProps = useBlockProps({ className: 'sd-missing-block' });
+		const blockTitle = title || tidyMissingBlockTitle(originalName, plugin.prefixes);
+		const actionLabel = sprintf(strings[plugin.status === 'inactive' ? 'activate' : (plugin.action && plugin.action.indexOf('plugin-install.php') !== -1 ? 'install' : 'get')] || '%s', plugin.name);
+		const instructions = sprintf(strings.returns || '', plugin.name)
+			+ (plugin.status === 'inactive' && plugin.action ? ' ' + (strings.reload || '') : '');
+
+		// Every action opens in a new tab. Activating in this tab would navigate away and
+		// drop any unsaved edits, and the editor cannot save them on the user's behalf.
+		return el('div', blockProps,
+			el(Placeholder, {
+				icon: 'admin-plugins',
+				label: sprintf(strings.needs || '%1$s needs %2$s.', blockTitle, plugin.name),
+				instructions,
+			},
+				plugin.action ? el(Button, {
+					variant: 'primary',
+					href: plugin.action,
+					target: '_blank',
+					rel: 'noopener noreferrer',
+				}, actionLabel) : null,
+				el(Button, {
+					variant: 'link',
+					isDestructive: true,
+					onClick: () => wp.data.dispatch('core/block-editor').removeBlock(clientId),
+				}, strings.remove || 'Remove block')
+			)
+		);
+	};
+
+	if (wp.hooks && wp.data) {
+		wp.hooks.addFilter('editor.BlockEdit', 'ayecode/super-duper/missing-block', (BlockEdit) => (props) => {
+			if (props.name !== 'core/missing') {
+				return el(BlockEdit, props);
+			}
+			const originalName = props.attributes && props.attributes.originalName;
+			const match = findMissingBlockPlugin(originalName);
+			if (!match) {
+				return el(BlockEdit, props);
+			}
+			return el(MissingAyeCodeBlock, { clientId: props.clientId, originalName, plugin: match.plugin, title: match.title });
+		});
+	}
+	// ++ END: Placeholder for blocks whose AyeCode plugin is not active
+
 	// Hide WP's BlockInspector "Advanced" PanelBody for SD blocks. We render our own
 	// "Additional CSS" textarea inside SD's tabbed inspector that writes to the same
 	// attributes.style.css path, so WP's duplicate would otherwise sit at the bottom
@@ -276,44 +368,115 @@ window.sdDependentFieldCache = window.sdDependentFieldCache || {};
 	};
 
 	/**
-	 * Parses a legacy element_require string into a structured logic object.
-	 * @param {string} str - The legacy condition string.
-	 * @returns {object|null} The new structured logic object.
+	 * Parses an element_require string into a structured logic object.
+	 *
+	 * The shortcode builder evaluates the same string as JavaScript, so this accepts what
+	 * JavaScript would: nested brackets, mixed && and || with && binding tighter, and ! in
+	 * front of a term or a bracket group. A term is `[%name%]` (set), `[%name%:checked]`
+	 * (checkbox on) or `[%name%] <op> <value>` with ==, !=, <, >, <=, >= and a quoted,
+	 * numeric or true/false value.
+	 *
+	 * @param {string} str - The condition string.
+	 * @returns {object|null} The structured logic object, or null when there is nothing to test.
 	 */
 	function parseLegacyRequireString(str) {
-		if (!str || typeof str !== 'string') return null;
-		const cleanedStr = str.trim().replace(/^[(]|[)]$/g, '').replace(/\[%|%]/g, '');
-		const parts = cleanedStr.split(/(&&|\|\|)/g).map(p => p.trim()).filter(Boolean);
-		if (parts.length === 0) return null;
-		const conditions = [];
-		let operator = 'AND';
-		const castValue = (val) => {
-			if (val === 'true') return true;
-			if (val === 'false') return false;
-			if (!isNaN(parseFloat(val)) && isFinite(val)) return parseFloat(val);
-			return val.replace(/^['"]|['"]$/g, '');
-		};
-		for (const part of parts) {
-			if (part === '&&') { operator = 'AND'; continue; }
-			if (part === '||') { operator = 'OR'; continue; }
-			const match = part.match(/^(\w+)\s*([!=<>]+)?\s*(.*)?$/);
-			if (!match) continue;
-			const condition = { attribute: match[1] };
-			const compare = match[2] || null;
-			const valueStr = match[3] || null;
-			if (compare) {
-				condition.compare = compare.replace('==', '===').replace('!=', '!==');
-				condition.value = castValue(valueStr);
+		if (!str || typeof str !== 'string' || !str.trim()) return null;
+		const tokenRe = /\s*(\[%([\w-]+)%(:checked)?\]|&&|\|\||===|!==|==|!=|<=|>=|<|>|!|\(|\)|"((?:[^"\\]|\\.)*)"|'((?:[^'\\]|\\.)*)'|-?\d+(?:\.\d+)?|true|false|[^\s()!&|=<>"']+)/gy;
+		const tokens = [];
+		let m;
+		tokenRe.lastIndex = 0;
+		while ((m = tokenRe.exec(str)) !== null) {
+			if (m[2] !== undefined) {
+				tokens.push({ type: 'attr', name: m[2], checked: !!m[3] });
+			} else if (m[4] !== undefined || m[5] !== undefined) {
+				tokens.push({ type: 'value', value: m[4] !== undefined ? m[4] : m[5] });
+			} else if (/^-?\d/.test(m[1])) {
+				tokens.push({ type: 'value', value: parseFloat(m[1]) });
+			} else if (m[1] === 'true' || m[1] === 'false') {
+				tokens.push({ type: 'value', value: m[1] === 'true' });
+			} else if (/^(&&|\|\||===|!==|==|!=|<=|>=|<|>|!|\(|\))$/.test(m[1])) {
+				tokens.push({ type: 'op', value: m[1] });
 			} else {
-				condition.compare = 'exists';
+				tokens.push({ type: 'value', value: m[1] });
 			}
-			conditions.push(condition);
+			if (tokenRe.lastIndex >= str.length) break;
 		}
-		return { operator, conditions };
+		if (!tokens.length) return null;
+
+		let pos = 0;
+		const peek = () => tokens[pos];
+		const take = () => tokens[pos++];
+		const isOp = (v) => peek() && peek().type === 'op' && peek().value === v;
+
+		const parseTerm = () => {
+			if (isOp('!')) {
+				take();
+				const inner = parseTerm();
+				if (inner) inner.negate = !inner.negate;
+				return inner;
+			}
+			if (isOp('(')) {
+				take();
+				const inner = parseOr();
+				if (isOp(')')) take();
+				return inner;
+			}
+			const tok = peek();
+			if (!tok) return null;
+			take();
+			if (tok.type !== 'attr') {
+				// A stray value or operator: skip it rather than hide the field over a typo.
+				return null;
+			}
+			const condition = { attribute: tok.name, compare: 'exists' };
+			if (tok.checked) return condition;
+			const next = peek();
+			if (next && next.type === 'op' && /^(===|!==|==|!=|<=|>=|<|>)$/.test(next.value)) {
+				take();
+				const val = peek();
+				condition.compare = next.value.replace('===', '==').replace('!==', '!=');
+				condition.value = val && val.type === 'value' ? take().value : '';
+			}
+			return condition;
+		};
+
+		const parseAnd = () => {
+			const conditions = [];
+			let term = parseTerm();
+			if (term) conditions.push(term);
+			while (isOp('&&')) {
+				take();
+				term = parseTerm();
+				if (term) conditions.push(term);
+			}
+			if (!conditions.length) return null;
+			return conditions.length === 1 ? conditions[0] : { operator: 'AND', conditions };
+		};
+
+		const parseOr = () => {
+			const conditions = [];
+			let group = parseAnd();
+			if (group) conditions.push(group);
+			while (isOp('||')) {
+				take();
+				group = parseAnd();
+				if (group) conditions.push(group);
+			}
+			if (!conditions.length) return null;
+			return conditions.length === 1 ? conditions[0] : { operator: 'OR', conditions };
+		};
+
+		const logic = parseOr();
+		if (!logic) return null;
+		return logic.operator ? logic : { operator: 'AND', conditions: [logic] };
 	}
 
 	/**
 	 * Executes a pre-parsed logic object against attributes.
+	 *
+	 * Comparisons are loose, as they are in the shortcode builder: a checkbox is a boolean
+	 * here and a "1" input there, and both must pass `=="1"`, `:checked` and `==""`.
+	 *
 	 * @param {object} logic - The structured logic object.
 	 * @param {object} attributes - The block's attributes.
 	 * @returns {boolean}
@@ -322,33 +485,35 @@ window.sdDependentFieldCache = window.sdDependentFieldCache || {};
 		if (!logic || typeof logic !== 'object' || !logic.conditions || !logic.conditions.length) return true;
 
 		const checkCondition = (condition) => {
-			const { attribute, compare, value } = condition;
-			const actualValue = attributes[attribute];
+			const { attribute, value } = condition;
+			const compare = (condition.compare || 'exists').replace('===', '==').replace('!==', '!=');
+			let actualValue = attributes[attribute];
+			if (actualValue == null) actualValue = '';
+			if (actualValue === true) actualValue = '1';
+			if (actualValue === false) actualValue = '';
+			let expected = value;
+			if (expected === true) expected = '1';
+			if (expected === false) expected = '';
 
-			if ((compare === '===' || compare === '==') && (value === '' || value === false)) {
-				return actualValue === false || actualValue === '' || actualValue == null;
-			}
-			if ((compare === '!==' || compare === '!=') && (value === '' || value === false)) {
-				return actualValue !== false && actualValue !== '' && actualValue != null;
-			}
-
+			let result;
 			switch (compare) {
-				case '===': return actualValue === value;
-				case '!==': return actualValue !== value;
-				case '>': return actualValue > value;
-				case '<': return actualValue < value;
-				case '>=': return actualValue >= value;
-				case '<=': return actualValue <= value;
-				case 'exists': return !!actualValue;
-				default: return false;
+				case '==': result = actualValue == expected; break; // eslint-disable-line eqeqeq
+				case '!=': result = actualValue != expected; break; // eslint-disable-line eqeqeq
+				case '>': result = actualValue > expected; break;
+				case '<': result = actualValue < expected; break;
+				case '>=': result = actualValue >= expected; break;
+				case '<=': result = actualValue <= expected; break;
+				case 'exists': result = !!actualValue; break;
+				default: result = false;
 			}
+			return condition.negate ? !result : result;
 		};
 
 		const results = logic.conditions.map(condition =>
 			condition.operator ? executeLogicObject(condition, attributes) : checkCondition(condition)
 		);
-		if (logic.operator === 'OR') return results.some(res => res === true);
-		return results.every(res => res === true);
+		const result = logic.operator === 'OR' ? results.some(res => res === true) : results.every(res => res === true);
+		return logic.negate ? !result : result;
 	}
 
 	/**

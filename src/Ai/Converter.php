@@ -1600,10 +1600,8 @@ class Converter {
 				continue;
 			}
 
-			// The flat require parser drops interior-paren and mixed-operator terms
-			// (a flex field's `(container=="row") || (display=="d-flex" || …)`), so
-			// an inexact parse cannot be trusted to justify dropping. Keep the
-			// attribute the source class explicitly asked for.
+			// A parse that skipped a term it could not read cannot be trusted to
+			// justify dropping. Keep the attribute the source class explicitly asked for.
 			$parsed = RequireExpression::parse( $arg['element_require'] );
 			if ( null === $parsed || empty( $parsed['exact'] ) ) {
 				continue;
@@ -1749,8 +1747,8 @@ class Converter {
 		}
 
 		foreach ( $parsed['conditions'] as $condition ) {
-			if ( '===' !== ( $condition['compare'] ?? '' ) ) {
-				return; // Existence or inequality — not unambiguous.
+			if ( isset( $condition['operator'] ) || ! empty( $condition['negate'] ) || '==' !== ( $condition['compare'] ?? '' ) ) {
+				return; // A nested group, negation, existence or inequality is not unambiguous.
 			}
 		}
 

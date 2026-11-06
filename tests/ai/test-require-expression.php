@@ -16,14 +16,14 @@ SD_Ai_Test::group( 'require/parse' );
 
 $parsed = RequireExpression::parse( '[%container%]=="col"' );
 SD_Ai_Test::same( 'single equality attribute', 'container', $parsed['conditions'][0]['attribute'] );
-SD_Ai_Test::same( 'single equality compare', '===', $parsed['conditions'][0]['compare'] );
+SD_Ai_Test::same( 'single equality compare', '==', $parsed['conditions'][0]['compare'] );
 SD_Ai_Test::same( 'single equality value', 'col', $parsed['conditions'][0]['value'] );
 SD_Ai_Test::same( 'single equality is exact', true, $parsed['exact'] );
 
 // --- Inequality against empty ---------------------------------------------
 
 $parsed = RequireExpression::parse( '[%icon_type%]!=""' );
-SD_Ai_Test::same( 'inequality compare', '!==', $parsed['conditions'][0]['compare'] );
+SD_Ai_Test::same( 'inequality compare', '!=', $parsed['conditions'][0]['compare'] );
 SD_Ai_Test::same( 'inequality value', '', $parsed['conditions'][0]['value'] );
 
 // --- AND chain -------------------------------------------------------------
@@ -58,31 +58,50 @@ $parsed = RequireExpression::parse( '([%border%]&&[%border%]!="0")' );
 SD_Ai_Test::same( 'no-space AND count', 2, count( $parsed['conditions'] ) );
 SD_Ai_Test::same( 'no-space quoted zero stays string', '0', $parsed['conditions'][1]['value'] );
 
-// --- Known-lossy shapes ----------------------------------------------------
+// --- Negation, grouping and precedence -----------------------------------
 
 $parsed = RequireExpression::parse( '![%hide_category_filter%]' );
-SD_Ai_Test::same( 'bare negation drops its only term', 0, count( $parsed['conditions'] ) );
-SD_Ai_Test::same( 'bare negation flagged lossy', false, $parsed['exact'] );
-SD_Ai_Test::ok(
-	'bare negation records the issue',
-	in_array( RequireExpression::ISSUE_DROPPED_TERM, $parsed['issues'], true )
-);
+SD_Ai_Test::same( 'bare negation keeps its term', 1, count( $parsed['conditions'] ) );
+SD_Ai_Test::same( 'bare negation sets the negate flag', true, $parsed['conditions'][0]['negate'] );
+SD_Ai_Test::same( 'bare negation is exact', true, $parsed['exact'] );
+
+$parsed = RequireExpression::parse( '![%hide_icon%:checked]' );
+SD_Ai_Test::same( 'negated :checked is an exists test', 'exists', $parsed['conditions'][0]['compare'] );
+SD_Ai_Test::same( 'negated :checked is negated', true, $parsed['conditions'][0]['negate'] );
 
 $parsed = RequireExpression::parse( '(![%button_hide%] && [%link_bg%]=="custom-gradient")' );
-SD_Ai_Test::same( 'negation inside AND keeps the other term', 1, count( $parsed['conditions'] ) );
-SD_Ai_Test::same( 'negation inside AND flagged lossy', false, $parsed['exact'] );
+SD_Ai_Test::same( 'negation inside AND keeps both terms', 2, count( $parsed['conditions'] ) );
+SD_Ai_Test::same( 'negation inside AND is exact', true, $parsed['exact'] );
 
 $parsed = RequireExpression::parse( ' ( ( [%container%]=="row" ) || ( [%display%]=="d-flex" || [%display_lg%]=="d-lg-flex" ) ) ' );
-SD_Ai_Test::ok(
-	'interior parens recorded',
-	in_array( RequireExpression::ISSUE_INTERIOR_PARENS, $parsed['issues'], true )
-);
-SD_Ai_Test::same( 'interior parens flagged lossy', false, $parsed['exact'] );
+SD_Ai_Test::same( 'nested groups parse as OR', 'OR', $parsed['operator'] );
+SD_Ai_Test::same( 'nested groups keep the inner group', 2, count( $parsed['conditions'] ) );
+SD_Ai_Test::same( 'the inner group is its own OR', 'OR', $parsed['conditions'][1]['operator'] ?? '' );
+SD_Ai_Test::same( 'nested groups are exact', true, $parsed['exact'] );
+
+$parsed = RequireExpression::parse( '[%type%]=="open" && ([%position%]=="header" || [%position%]=="footer")' );
+SD_Ai_Test::same( 'AND with a bracketed OR is an AND', 'AND', $parsed['operator'] );
+SD_Ai_Test::same( 'the bracketed OR is nested', 'OR', $parsed['conditions'][1]['operator'] ?? '' );
 
 $parsed = RequireExpression::parse( '[%a%]=="1" && [%b%]=="2" || [%c%]=="3"' );
+SD_Ai_Test::same( 'mixed operators: && binds tighter', 'OR', $parsed['operator'] );
+SD_Ai_Test::same( 'mixed operators: the AND is nested', 'AND', $parsed['conditions'][0]['operator'] ?? '' );
+SD_Ai_Test::same( 'mixed operators are exact', true, $parsed['exact'] );
+
+$parsed = RequireExpression::parse( "[%a%]=='x'" );
+SD_Ai_Test::same( 'single quoted value', 'x', $parsed['conditions'][0]['value'] );
+
+$parsed = RequireExpression::parse( '[%n%]>2' );
+SD_Ai_Test::same( 'unquoted number is numeric', 2.0, $parsed['conditions'][0]['value'] );
+
+// --- Lossy shape -----------------------------------------------------------
+
+$parsed = RequireExpression::parse( 'this is not an expression' );
+SD_Ai_Test::same( 'stray words are dropped', 0, count( $parsed['conditions'] ) );
+SD_Ai_Test::same( 'stray words flagged lossy', false, $parsed['exact'] );
 SD_Ai_Test::ok(
-	'mixed operators recorded',
-	in_array( RequireExpression::ISSUE_MIXED_OPERATORS, $parsed['issues'], true )
+	'stray words record the issue',
+	in_array( RequireExpression::ISSUE_DROPPED_TERM, $parsed['issues'], true )
 );
 
 // --- Empty / absent --------------------------------------------------------
@@ -149,9 +168,60 @@ SD_Ai_Test::same(
 );
 
 SD_Ai_Test::same(
+	'negation hides when the term is truthy',
+	false,
+	RequireExpression::evaluate( '![%button_hide%]', array( 'button_hide' => true ) )
+);
+SD_Ai_Test::same(
+	'negation shows when the term is empty',
+	true,
+	RequireExpression::evaluate( '![%button_hide%]', array( 'button_hide' => '' ) )
+);
+SD_Ai_Test::same(
+	'a boolean checkbox passes =="1"',
+	true,
+	RequireExpression::evaluate( '[%with_pagination%]=="1"', array( 'with_pagination' => true ) )
+);
+SD_Ai_Test::same(
+	'a "1" checkbox passes :checked',
+	true,
+	RequireExpression::evaluate( '[%with_pagination%:checked]', array( 'with_pagination' => '1' ) )
+);
+SD_Ai_Test::same(
+	'an off checkbox fails :checked',
+	false,
+	RequireExpression::evaluate( '[%with_pagination%:checked]', array( 'with_pagination' => false ) )
+);
+SD_Ai_Test::same(
+	'bracketed group inside AND: closed section',
+	false,
+	RequireExpression::evaluate(
+		'[%type%]=="open" && ([%position%]=="header" || [%position%]=="footer")',
+		array( 'type' => 'close', 'position' => 'footer' )
+	)
+);
+SD_Ai_Test::same(
+	'bracketed group inside AND: open header',
+	true,
+	RequireExpression::evaluate(
+		'[%type%]=="open" && ([%position%]=="header" || [%position%]=="footer")',
+		array( 'type' => 'open', 'position' => 'header' )
+	)
+);
+SD_Ai_Test::same(
+	'&& binds tighter than ||',
+	true,
+	RequireExpression::evaluate( '[%a%]=="x" && [%b%]=="y" || [%c%]=="z"', array( 'a' => 'no', 'b' => 'no', 'c' => 'z' ) )
+);
+SD_Ai_Test::same(
+	'!=0 against an empty value is false, as JS reads "" as 0',
+	false,
+	RequireExpression::evaluate( '[%key_1%]!=0', array( 'key_1' => '' ) )
+);
+SD_Ai_Test::same(
 	'a dropped-term expression evaluates permissively, as the editor does',
 	true,
-	RequireExpression::evaluate( '![%button_hide%]', array( 'button_hide' => true ) )
+	RequireExpression::evaluate( 'this is not an expression', array() )
 );
 
 SD_Ai_Test::same(
@@ -195,9 +265,19 @@ SD_Ai_Test::same(
 	RequireExpression::to_schema( '[%icon_type%]!=""' )
 );
 SD_Ai_Test::same(
-	'a lossy parse is never described to the model',
+	'negation is not describable',
 	null,
 	RequireExpression::to_schema( '(![%button_hide%] && [%link_bg%]=="custom-gradient")' )
+);
+SD_Ai_Test::same(
+	'a nested group is not describable',
+	null,
+	RequireExpression::to_schema( '[%type%]=="open" && ([%position%]=="header" || [%position%]=="footer")' )
+);
+SD_Ai_Test::same(
+	'a lossy parse is never described to the model',
+	null,
+	RequireExpression::to_schema( 'this is not an expression' )
 );
 
 // ---------------------------------------------------------------------------

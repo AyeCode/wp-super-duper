@@ -21,6 +21,93 @@ if ( ! defined( 'ABSPATH' ) ) {
 class BlockEditorAssets {
 
 	/**
+	 * Returns the inline JavaScript that tells the editor which AyeCode plugins are
+	 * inactive or not installed, so a core/missing block from one of them can show
+	 * what it needs instead of the generic unsupported block message.
+	 *
+	 * Active plugins are left out: a block that is still missing while its plugin is
+	 * active belongs to something else, and the core placeholder is the right one.
+	 * Action links are only included for users who can act on them, and are built with
+	 * the same nonce the Plugins screen uses so activation works from a plain link.
+	 *
+	 * @return string
+	 */
+	public static function missing_blocks_data() {
+		if ( ! function_exists( 'get_plugins' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		}
+
+		$installed    = get_plugins();
+		$can_activate = current_user_can( 'activate_plugins' );
+		$can_install  = current_user_can( 'install_plugins' );
+		$plugins      = array();
+
+		foreach ( \AyeCode\SuperDuper\Utils::missing_block_plugins() as $file => $plugin ) {
+			// A plugin installed from a zip can sit in a renamed directory; match on the
+			// main file name too so it still counts as installed and activates correctly.
+			$installed_file = isset( $installed[ $file ] ) ? $file : '';
+			if ( '' === $installed_file ) {
+				foreach ( array_keys( $installed ) as $candidate ) {
+					if ( basename( $candidate ) === basename( $file ) ) {
+						$installed_file = $candidate;
+						break;
+					}
+				}
+			}
+
+			if ( '' !== $installed_file && \AyeCode\SuperDuper\Utils::is_plugin_active( $installed_file ) ) {
+				continue;
+			}
+
+			$status = '' !== $installed_file ? 'inactive' : 'missing';
+			$action = '';
+			if ( 'inactive' === $status && $can_activate ) {
+				$action = add_query_arg(
+					array(
+						'action'   => 'activate',
+						'plugin'   => rawurlencode( $installed_file ),
+						'_wpnonce' => wp_create_nonce( 'activate-plugin_' . $installed_file ),
+					),
+					self_admin_url( 'plugins.php' )
+				);
+			} elseif ( 'missing' === $status && $can_install ) {
+				$action = ! empty( $plugin['slug'] )
+					? self_admin_url( 'plugin-install.php?tab=plugin-information&plugin=' . rawurlencode( $plugin['slug'] ) )
+					: (string) $plugin['url'];
+			}
+
+			$plugins[ $file ] = array(
+				'name'       => (string) $plugin['name'],
+				'status'     => $status,
+				'action'     => $action,
+				'namespaces' => array_values( (array) $plugin['namespaces'] ),
+				'prefixes'   => array_values( (array) $plugin['prefixes'] ),
+				'blocks'     => (array) $plugin['blocks'],
+			);
+		}
+
+		$data = array(
+			'plugins' => $plugins,
+			'i18n'    => array(
+				/* translators: 1: block title, 2: plugin name. */
+				'needs'    => __( '%1$s needs %2$s.', 'ayecode-connect' ),
+				/* translators: %s: plugin name. */
+				'returns'  => __( 'It will show here again once %s is active.', 'ayecode-connect' ),
+				'reload'   => __( 'Activation opens in a new tab so unsaved changes here are kept. Reload the editor afterwards.', 'ayecode-connect' ),
+				/* translators: %s: plugin name. */
+				'activate' => __( 'Activate %s', 'ayecode-connect' ),
+				/* translators: %s: plugin name. */
+				'install'  => __( 'Install %s', 'ayecode-connect' ),
+				/* translators: %s: plugin name. */
+				'get'      => __( 'Get %s', 'ayecode-connect' ),
+				'remove'   => __( 'Remove block', 'ayecode-connect' ),
+			),
+		);
+
+		return 'window.sdMissingBlockPlugins = ' . wp_json_encode( $data ) . ';';
+	}
+
+	/**
 	 * Returns the JavaScript for the VisibilityConditionsModal React component.
 	 *
 	 * @return string
@@ -28,15 +115,17 @@ class BlockEditorAssets {
 	public static function visibility_conditions_script() {
     // --- START: Data Configuration ---
 
-    // Rule Options
+    // Rule Options. Built from the same list the frontend validates against, so
+    // rule types added with the sd_visibility_rules_options filter can be picked.
     $rule_options = [
             ['label' => 'Select Rule...', 'value' => ''],
-            ['label' => 'Logged In', 'value' => 'logged_in'],
-            ['label' => 'Logged Out', 'value' => 'logged_out'],
-            ['label' => 'Post Author', 'value' => 'post_author'],
-            ['label' => 'Specific User Roles', 'value' => 'user_roles'],
-            ['label' => 'GD Field', 'value' => 'gd_field'],
     ];
+    foreach ( \AyeCode\SuperDuper\Utils::visibility_rules_options() as $rule_key => $rule_label ) {
+        $rule_options[] = [
+                'label' => $rule_label,
+                'value' => $rule_key,
+        ];
+    }
 
     // Action Options
     $output_options = [
@@ -56,8 +145,8 @@ class BlockEditorAssets {
             ['label' => 'is not equal', 'value' => 'is_not_equal'],
             ['label' => 'is greater than', 'value' => 'is_greater_than'],
             ['label' => 'is less than', 'value' => 'is_less_than'],
-            ['label' => 'contains', 'value' => 'contains'],
-            ['label' => 'does not contain', 'value' => 'not_contains'],
+            ['label' => 'contains', 'value' => 'is_contains'],
+            ['label' => 'does not contain', 'value' => 'is_not_contains'],
     ];
 
     // Message type options
@@ -81,6 +170,34 @@ class BlockEditorAssets {
         }
     }
 
+    // Plugin Active rule conditions
+    $plugin_condition_options = [
+            ['label' => 'is active', 'value' => 'is_active'],
+            ['label' => 'is not active', 'value' => 'is_not_active'],
+    ];
+
+    // Installed plugins for the Plugin Active rule. Must-use plugins are keyed under
+    // mu-plugins/ so the evaluator can tell them apart from regular plugins.
+    $plugin_options = [];
+    if ( ! function_exists( 'get_plugins' ) ) {
+        require_once ABSPATH . 'wp-admin/includes/plugin.php';
+    }
+    foreach ( get_plugins() as $plugin_file => $plugin_data ) {
+        $plugin_options[] = [
+                'label'  => wp_strip_all_tags( $plugin_data['Name'] ),
+                'value'  => $plugin_file,
+                'active' => \AyeCode\SuperDuper\Utils::is_plugin_active( $plugin_file ),
+        ];
+    }
+    foreach ( get_mu_plugins() as $plugin_file => $plugin_data ) {
+        $plugin_options[] = [
+                'label'  => wp_strip_all_tags( $plugin_data['Name'] ),
+                'value'  => 'mu-plugins/' . $plugin_file,
+                'active' => true,
+        ];
+    }
+    usort( $plugin_options, fn( $a, $b ) => strcasecmp( $a['label'], $b['label'] ) );
+
     // --- END: Data Configuration ---
 
 
@@ -90,11 +207,40 @@ class BlockEditorAssets {
         (function(wp) {
             if (!wp || !wp.element) return;
 
-            const { element, apiFetch } = wp;
+            const { element, apiFetch, components } = wp;
             const { createElement: el, useState, useEffect, Fragment, createPortal } = element;
+            const { ComboboxControl } = components || {};
 
             // Cache variable outside the component to persist across re-mounts.
             let apiOptionsCache = null;
+
+            const ruleOptions = <?php echo wp_json_encode($rule_options); ?>;
+
+            // A saved rule type that is no longer offered (a filter-added rule whose plugin is
+            // off, or gd_field without GeoDirectory) is kept as an option so the select does not
+            // show blank and the rule survives a resave.
+            const getRuleOptions = (type) => {
+                if (!type || ruleOptions.some(o => o.value === type)) return ruleOptions;
+                return [...ruleOptions, { label: type, value: type }];
+            };
+
+            // Plugin Active rule. The combobox lists installed plugins and ends with a custom
+            // constant entry for code the plugin list cannot see (bundled packages, theme code,
+            // feature flags). A rule saved for a plugin not installed here keeps its raw path.
+            const CUSTOM_CONSTANT = '__constant__';
+            const pluginOptions = <?php echo wp_json_encode($plugin_options); ?>.map(p => ({
+                value: p.value,
+                label: p.active ? p.label : `${p.label} (inactive)`,
+            }));
+            const getPluginOptions = (rule) => {
+                const options = [...pluginOptions];
+                if (rule.plugin && !options.some(o => o.value === rule.plugin)) {
+                    options.push({ value: rule.plugin, label: rule.plugin });
+                }
+                options.push({ value: CUSTOM_CONSTANT, label: 'Custom constant...' });
+                return options;
+            };
+            const isConstantRule = (rule) => typeof rule.constant === 'string';
 
             const VisibilityConditionsModal = (props) => {
                 const { isOpen, onClose, value, onSave } = props;
@@ -188,6 +334,9 @@ class BlockEditorAssets {
                     if (newType === 'gd_field') {
                         updates.condition = 'is_empty';
                     }
+                    if (newType === 'plugin_active') {
+                        updates.condition = 'is_active';
+                    }
                     updateRule(id, updates);
                 };
 
@@ -199,6 +348,10 @@ class BlockEditorAssets {
                                 type: rule.type,
                                 ...(rule.type === 'user_roles' && { user_roles: rule.user_roles }),
                                 ...(rule.type === 'gd_field' && { field: rule.field, condition: rule.condition, search: rule.search }),
+                                ...(rule.type === 'plugin_active' && {
+                                    condition: rule.condition || 'is_active',
+                                    ...(isConstantRule(rule) ? { constant: rule.constant } : { plugin: rule.plugin || '' }),
+                                }),
                             };
                         }
                     });
@@ -256,7 +409,7 @@ class BlockEditorAssets {
                                             el('div', { className: 'input-group mb-3' },
                                                 el('span', { className: 'input-group-text' }, 'Rule:'),
                                                 el('select', { className: 'form-select', style: { maxWidth: 'unset' }, value: rule.type || '', onChange: e => handleRuleTypeChange(rule.id, e.target.value) },
-                                                <?php echo wp_json_encode($rule_options); ?>.map(o => el('option', { key: o.value, value: o.value }, o.label))
+                                                getRuleOptions(rule.type).map(o => el('option', { key: o.value, value: o.value }, o.label))
                                             )
                                         ),
                                         rule.type === 'user_roles' && el(Fragment, null,
@@ -270,6 +423,31 @@ class BlockEditorAssets {
                                             ))
                                         )
                                     ),
+                                    rule.type === 'plugin_active' && el('div', { className: 'row g-2' },
+                                        el('div', { className: 'col-md-8' },
+                                            ComboboxControl
+                                                ? el(ComboboxControl, {
+                                                    __next40pxDefaultSize: true,
+                                                    __nextHasNoMarginBottom: true,
+                                                    placeholder: 'Search plugins...',
+                                                    value: isConstantRule(rule) ? CUSTOM_CONSTANT : (rule.plugin || null),
+                                                    options: getPluginOptions(rule),
+                                                    onChange: v => updateRule(rule.id, v === CUSTOM_CONSTANT ? { plugin: '', constant: rule.constant || '' } : { plugin: v || '', constant: undefined }),
+                                                })
+                                                : el('select', { className: 'form-select', style: { maxWidth: 'unset' }, value: isConstantRule(rule) ? CUSTOM_CONSTANT : (rule.plugin || ''), onChange: e => updateRule(rule.id, e.target.value === CUSTOM_CONSTANT ? { plugin: '', constant: rule.constant || '' } : { plugin: e.target.value, constant: undefined }) },
+                                                    [{ value: '', label: 'Select Plugin...' }, ...getPluginOptions(rule)].map(o => el('option', { key: o.value, value: o.value }, o.label))
+                                                )
+                                        ),
+                                        el('div', { className: 'col-md-4' },
+                                            el('select', { className: 'form-select', style: { maxWidth: 'unset' }, value: rule.condition || 'is_active', onChange: e => updateRule(rule.id, { condition: e.target.value }) },
+                                            <?php echo wp_json_encode($plugin_condition_options); ?>.map(o => el('option', { key: o.value, value: o.value }, o.label))
+                                        )
+                                    ),
+                                    isConstantRule(rule) && el('div', { className: 'col-12' },
+                                        el('input', { type: 'text', className: 'form-control font-monospace', placeholder: 'CONSTANT_NAME', value: rule.constant, onChange: e => updateRule(rule.id, { constant: e.target.value.replace(/[^A-Za-z0-9_\\]/g, '') }) }),
+                                        el('div', { className: 'form-text' }, 'The rule passes when this PHP constant is defined. Its value is never read.')
+                                    )
+                                ),
                                     rule.type === 'gd_field' && el('div', { className: 'row g-2' },
                                         el('div', { className: 'col-md-6' },
                                             el('select', { className: 'form-select', style: { maxWidth: 'unset' }, value: rule.field || '', onChange: e => updateRule(rule.id, { field: e.target.value }) },
@@ -1088,6 +1266,41 @@ class BlockEditorAssets {
     <style>
         .bsui label.components-base-control__label {
             width: 100%;
+        }
+        /* The visibility modal's plugin combobox is a WP component inside a Bootstrap modal.
+           Give its box the form-control look so it lines up with the selects beside it, and
+           float the suggestions list over the modal instead of pushing the content down. */
+        .bsui .components-combobox-control__suggestions-container {
+            position: relative;
+            min-height: calc(1.5em + 1rem + 2px);
+            padding: 0;
+            font-size: 1rem;
+            color: var(--bs-body-color);
+            background-color: var(--bs-body-bg);
+            border: 1px solid var(--bs-border-color);
+            border-radius: var(--bs-border-radius);
+            align-items: center;
+        }
+        .bsui .components-combobox-control input.components-combobox-control__input[type='text'] {
+            min-height: 0;
+            padding: .5rem .75rem;
+            font-size: 1rem;
+        }
+        .bsui .components-form-token-field__suggestions-list {
+            position: absolute;
+            top: 100%;
+            left: -1px;
+            right: -1px;
+            z-index: 5;
+            max-height: 14rem;
+            margin-top: .25rem;
+            overflow-y: auto;
+            font-size: 1rem;
+            color: var(--bs-body-color);
+            background-color: var(--bs-body-bg);
+            border: 1px solid var(--bs-border-color);
+            border-radius: var(--bs-border-radius);
+            box-shadow: var(--bs-box-shadow);
         }
     </style>
     ";

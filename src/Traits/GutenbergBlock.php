@@ -43,7 +43,7 @@ trait GutenbergBlock {
         wp_enqueue_script(
                 'super-duper-universal-block-editor',
                 SUPER_DUPER_PLUGIN_URL . 'assets/js/super-duper-block-editor.js',
-                [ 'wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components', 'wp-i18n' ], // Common dependencies
+                [ 'wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components', 'wp-i18n', 'wp-hooks', 'wp-data' ], // Common dependencies
                 SUPER_DUPER_VER,
                 true // Load in footer
         );
@@ -53,6 +53,9 @@ trait GutenbergBlock {
         static $sd_editor_assets_loaded = false;
         if ( ! $sd_editor_assets_loaded ) {
             $sd_editor_assets_loaded = true;
+
+            // plugins whose missing blocks the editor can explain, read by the core/missing placeholder
+            wp_add_inline_script( 'super-duper-universal-block-editor', \AyeCode\SuperDuper\Assets\BlockEditorAssets::missing_blocks_data(), 'before' );
 
             // visibility conditions
             wp_add_inline_script( 'super-duper-universal-block-editor', \AyeCode\SuperDuper\Assets\BlockEditorAssets::visibility_conditions_script() );

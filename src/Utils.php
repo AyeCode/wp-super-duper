@@ -1238,13 +1238,14 @@ class Utils {
 	 */
 	public static function visibility_rules_options() {
 		$options = array(
-			'logged_in'   => __( 'Logged In', 'ayecode-connect' ),
-			'logged_out'  => __( 'Logged Out', 'ayecode-connect' ),
-			'post_author' => __( 'Post Author', 'ayecode-connect' ),
-			'user_roles'  => __( 'Specific User Roles', 'ayecode-connect' ),
+			'logged_in'     => __( 'Logged In', 'ayecode-connect' ),
+			'logged_out'    => __( 'Logged Out', 'ayecode-connect' ),
+			'post_author'   => __( 'Post Author', 'ayecode-connect' ),
+			'user_roles'    => __( 'Specific User Roles', 'ayecode-connect' ),
+			'plugin_active' => __( 'Plugin Active', 'ayecode-connect' ),
 		);
 
-		if ( class_exists( 'GeoDirectory' ) ) {
+		if ( defined( 'GEODIRECTORY_VERSION' ) ) {
 			$options['gd_field'] = __( 'GD Field', 'ayecode-connect' );
 		}
 
@@ -1731,6 +1732,9 @@ class Utils {
 						}
 					}
 					break;
+				case 'plugin_active':
+					$match = self::block_check_rule_plugin_active( $rule );
+					break;
 				case 'gd_field':
 					$match = self::block_check_rule_gd_field( $rule );
 					break;
@@ -1744,6 +1748,214 @@ class Utils {
 	}
 
 	/**
+	 * Evaluate a plugin active visibility rule.
+	 *
+	 * The rule names either a plugin file as listed by get_plugins(), or a constant the
+	 * code in question defines. A constant is only tested for existence, never read, so
+	 * the rule cannot be used to probe values such as credentials.
+	 *
+	 * @param array $rule Rule array with 'condition' and either 'plugin' or 'constant'.
+	 * @return bool
+	 */
+	public static function block_check_rule_plugin_active( $rule ) {
+		$active = false;
+
+		if ( ! empty( $rule['constant'] ) ) {
+			$constant = preg_replace( '/[^A-Za-z0-9_\\\\]/', '', (string) $rule['constant'] );
+			$active   = '' !== $constant && defined( $constant );
+		} elseif ( ! empty( $rule['plugin'] ) ) {
+			$active = self::is_plugin_active( (string) $rule['plugin'] );
+		}
+
+		if ( ! empty( $rule['condition'] ) && 'is_not_active' === $rule['condition'] ) {
+			return ! $active;
+		}
+
+		return $active;
+	}
+
+	/**
+	 * Check whether a plugin file is active without loading the admin plugin API.
+	 *
+	 * Must-use plugins are passed as mu-plugins/file.php and are active whenever the file
+	 * exists, since WordPress always loads them.
+	 *
+	 * @param string $plugin Plugin file relative to the plugins directory.
+	 * @return bool
+	 */
+	public static function is_plugin_active( $plugin ) {
+		$plugin = ltrim( str_replace( '\\', '/', $plugin ), '/' );
+
+		if ( 0 === strpos( $plugin, 'mu-plugins/' ) ) {
+			return file_exists( WPMU_PLUGIN_DIR . '/' . basename( substr( $plugin, 11 ) ) );
+		}
+
+		if ( in_array( $plugin, (array) get_option( 'active_plugins', array() ), true ) ) {
+			return true;
+		}
+
+		if ( is_multisite() ) {
+			$sitewide = (array) get_site_option( 'active_sitewide_plugins', array() );
+
+			return isset( $sitewide[ $plugin ] );
+		}
+
+		return false;
+	}
+
+	/**
+	 * AyeCode plugins the block editor can name when one of their blocks is missing.
+	 *
+	 * When a plugin is not active, WordPress shows its blocks as core/missing with the
+	 * original block name in originalName. The editor matches that name against this map,
+	 * first on the exact block names listed under 'blocks', then on the block namespace,
+	 * so it can say which plugin the block needs. Blocks are named textdomain/class-name,
+	 * and some add-ons register under a namespace that another plugin owns (the v2 events
+	 * calendar lived under geodirectory), which is what the exact list is for. It also
+	 * supplies titles for blocks whose class name does not read well on its own; any other
+	 * block gets its title from the class name with the plugin's 'prefixes' stripped.
+	 *
+	 * Keyed by plugin file. Each entry has:
+	 * - 'name'       The plugin as the placeholder names it.
+	 * - 'slug'       The wordpress.org slug, or '' when the plugin is not hosted there.
+	 * - 'url'        The product page, used when there is no wordpress.org slug.
+	 * - 'namespaces' Block namespaces the plugin registers under.
+	 * - 'prefixes'   Class name prefixes to strip when building a block title.
+	 * - 'blocks'     Exact block names mapped to a title.
+	 *
+	 * @return array<string, array{name: string, slug: string, url: string, namespaces: string[], prefixes: string[], blocks: array<string, string>}>
+	 */
+	public static function missing_block_plugins() {
+		$plugins = array();
+
+		$plugins['geodirectory/geodirectory.php'] = array(
+			'name'       => 'GeoDirectory',
+			'slug'       => 'geodirectory',
+			'url'        => 'https://wpgeodirectory.com/',
+			'namespaces' => array( 'geodirectory' ),
+			'prefixes'   => array( 'geodir-widget-' ),
+			'blocks'     => array(
+				'geodirectory/geodir-widget-az-search' => 'A-Z Search',
+				'geodirectory/geodir-widget-cpt-meta'  => 'CPT Meta',
+			),
+		);
+
+		$plugins['geodir_location_manager/geodir_location_manager.php'] = array(
+			'name'       => 'Location Manager',
+			'slug'       => '',
+			'url'        => 'https://wpgeodirectory.com/downloads/location-manager/',
+			'namespaces' => array( 'geodirlocation' ),
+			'prefixes'   => array( 'geodir-location-widget-' ),
+			'blocks'     => array(
+				'geodirlocation/geodir-location-widget-description' => 'Location Description',
+				'geodirlocation/geodir-location-widget-near-me'     => 'Near Me Button',
+			),
+		);
+
+		$plugins['geodir_payment_manager/geodir_payment_manager.php'] = array(
+			'name'       => 'Pricing Manager',
+			'slug'       => '',
+			'url'        => 'https://wpgeodirectory.com/downloads/pricing-manager/',
+			'namespaces' => array( 'geodir-pricing' ),
+			'prefixes'   => array(),
+			'blocks'     => array(
+				'geodir-pricing/pricingblock'     => 'Pricing',
+				'geodir-pricing/expiredtextblock' => 'Single Expired Text',
+				'geodir-pricing/userbundleblock'  => 'Bundle Posts',
+			),
+		);
+
+		$plugins['geodir_custom_posts/geodir_custom_posts.php'] = array(
+			'name'       => 'Custom Post Types',
+			'slug'       => '',
+			'url'        => 'https://wpgeodirectory.com/downloads/custom-post-types/',
+			'namespaces' => array( 'geodir-custom-posts' ),
+			'prefixes'   => array(),
+			'blocks'     => array(
+				'geodir-custom-posts/cptlistings' => 'CPT Listings',
+				'geodir-custom-posts/linkedposts' => 'Linked Posts',
+			),
+		);
+
+		$plugins['geodir_claim_listing/geodir_claim_listing.php'] = array(
+			'name'       => 'Claim Listings',
+			'slug'       => '',
+			'url'        => 'https://wpgeodirectory.com/downloads/claim-listings/',
+			'namespaces' => array( 'geodir-claim' ),
+			'prefixes'   => array(),
+			'blocks'     => array(
+				'geodir-claim/claimbutton' => 'Post Claim',
+			),
+		);
+
+		$plugins['geodir_list_manager/geodir_list_manager.php'] = array(
+			'name'       => 'List Manager',
+			'slug'       => '',
+			'url'        => 'https://wpgeodirectory.com/downloads/list-manager/',
+			'namespaces' => array( 'gd-lists' ),
+			'prefixes'   => array(),
+			'blocks'     => array(
+				'gd-lists/listloop'        => 'List Loop',
+				'gd-lists/listloopactions' => 'List Loop Actions',
+				'gd-lists/listsave'        => 'List Save',
+				'gd-lists/listdescription' => 'List Description',
+			),
+		);
+
+		$plugins['geodir_advance_search_filters/geodir-advanced-search.php'] = array(
+			'name'       => 'Advanced Search Filters',
+			'slug'       => '',
+			'url'        => 'https://wpgeodirectory.com/downloads/advanced-search-add-on/',
+			'namespaces' => array( 'geodiradvancesearch' ),
+			'prefixes'   => array( 'geodir-adv-search-widget-' ),
+			'blocks'     => array(),
+		);
+
+		$plugins['events-for-geodirectory/events-for-geodirectory.php'] = array(
+			'name'       => 'Events for GeoDirectory',
+			'slug'       => 'events-for-geodirectory',
+			'url'        => 'https://wpgeodirectory.com/downloads/events/',
+			'namespaces' => array( 'geodirevents' ),
+			'prefixes'   => array( 'geodir-event-widget-' ),
+			'blocks'     => array(
+				'geodirevents/calendarblock'           => 'Events Calendar',
+				'geodirevents/countdownblock'          => 'Event Countdown',
+				'geodirevents/schedulesblock'          => 'Event Schedules',
+				'geodirevents/ayiblock'                => 'Are You Interested?',
+				'geodirevents/geodir-event-widget-ayi' => 'Are You Interested?',
+				'geodirectory/geodir-event-widget-calendar' => 'Events Calendar',
+			),
+		);
+
+		$plugins['geodir-embed/geodir-embed.php'] = array(
+			'name'       => 'GeoDirectory Embed',
+			'slug'       => '',
+			'url'        => 'https://wpgeodirectory.com/downloads/embeddable-ratings-badge/',
+			'namespaces' => array( 'geodir-embed' ),
+			'prefixes'   => array(),
+			'blocks'     => array(
+				'geodir-embed/embedblock' => 'Embed',
+			),
+		);
+
+		$plugins['blockstrap-page-builder-blocks/blockstrap-page-builder-blocks.php'] = array(
+			'name'       => 'BlockStrap Blocks',
+			'slug'       => 'blockstrap-page-builder-blocks',
+			'url'        => 'https://ayecode.io/',
+			'namespaces' => array( 'blockstrap', 'blockstrap-page-builder-blocks' ),
+			'prefixes'   => array( 'blockstrap-widget-' ),
+			'blocks'     => array(),
+		);
+
+		/**
+		 * Filter the plugins the editor names when one of their blocks is missing.
+		 *
+		 * @param array $plugins Plugin entries keyed by plugin file. See Utils::missing_block_plugins().
+		 */
+		return apply_filters( 'sd_missing_block_plugins', $plugins );
+	}
+
+	/**
 	 * Evaluate a GeoDirectory field visibility rule.
 	 *
 	 * @param array $rule Rule array containing 'field', 'condition', 'search'.
@@ -1754,12 +1966,18 @@ class Utils {
 
 		$match_found = false;
 
-		if ( class_exists( 'GeoDirectory' ) && ! empty( $gd_post->ID ) && ! empty( $rule['field'] ) && ! empty( $rule['condition'] ) ) {
+		if ( defined( 'GEODIRECTORY_VERSION' ) && ! empty( $gd_post->ID ) && ! empty( $rule['field'] ) && ! empty( $rule['condition'] ) ) {
 			$args                    = array();
 			$args['block_visibility'] = true;
 			$args['key']             = $rule['field'];
 			$args['condition']       = $rule['condition'];
 			$args['search']          = isset( $rule['search'] ) ? $rule['search'] : '';
+
+			// Accept the short condition names too, so a rule written as contains or not_contains
+			// evaluates the same as the stored is_contains and is_not_contains forms.
+			if ( 'contains' === $args['condition'] || 'not_contains' === $args['condition'] ) {
+				$args['condition'] = 'is_' . $args['condition'];
+			}
 
 			if ( $args['key'] == 'street' ) {
 				$args['key'] = 'address';

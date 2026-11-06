@@ -98,11 +98,14 @@ trait OutputHandler {
 		// so without this save/restore a nested render would leave the outer render
 		// reading the inner one's state and emitting the wrong sdel- hash.
 		$previous_instance = $this->instance;
+		$previous_actions  = $this->title_actions;
+		$this->title_actions = '';
 
 		try {
 			return $this->render_shortcode_output( $args, $content );
 		} finally {
-			$this->instance = $previous_instance;
+			$this->instance      = $previous_instance;
+			$this->title_actions = $previous_actions;
 		}
 	}
 
@@ -149,7 +152,7 @@ trait OutputHandler {
 
 		if ( $main_content && ! $no_wrap ) {
 			$output .= '<div class="' . esc_attr( $class ) . '" ' . $attrs . '>';
-			if ( ! empty( $args['title'] ) ) {
+			if ( ! empty( $args['title'] ) || $this->get_title_actions( $args ) ) {
 				$output .= $this->output_title( array(), $args );
 			}
 			$output .= $main_content;
@@ -175,6 +178,7 @@ trait OutputHandler {
 		$args = is_array( $args ) ? $args : array();
 		$argument_values = $this->argument_values( $instance );
 		$argument_values = \AyeCode\SuperDuper\Utils::string_to_bool( $argument_values );
+		$this->title_actions = '';
 		$output = $this->output( $argument_values, $args );
 
 		if ( $output ) {
@@ -283,7 +287,9 @@ trait OutputHandler {
 	 * @return string The rendered title HTML.
 	 */
 	public function output_title( $args, $instance = array() ) {
-		$output = '';
+		$output  = '';
+		$actions = $this->get_title_actions( $instance );
+
 		if ( ! empty( $instance['title'] ) ) {
 			/** This filter is documented in wp-includes/widgets/class-wp-widget-pages.php */
 			$title  = apply_filters( 'widget_title', $instance['title'], $instance, $this->id_base );
@@ -297,7 +303,8 @@ trait OutputHandler {
 					$args['after_title'] = '';
 				}
 
-				$output = $args['before_title'] . $title . $args['after_title'];
+				// In the title row a bare title (no tag and no sidebar wrapper) needs a heading to sit beside the actions.
+				$output = $actions && ! $args['before_title'] ? '<h2 class="mb-0">' . $title . '</h2>' : $args['before_title'] . $title . $args['after_title'];
 			} else {
 				$tag 			= esc_attr( $instance['widget_title_tag'] );
 				$allowed_tags 	= array( 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'span', 'div', 'p' );
@@ -319,13 +326,53 @@ trait OutputHandler {
 				$title_classes[] = !empty( $instance['widget_title_pb_class'] ) ? "pb-".absint( $instance['widget_title_pb_class'] ) : '';
 				$title_classes[] = !empty( $instance['widget_title_pl_class'] ) ? "pl-".absint( $instance['widget_title_pl_class'] ) : '';
 
+				if ( $actions ) {
+					// The row carries the bottom margin, so the heading and the actions stay on one line.
+					$title_classes[] = 'mb-0';
+				}
+
 				$class = !empty( $title_classes ) ? implode(" ",$title_classes) : '';
 				$output = "<$title_tag class='$class' >$title</$title_tag>";
 			}
 
 		}
 
+		if ( $actions ) {
+			$mb     = ! empty( $instance['widget_title_mb_class'] ) ? 'mb-' . absint( $instance['widget_title_mb_class'] ) : 'mb-3';
+			$output = '<div class="sd-title-row d-flex align-items-center justify-content-between gap-4 ' . esc_attr( $mb ) . '">' . ( $output ? $output : '<div></div>' ) . '<div class="sd-title-actions d-flex align-items-center gap-3 text-nowrap">' . $actions . '</div></div>';
+		}
+
 		return $output;
+	}
+
+	/**
+	 * Put content on the end side of the title row: a view all link, pagination, carousel arrows.
+	 *
+	 * Call it from output(). The row prints even when the block has no title, with the actions on the end.
+	 * Several calls append, in the order they were made.
+	 *
+	 * @param string $html Escaped HTML.
+	 * @return void
+	 */
+	public function set_title_actions( $html ) {
+		$this->title_actions .= (string) $html;
+	}
+
+	/**
+	 * The title row actions for this render, with the filter applied.
+	 *
+	 * @param array $instance The instance settings.
+	 * @return string
+	 */
+	public function get_title_actions( $instance = array() ) {
+		/**
+		 * Filters the content on the end side of a block's title row.
+		 *
+		 * @param string $html     Escaped HTML, empty when the block set nothing.
+		 * @param array  $instance The instance settings.
+		 * @param object $widget   The block instance.
+		 */
+		return (string) apply_filters( 'wp_super_duper_title_actions', $this->title_actions, $instance, $this );
 	}
 
 	/**

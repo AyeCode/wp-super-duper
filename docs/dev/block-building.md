@@ -472,6 +472,19 @@ This creates the exact same fields with the exact same `element_require` logic, 
 
 ---
 
+## Title Row Actions
+
+A block's title is printed by the base class, after `output()` has run. To put something inline on the end side of it, a view all link, pagination or carousel arrows, call `set_title_actions()` from `output()` with escaped HTML. The title then prints as one flex row: the heading on the start, the actions on the end, with the title's bottom margin moved to the row. The row prints even when the block has no title. Several calls append in order; keep the order view all, pagination, arrows. Blocks, shortcodes and sidebar widgets all get the same row. The `wp_super_duper_title_actions` filter lets other code add to any block's row.
+
+```php
+public function output( $args = [], $widget_args = [], $content = '' ) {
+	if ( $args['view_all_position'] === 'title' ) {
+		$this->set_title_actions( '<a class="nav-link py-1 px-0" href="' . esc_url( $url ) . '">' . esc_html__( 'View all', 'my-domain' ) . '</a>' );
+	}
+	// ...
+}
+```
+
 ## Complete Constructor Options Reference
 
 Pass to `parent::__construct()`:
@@ -852,15 +865,26 @@ Every field passed to `add_field()` supports these properties:
 
 ### `element_require` Syntax
 
-Conditional display logic:
+Conditional display logic, evaluated the same way in the block editor, the shortcode builder and the classic widget form:
 
 ```php
-'element_require' => '[%field_name%]'              // Show when field_name is truthy
-'element_require' => '![%field_name%]'             // Show when field_name is falsy
-'element_require' => '[%field_name%]=="value"'     // Show when field equals "value"
-'element_require' => '[%field_name%]!="value"'     // Show when field does not equal "value"
-'element_require' => '([%a%]&&[%b%])||[%c%]'       // Complex conditions with &&/||
+'element_require' => '[%field_name%]=="value"'          // Show when field equals "value"
+'element_require' => '[%field_name%]!="value"'          // Show when field does not equal "value"
+'element_require' => '[%field_name%]!=""'               // Show when field is set
+'element_require' => '[%field_name%]==""'               // Show when field is empty
+'element_require' => '[%field_name%]'                   // Show when field is truthy
+'element_require' => '[%checkbox_name%:checked]'        // Show when a checkbox is on
+'element_require' => '![%checkbox_name%:checked]'       // Show when a checkbox is off
+'element_require' => '[%a%]=="x" && ([%b%]=="y" || [%b%]=="z")' // && binds tighter than ||, brackets group
 ```
+
+- Comparisons are loose, so a checkbox passes `=="1"` and `:checked` whether it arrives as a boolean (block editor) or a `"1"` input (shortcode builder). `:checked` reads best.
+- `<`, `>`, `<=` and `>=` compare numbers. Quote strings with either quote style.
+- `!` negates the term or bracket group after it.
+- A term the parser cannot read is skipped rather than hiding the field, so a typo shows the field instead of losing it.
+- When a field group takes an `element_require` override, it is wrapped in brackets and joined to each field's own test with `&&`.
+
+The block editor parser is `parseLegacyRequireString()` in `assets/js/super-duper-block-editor.js`. `src/Ai/RequireExpression.php` is its PHP port for the AI schema, and `tests/ai/test-require-expression.php` holds the parity cases.
 
 ### Dependent Fields (`depends_on`)
 
@@ -1099,6 +1123,14 @@ Filters: `sd_get_aui_colors` (grouped result), `sd_get_aui_colors_flat` (flat re
 
 ---
 
+### CarouselFields Methods
+
+| Method | Description |
+|---|---|
+| `CarouselFields::group( $prefix = '', $overwrite = [] )` | The standard carousel settings: arrows with an offset, dots, autoplay, loop, move by, per view per device, gap, items per column, peek, peek on both sides, speed. See `fields.md`. |
+| `CarouselFields::args( $instance, $prefix = '', $per_view = 1 )` | Saved values to `aui()->carousel()` args. |
+| `CarouselFields::stack( $slides, $instance, $prefix = '' )` | Groups slides into stacked columns when items per column is above one. |
+
 ## Block Output Modes
 
 ### Mode 1 — `block-output` Array (Auto-Compiled)
@@ -1256,6 +1288,36 @@ public function output( $args = array(), $widget_args = array(), $content = '' )
 
 **Use when:** Block queries the database, reads user/post context, or generates dynamic markup (most data-driven blocks).
 
+**Output attribute helpers**
+
+The settings a block inherits (margins, colors, display, border, typography, background and so on) are turned into HTML by one family of global functions. Use them instead of assembling the attribute yourself:
+
+| Function | Returns |
+|---|---|
+| `sd_build_aui_wrapper_attrs( $args, $extra_classes = '' )` | `class="..." style="..." ` for the wrapper element. Either attribute is left out when empty. |
+| `sd_build_aui_class_attr( $args, $extra_classes = '' )` | `class="..." ` or nothing. Every token is sanitized. |
+| `sd_build_aui_style_attr( $args )` | `style="..." ` or nothing. Validated and escaped. |
+| `sd_build_attributes_string_escaped( $args )` | `key="value" ` pairs from the `custom`, `new_window` and `nofollow` settings, for the link or inner element. |
+| `sd_build_aui_class( $args )` | The bare class string, when you need to merge it into something else. |
+| `sd_build_aui_styles( $args )` | The bare style value, already escaped for a double-quoted attribute. |
+
+All of them share one spacing convention: no leading space, a trailing space when there is output, so they drop straight into an opening tag:
+
+```php
+$html  = '<figure ' . sd_build_aui_wrapper_attrs( $args, 'overflow-hidden' ) . '>';
+$html .= '<a href="' . esc_url( $url ) . '" ' . sd_build_attributes_string_escaped( $args ) . '>';
+```
+
+Rules:
+
+- Never pass the output of `sd_build_aui_styles()` or `sd_build_aui_style_attr()` through `sd_sanitize_html_classes()` or any other sanitizer. The class sanitizer strips `:` and `;`, which turns `font-size:2rem;` into `font-size2rem` and silently kills every style setting on the block.
+- Test the style string, not the class string, when deciding whether to print a style attribute. Better still, let `sd_build_aui_style_attr()` decide.
+- Free-text style values (`bg_color`, `bg_gradient`, `bg_image`, `text_color_custom`, `font_line_height`, `max_height`) are validated as CSS inside the builder. A value that is not a color, gradient, URL or length is dropped. Do not read those args and print them yourself.
+- The PHP and JS builders (`sd_build_aui_class`, `sd_build_aui_styles`) are a matched pair. The `*_attr` helpers exist only in PHP, because the JS side returns props objects, not markup.
+
+Full signatures, the settings each builder reads and the validation rules are in [Global Helper Functions](global-functions.md#output-attributes).
+
+
 ### `block_global_js()` Method
 
 Optional method for injecting global JS helpers for the editor.
@@ -1288,36 +1350,6 @@ public function enqueue_scripts() {
     wp_enqueue_script( 'my-plugin-frontend' );
 
     wp_add_inline_script(
-**Output attribute helpers**
-
-The settings a block inherits (margins, colors, display, border, typography, background and so on) are turned into HTML by one family of global functions. Use them instead of assembling the attribute yourself:
-
-| Function | Returns |
-|---|---|
-| `sd_build_aui_wrapper_attrs( $args, $extra_classes = '' )` | `class="..." style="..." ` for the wrapper element. Either attribute is left out when empty. |
-| `sd_build_aui_class_attr( $args, $extra_classes = '' )` | `class="..." ` or nothing. Every token is sanitized. |
-| `sd_build_aui_style_attr( $args )` | `style="..." ` or nothing. Validated and escaped. |
-| `sd_build_attributes_string_escaped( $args )` | `key="value" ` pairs from the `custom`, `new_window` and `nofollow` settings, for the link or inner element. |
-| `sd_build_aui_class( $args )` | The bare class string, when you need to merge it into something else. |
-| `sd_build_aui_styles( $args )` | The bare style value, already escaped for a double-quoted attribute. |
-
-All of them share one spacing convention: no leading space, a trailing space when there is output, so they drop straight into an opening tag:
-
-```php
-$html  = '<figure ' . sd_build_aui_wrapper_attrs( $args, 'overflow-hidden' ) . '>';
-$html .= '<a href="' . esc_url( $url ) . '" ' . sd_build_attributes_string_escaped( $args ) . '>';
-```
-
-Rules:
-
-- Never pass the output of `sd_build_aui_styles()` or `sd_build_aui_style_attr()` through `sd_sanitize_html_classes()` or any other sanitizer. The class sanitizer strips `:` and `;`, which turns `font-size:2rem;` into `font-size2rem` and silently kills every style setting on the block.
-- Test the style string, not the class string, when deciding whether to print a style attribute. Better still, let `sd_build_aui_style_attr()` decide.
-- Free-text style values (`bg_color`, `bg_gradient`, `bg_image`, `text_color_custom`, `font_line_height`, `max_height`) are validated as CSS inside the builder. A value that is not a color, gradient, URL or length is dropped. Do not read those args and print them yourself.
-- The PHP and JS builders (`sd_build_aui_class`, `sd_build_aui_styles`) are a matched pair. The `*_attr` helpers exist only in PHP, because the JS side returns props objects, not markup.
-
-Full signatures, the settings each builder reads and the validation rules are in [Global Helper Functions](global-functions.md#output-attributes).
-
-
         'my-plugin-frontend',
         'var myBlockL10n = ' . wp_json_encode( $this->l10n() ) . ';',
         'before'
@@ -1545,6 +1577,4 @@ public function set_arguments(): array {
         ->add_field( 'hover_animation', StyleFields::hover_animation( [ 'group' => 'styles' ] ) )
         ->get();
 }
-```' ) . ' ' . __( 'Linkedin', 'blockstrap-page-builder-blocks' ) . '</a>';
-			}
-
+```

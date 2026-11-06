@@ -7,3 +7,4 @@ Deeper references for individual Super Duper features. Start with
 |---|---|
 | [block-output-formats.md](block-output-formats.md) | The three ways a block defines its editor output: the `block-output` array (auto-compiled), custom `block-edit-return` / `block-save-return` JS, and PHP dynamic rendering via `output()`. Also `block_global_js()`. |
 | [dependent-fields.md](dependent-fields.md) | `depends_on` — populating one field's options from another field's value over the REST API, with response mapping and caching. |
+| [visibility-conditions.md](visibility-conditions.md) | Block visibility rules: the built-in rule types, the Plugin Active rule with its installed-plugin picker and constant fallback, and the filters that add rule types from other plugins. |

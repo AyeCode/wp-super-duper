@@ -3,34 +3,26 @@
 namespace AyeCode\SuperDuper\Ai;
 
 /**
- * Parser and evaluator for the legacy `element_require` expression syntax.
+ * Parser and evaluator for the `element_require` expression syntax.
  *
- * This is a deliberate port of the editor's own implementation —
+ * This is a deliberate port of the editor's own implementation,
  * parseLegacyRequireString() and executeLogicObject() in
  * assets/js/super-duper-block-editor.js. The editor decides which fields a user
  * can actually see, so it is the reference: any divergence here would mean the
  * AI schema documents a grammar the editor does not enforce.
  *
- * That includes reproducing the parser's known limitations. It splits on
- * && / || flatly with no precedence, strips only a single leading and trailing
- * paren, and silently discards terms it cannot match (bare negation such as
- * `![%foo%]`). Those quirks are preserved but recorded — see the `issues` key
- * returned by parse() — so callers can tell an exact parse from a lossy one
- * instead of trusting all of them equally.
+ * The grammar is what the shortcode builder gets from evaluating the string as
+ * JavaScript: nested brackets, && binding tighter than ||, ! in front of a term
+ * or a bracket group, and loose comparisons so a checkbox passes `=="1"` whether
+ * it is a boolean (block editor) or a "1" input (shortcode builder). A term the
+ * tokenizer cannot read is skipped rather than hiding the field, and that is the
+ * one lossy case: it is recorded in the `issues` key returned by parse() so
+ * callers can tell an exact parse from a lossy one.
  */
 class RequireExpression {
 
-	/**
-	 * A term did not match the condition pattern and was dropped.
-	 * Bare negation (`![%foo%]`) is the common cause.
-	 */
+	/** A token that is not a `[%name%]` placeholder sat where a term should be and was skipped. */
 	const ISSUE_DROPPED_TERM = 'dropped_term';
-
-	/** Both && and || appear; the flat parse keeps only the last operator seen. */
-	const ISSUE_MIXED_OPERATORS = 'mixed_operators';
-
-	/** Parens remain after the single outer strip, so grouping was lost. */
-	const ISSUE_INTERIOR_PARENS = 'interior_parens';
 
 	/**
 	 * Parse an expression into the editor's structured logic form.
@@ -38,102 +30,44 @@ class RequireExpression {
 	 * @param string $expression Raw element_require string.
 	 * @return array|null {
 	 *     @type string $operator   'AND' or 'OR'.
-	 *     @type array  $conditions List of ['attribute', 'compare', 'value'].
-	 *     @type bool   $exact      True when nothing was lost or flattened.
+	 *     @type array  $conditions Conditions ['attribute', 'compare', 'value', 'negate'?] or nested
+	 *                              groups carrying their own 'operator' and 'conditions'.
+	 *     @type bool   $exact      True when every term was read.
 	 *     @type array  $issues     Any ISSUE_* constants that applied.
 	 * }
 	 * Null when the expression is empty or yields no terms.
 	 */
 	public static function parse( string $expression ): ?array {
-		if ( '' === trim( $expression ) ) {
+		$tokens = self::tokenize( $expression );
+
+		if ( empty( $tokens ) ) {
 			return null;
 		}
 
-		// Strip one leading and one trailing paren, then the [% %] placeholders.
-		// Mirrors: .replace(/^[(]|[)]$/g, '').replace(/\[%|%]/g, '')
-		$cleaned = preg_replace( '/^\(|\)$/', '', trim( $expression ) );
-		$cleaned = str_replace( array( '[%', '%]' ), '', $cleaned );
+		$issues = [];
+		$pos    = 0;
+		$logic  = self::parse_or( $tokens, $pos, $issues );
 
-		// Split on the boolean operators, keeping them as tokens.
-		$parts = preg_split( '/(&&|\|\|)/', $cleaned, -1, PREG_SPLIT_DELIM_CAPTURE );
-		$parts = array_filter( array_map( 'trim', (array) $parts ), static fn( $part ) => '' !== $part );
-
-		if ( empty( $parts ) ) {
-			return null;
-		}
-
-		$issues     = array();
-		$conditions = array();
-		$operator   = 'AND';
-		$seen_and   = false;
-		$seen_or    = false;
-
-		// Grouping the parser cannot honour: any paren surviving the outer strip.
-		if ( false !== strpos( $cleaned, '(' ) || false !== strpos( $cleaned, ')' ) ) {
-			$issues[] = self::ISSUE_INTERIOR_PARENS;
-		}
-
-		foreach ( $parts as $part ) {
-			if ( '&&' === $part ) {
-				$operator = 'AND';
-				$seen_and = true;
-				continue;
-			}
-
-			if ( '||' === $part ) {
-				$operator = 'OR';
-				$seen_or  = true;
-				continue;
-			}
-
-			// Mirrors: /^(\w+)\s*([!=<>]+)?\s*(.*)?$/
-			// A leading '!' is not a word character, so negated terms fall through
-			// here and are dropped — exactly as the editor drops them.
-			if ( ! preg_match( '/^(\w+)\s*([!=<>]+)?\s*(.*)?$/', $part, $match ) ) {
-				$issues[] = self::ISSUE_DROPPED_TERM;
-				continue;
-			}
-
-			$compare = isset( $match[2] ) && '' !== $match[2] ? $match[2] : '';
-
-			if ( '' === $compare ) {
-				$conditions[] = array(
-					'attribute' => $match[1],
-					'compare'   => 'exists',
-					'value'     => null,
-				);
-				continue;
-			}
-
-			$conditions[] = array(
-				'attribute' => $match[1],
-				'compare'   => str_replace( array( '==', '!=' ), array( '===', '!==' ), $compare ),
-				'value'     => self::cast_value( $match[3] ?? '' ),
-			);
-		}
-
-		if ( $seen_and && $seen_or ) {
-			$issues[] = self::ISSUE_MIXED_OPERATORS;
-		}
-
-		if ( empty( $conditions ) ) {
-			// Every term was dropped. The editor treats this as "always show".
-			return array(
-				'operator'   => $operator,
-				'conditions' => array(),
+		if ( null === $logic ) {
+			return [
+				'operator'   => 'AND',
+				'conditions' => [],
 				'exact'      => false,
-				'issues'     => array_values( array_unique( array_merge( $issues, array( self::ISSUE_DROPPED_TERM ) ) ) ),
-			);
+				'issues'     => [ self::ISSUE_DROPPED_TERM ],
+			];
 		}
 
-		$issues = array_values( array_unique( $issues ) );
+		if ( ! isset( $logic['operator'] ) ) {
+			$logic = [
+				'operator'   => 'AND',
+				'conditions' => [ $logic ],
+			];
+		}
 
-		return array(
-			'operator'   => $operator,
-			'conditions' => $conditions,
-			'exact'      => empty( $issues ),
-			'issues'     => $issues,
-		);
+		$logic['exact']  = empty( $issues );
+		$logic['issues'] = array_values( array_unique( $issues ) );
+
+		return $logic;
 	}
 
 	/**
@@ -161,9 +95,11 @@ class RequireExpression {
 	/**
 	 * Reduce a parsed expression to the normalized form used in the AI schema.
 	 *
-	 * Only unambiguous parses are described to the model — a lossy parse would
-	 * teach it a rule the validator does not actually apply. Callers fall back
-	 * to evaluating the original expression in that case.
+	 * Only a flat chain of plain equality or truthiness terms translates into the
+	 * attribute => value shape the schema uses. Nested groups, negation,
+	 * inequality and a lossy parse are not described: a rule the model cannot
+	 * apply exactly is worse than none, so callers fall back to evaluating the
+	 * original expression.
 	 *
 	 * @param string $expression Raw element_require string.
 	 * @return array|null ['requires' => [...]] or ['requires_any' => [...]], null when not describable.
@@ -171,32 +107,243 @@ class RequireExpression {
 	public static function to_schema( string $expression ): ?array {
 		$parsed = self::parse( $expression );
 
-		if ( null === $parsed || ! $parsed['exact'] || empty( $parsed['conditions'] ) ) {
+		if ( null === $parsed || ! $parsed['exact'] || empty( $parsed['conditions'] ) || ! empty( $parsed['negate'] ) ) {
 			return null;
 		}
 
-		$clauses = array();
+		$clauses = [];
 
 		foreach ( $parsed['conditions'] as $condition ) {
-			// Only plain equality and truthiness translate cleanly into the
-			// attribute => value shape the schema uses.
-			if ( 'exists' === $condition['compare'] ) {
-				$clauses[] = array( $condition['attribute'] => '*' );
-				continue;
-			}
-
-			if ( '===' !== $condition['compare'] ) {
+			if ( isset( $condition['operator'] ) || ! empty( $condition['negate'] ) ) {
 				return null;
 			}
 
-			$clauses[] = array( $condition['attribute'] => $condition['value'] );
+			if ( 'exists' === $condition['compare'] ) {
+				$clauses[] = [ $condition['attribute'] => '*' ];
+				continue;
+			}
+
+			if ( '==' !== $condition['compare'] ) {
+				return null;
+			}
+
+			$clauses[] = [ $condition['attribute'] => $condition['value'] ];
 		}
 
 		if ( 'OR' === $parsed['operator'] && count( $clauses ) > 1 ) {
-			return array( 'requires_any' => $clauses );
+			return [ 'requires_any' => $clauses ];
 		}
 
-		return array( 'requires' => array_merge( ...$clauses ) );
+		return [ 'requires' => array_merge( ...$clauses ) ];
+	}
+
+	/**
+	 * Split an expression into tokens.
+	 *
+	 * Mirrors the editor's token pattern: placeholders, the boolean and comparison
+	 * operators, brackets, quoted strings, numbers, true/false and any other bare
+	 * word (kept as a value so `[%x%]==col` still reads).
+	 *
+	 * @param string $expression
+	 * @return array List of ['type' => 'attr'|'op'|'value', ...].
+	 */
+	private static function tokenize( string $expression ): array {
+		$pattern = '/\s*(\[%([\w-]+)%(:checked)?\]|&&|\|\||===|!==|==|!=|<=|>=|<|>|!|\(|\)|"((?:[^"\\\\]|\\\\.)*)"|\'((?:[^\'\\\\]|\\\\.)*)\'|-?\d+(?:\.\d+)?|true|false|[^\s()!&|=<>"\']+)/A';
+		$tokens  = [];
+		$offset  = 0;
+		$length  = strlen( $expression );
+
+		while ( $offset < $length && preg_match( $pattern, $expression, $m, 0, $offset ) ) {
+			$offset += strlen( $m[0] );
+			$raw     = $m[1];
+
+			if ( isset( $m[2] ) && '' !== $m[2] ) {
+				$tokens[] = [
+					'type'    => 'attr',
+					'name'    => $m[2],
+					'checked' => ! empty( $m[3] ),
+				];
+			} elseif ( '"' === $raw[0] || "'" === $raw[0] ) {
+				$tokens[] = [
+					'type'  => 'value',
+					'value' => substr( $raw, 1, -1 ),
+				];
+			} elseif ( preg_match( '/^-?\d/', $raw ) ) {
+				$tokens[] = [
+					'type'  => 'value',
+					'value' => (float) $raw,
+				];
+			} elseif ( 'true' === $raw || 'false' === $raw ) {
+				$tokens[] = [
+					'type'  => 'value',
+					'value' => 'true' === $raw,
+				];
+			} elseif ( preg_match( '/^(&&|\|\||===|!==|==|!=|<=|>=|<|>|!|\(|\))$/', $raw ) ) {
+				$tokens[] = [
+					'type'  => 'op',
+					'value' => $raw,
+				];
+			} else {
+				$tokens[] = [
+					'type'  => 'value',
+					'value' => $raw,
+				];
+			}
+
+			if ( '' === $m[0] ) {
+				break;
+			}
+		}
+
+		return $tokens;
+	}
+
+	/**
+	 * Whether the next token is the given operator.
+	 *
+	 * @param array  $tokens
+	 * @param int    $pos
+	 * @param string $op
+	 * @return bool
+	 */
+	private static function is_op( array $tokens, int $pos, string $op ): bool {
+		return isset( $tokens[ $pos ] ) && 'op' === $tokens[ $pos ]['type'] && $op === $tokens[ $pos ]['value'];
+	}
+
+	/**
+	 * or := and ('||' and)*
+	 *
+	 * @param array $tokens
+	 * @param int   $pos    Advanced in place.
+	 * @param array $issues Appended in place.
+	 * @return array|null A condition, a group, or null when nothing was read.
+	 */
+	private static function parse_or( array $tokens, int &$pos, array &$issues ): ?array {
+		$conditions = [];
+		$group      = self::parse_and( $tokens, $pos, $issues );
+
+		if ( null !== $group ) {
+			$conditions[] = $group;
+		}
+
+		while ( self::is_op( $tokens, $pos, '||' ) ) {
+			++$pos;
+			$group = self::parse_and( $tokens, $pos, $issues );
+
+			if ( null !== $group ) {
+				$conditions[] = $group;
+			}
+		}
+
+		if ( empty( $conditions ) ) {
+			return null;
+		}
+
+		return 1 === count( $conditions ) ? $conditions[0] : [
+			'operator'   => 'OR',
+			'conditions' => $conditions,
+		];
+	}
+
+	/**
+	 * and := term ('&&' term)*
+	 *
+	 * @param array $tokens
+	 * @param int   $pos
+	 * @param array $issues
+	 * @return array|null
+	 */
+	private static function parse_and( array $tokens, int &$pos, array &$issues ): ?array {
+		$conditions = [];
+		$term       = self::parse_term( $tokens, $pos, $issues );
+
+		if ( null !== $term ) {
+			$conditions[] = $term;
+		}
+
+		while ( self::is_op( $tokens, $pos, '&&' ) ) {
+			++$pos;
+			$term = self::parse_term( $tokens, $pos, $issues );
+
+			if ( null !== $term ) {
+				$conditions[] = $term;
+			}
+		}
+
+		if ( empty( $conditions ) ) {
+			return null;
+		}
+
+		return 1 === count( $conditions ) ? $conditions[0] : [
+			'operator'   => 'AND',
+			'conditions' => $conditions,
+		];
+	}
+
+	/**
+	 * term := '!' term | '(' or ')' | attr (op value)?
+	 *
+	 * @param array $tokens
+	 * @param int   $pos
+	 * @param array $issues
+	 * @return array|null
+	 */
+	private static function parse_term( array $tokens, int &$pos, array &$issues ): ?array {
+		if ( self::is_op( $tokens, $pos, '!' ) ) {
+			++$pos;
+			$inner = self::parse_term( $tokens, $pos, $issues );
+
+			if ( null !== $inner ) {
+				$inner['negate'] = empty( $inner['negate'] );
+			}
+
+			return $inner;
+		}
+
+		if ( self::is_op( $tokens, $pos, '(' ) ) {
+			++$pos;
+			$inner = self::parse_or( $tokens, $pos, $issues );
+
+			if ( self::is_op( $tokens, $pos, ')' ) ) {
+				++$pos;
+			}
+
+			return $inner;
+		}
+
+		if ( ! isset( $tokens[ $pos ] ) ) {
+			return null;
+		}
+
+		$token = $tokens[ $pos++ ];
+
+		if ( 'attr' !== $token['type'] ) {
+			// A stray value or operator: skipped rather than hiding the field over a typo.
+			$issues[] = self::ISSUE_DROPPED_TERM;
+			return null;
+		}
+
+		$condition = [
+			'attribute' => $token['name'],
+			'compare'   => 'exists',
+			'value'     => null,
+		];
+
+		if ( $token['checked'] ) {
+			return $condition;
+		}
+
+		if ( isset( $tokens[ $pos ] ) && 'op' === $tokens[ $pos ]['type'] && preg_match( '/^(===|!==|==|!=|<=|>=|<|>)$/', $tokens[ $pos ]['value'] ) ) {
+			$condition['compare'] = str_replace( [ '===', '!==' ], [ '==', '!=' ], $tokens[ $pos ]['value'] );
+			++$pos;
+			$condition['value'] = '';
+
+			if ( isset( $tokens[ $pos ] ) && 'value' === $tokens[ $pos ]['type'] ) {
+				$condition['value'] = $tokens[ $pos++ ]['value'];
+			}
+		}
+
+		return $condition;
 	}
 
 	/**
@@ -211,7 +358,7 @@ class RequireExpression {
 			return true;
 		}
 
-		$results = array();
+		$results = [];
 
 		foreach ( $logic['conditions'] as $condition ) {
 			// Nested logic arrays carry their own operator.
@@ -220,71 +367,139 @@ class RequireExpression {
 				: self::check_condition( $condition, $attributes );
 		}
 
-		if ( 'OR' === ( $logic['operator'] ?? 'AND' ) ) {
-			return in_array( true, $results, true );
-		}
+		$result = 'OR' === ( $logic['operator'] ?? 'AND' )
+			? in_array( true, $results, true )
+			: ! in_array( false, $results, true );
 
-		return ! in_array( false, $results, true );
+		return empty( $logic['negate'] ) ? $result : ! $result;
 	}
 
 	/**
 	 * Test a single condition.
 	 *
-	 * @param array $condition  ['attribute', 'compare', 'value'].
+	 * Mirrors the editor's checkCondition(): null, true and false on either side
+	 * become '', '1' and '' before a loose JavaScript style comparison, so a
+	 * checkbox matches `=="1"` and `:checked` whichever form it arrives in.
+	 *
+	 * @param array $condition  ['attribute', 'compare', 'value', 'negate'?].
 	 * @param array $attributes Attribute values keyed by name.
 	 * @return bool
 	 */
 	private static function check_condition( array $condition, array $attributes ): bool {
-		$actual  = $attributes[ $condition['attribute'] ] ?? null;
-		$compare = $condition['compare'] ?? '';
-		$value   = $condition['value'] ?? null;
-
-		// Comparing against "" or false also matches unset/null, so a field
-		// gated on `[%foo%]==""` shows before the attribute has ever been set.
-		if ( '===' === $compare && ( '' === $value || false === $value ) ) {
-			return false === $actual || '' === $actual || null === $actual;
-		}
-
-		if ( '!==' === $compare && ( '' === $value || false === $value ) ) {
-			return false !== $actual && '' !== $actual && null !== $actual;
-		}
+		$actual   = self::normalize( $attributes[ $condition['attribute'] ] ?? null );
+		$expected = self::normalize( $condition['value'] ?? null );
+		$compare  = str_replace( [ '===', '!==' ], [ '==', '!=' ], (string) ( $condition['compare'] ?? 'exists' ) );
 
 		switch ( $compare ) {
-			case '===':
-				return self::identical( $actual, $value );
-			case '!==':
-				return ! self::identical( $actual, $value );
+			case '==':
+				$result = self::loose_equal( $actual, $expected );
+				break;
+			case '!=':
+				$result = ! self::loose_equal( $actual, $expected );
+				break;
 			case '>':
-				return $actual > $value;
+				$result = self::loose_compare( $actual, $expected ) > 0;
+				break;
 			case '<':
-				return $actual < $value;
+				$result = self::loose_compare( $actual, $expected ) < 0;
+				break;
 			case '>=':
-				return $actual >= $value;
+				$result = self::loose_compare( $actual, $expected ) >= 0;
+				break;
 			case '<=':
-				return $actual <= $value;
+				$result = self::loose_compare( $actual, $expected ) <= 0;
+				break;
 			case 'exists':
-				return self::is_truthy( $actual );
+				$result = self::is_truthy( $actual );
+				break;
 			default:
-				return false;
+				$result = false;
 		}
+
+		return empty( $condition['negate'] ) ? $result : ! $result;
 	}
 
 	/**
-	 * Strict equality with JavaScript's single numeric type accounted for.
+	 * Fold null and booleans into the strings the editor compares with.
 	 *
-	 * PHP separates int and float where JS does not, so 5 and 5.0 must compare
-	 * equal here or every numeric condition would fail against a parsed value.
-	 *
-	 * @param mixed $actual
-	 * @param mixed $expected
-	 * @return bool
+	 * @param mixed $value
+	 * @return string|int|float
 	 */
-	private static function identical( $actual, $expected ): bool {
-		if ( ( is_int( $actual ) || is_float( $actual ) ) && ( is_int( $expected ) || is_float( $expected ) ) ) {
-			return (float) $actual === (float) $expected;
+	private static function normalize( $value ) {
+		if ( null === $value || false === $value ) {
+			return '';
 		}
 
-		return $actual === $expected;
+		if ( true === $value ) {
+			return '1';
+		}
+
+		if ( is_int( $value ) || is_float( $value ) ) {
+			return $value;
+		}
+
+		return (string) $value;
+	}
+
+	/**
+	 * JavaScript loose equality for the string and number values left after normalize().
+	 *
+	 * Two strings compare as strings. A string against a number is converted the
+	 * JavaScript way: blank is 0, a numeric string is its number, anything else
+	 * is NaN and never equal. PHP 8 differs on the blank case ('' == 0 is false),
+	 * so this is spelled out rather than left to ==.
+	 *
+	 * @param string|int|float $a
+	 * @param string|int|float $b
+	 * @return bool
+	 */
+	private static function loose_equal( $a, $b ): bool {
+		if ( is_string( $a ) && is_string( $b ) ) {
+			return $a === $b;
+		}
+
+		$a = self::to_number( $a );
+		$b = self::to_number( $b );
+
+		return null !== $a && null !== $b && $a === $b;
+	}
+
+	/**
+	 * Ordering for < and >: numeric when both sides read as numbers, string order otherwise.
+	 *
+	 * @param string|int|float $a
+	 * @param string|int|float $b
+	 * @return int
+	 */
+	private static function loose_compare( $a, $b ): int {
+		$na = self::to_number( $a );
+		$nb = self::to_number( $b );
+
+		if ( null !== $na && null !== $nb && ( ! is_string( $a ) || ! is_string( $b ) || ( '' !== trim( $a ) && '' !== trim( $b ) ) ) ) {
+			return $na <=> $nb;
+		}
+
+		return strcmp( (string) $a, (string) $b );
+	}
+
+	/**
+	 * JavaScript Number() for a string or number, null standing in for NaN.
+	 *
+	 * @param string|int|float $value
+	 * @return float|null
+	 */
+	private static function to_number( $value ): ?float {
+		if ( is_int( $value ) || is_float( $value ) ) {
+			return (float) $value;
+		}
+
+		$value = trim( $value );
+
+		if ( '' === $value ) {
+			return 0.0;
+		}
+
+		return is_numeric( $value ) ? (float) $value : null;
 	}
 
 	/**
@@ -303,38 +518,9 @@ class RequireExpression {
 		}
 
 		if ( is_int( $value ) || is_float( $value ) ) {
-			return 0 != $value; // phpcs:ignore WordPress.PHP.StrictComparisons.LooseComparison -- NaN/0.0 parity with JS.
+			return 0.0 !== (float) $value;
 		}
 
 		return true;
-	}
-
-	/**
-	 * Coerce a literal from the expression into a PHP value.
-	 *
-	 * Mirrors the editor's castValue(): booleans, then numbers, then a string
-	 * with any surrounding quotes removed.
-	 *
-	 * @param string $raw
-	 * @return bool|float|string
-	 */
-	private static function cast_value( string $raw ) {
-		$raw = trim( $raw );
-
-		if ( 'true' === $raw ) {
-			return true;
-		}
-
-		if ( 'false' === $raw ) {
-			return false;
-		}
-
-		// JS: !isNaN(parseFloat(val)) && isFinite(val) — a quoted "5" stays a
-		// string because isFinite('"5"') is false.
-		if ( '' !== $raw && is_numeric( $raw ) ) {
-			return (float) $raw;
-		}
-
-		return preg_replace( '/^[\'"]|[\'"]$/', '', $raw );
 	}
 }

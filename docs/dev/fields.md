@@ -147,6 +147,32 @@ When using `border_group()` with a prefix, the condition is updated automaticall
 
 ---
 
+## CarouselFields
+
+The standard settings for a block whose slides go on the AyeCode UI carousel, so every carousel reads and behaves the same. Keys are `{prefix}carousel_*`.
+
+| Method | Returns |
+|---|---|
+| `group( string $prefix = '', array $overwrite = [] )` | Arrows (none, edges, edges on hover, beside the title) with an arrow offset for the edge placements (`arrow_offset`, the margin steps 0 to 12 or -1 to -12 to push them outside the carousel, 2 when empty), dots, autoplay (off, slide every N seconds, scroll left, scroll right, the scroll labels following the site's text direction) with the seconds or the 0.1 to 10 pixels per frame scroll speed gated behind it, loop, move by (one slide, a full page), slide speed, peek with its width as a percent of the carousel (50 when empty) and a peek on both sides switch, fade the edges (`edge_fade`, a mask on the viewport, on any carousel), gap between slides (`gap`: a gutter step 0 to 5, default 3, also the gap inside stacked columns), items per column (`stack`: 1, 2 or 3, see `stack()`), and slides per view as a device trio (`per_view`, `per_view_md`, `per_view_lg` behind the editor's device switcher, auto by default). Scrolling is a marquee, so it hides arrows, dots, loop, move by and slide speed, and `args()` forces them off, looping on, with a negative `auto_scroll` for scroll right. The peek width and both sides fields only show while peek is on. `$overwrite` is merged into every field: pass `group` to put them in your own group and `element_require` to gate them on a carousel toggle (it is wrapped in brackets and joined to each field's own requirement with `&&`). |
+| `args( array $instance, string $prefix = '', $per_view = 1 )` | The matching `aui()->carousel()` args. `$per_view` is your desktop column count (or a breakpoint array); on auto, phones get one slide, tablets (md, 768px up) up to two and desktops (lg, 992px up) the count, and each device field overrides its tier. Add `slides`, `aria_label` and `id` and print. Arrows "beside the title" come back as `'arrows' => 'external'`: print `Carousel::arrows( $id )` into your title row with `set_title_actions()`. |
+| `stack( array $slides, array $instance, string $prefix = '' )` | Pass your slides through this before `args()` gets them. When items per column is 2 or 3 it groups them into flex columns with the gap setting as the vertical gap, so a slide shows a wall of items; otherwise the slides come back untouched. Give each item a `col` class and the column shares its height between them. |
+
+```php
+->add_field( 'with_carousel', [ 'type' => 'checkbox', 'title' => __( 'Carousel', 'my-domain' ), 'value' => '1', 'default' => '', 'group' => 'carousel' ] )
+->add_fields( CarouselFields::group( '', [ 'element_require' => '[%with_carousel%:checked]' ] ) )
+
+// output()
+$args           = CarouselFields::args( $instance, '', $columns );
+$args['id']     = 'my-carousel-' . $this->get_instance_hash();
+$args['slides'] = CarouselFields::stack( $slides, $instance );
+if ( 'external' === $args['arrows'] ) {
+	$this->set_title_actions( \AyeCode\UI\Components\Carousel::arrows( $args['id'] ) );
+}
+echo aui()->carousel( $args );
+```
+
+---
+
 ## FlexFields
 
 ### Single-field methods
