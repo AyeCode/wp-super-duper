@@ -733,6 +733,15 @@ class Utils {
 	 *
 	 * This needs to be kept in sync with the JS version in src/Assets/BlockEditorAssets.php
 	 *
+	 * Free-text values (custom colors, gradient, background image URL, line height,
+	 * max height) are validated as CSS values before they are used. Block attributes
+	 * survive kses, so a contributor can store anything in them; without this a value
+	 * such as "red;position:fixed;..." would add its own declarations to the attribute.
+	 * Attribute escaping alone does not stop that, since ";" and ":" are legal there.
+	 *
+	 * The return value is escaped for use inside a double-quoted attribute. Callers
+	 * that want the whole attribute should use build_aui_style_attr() instead.
+	 *
 	 * @param array $args Widget arguments.
 	 * @return string Inline style attribute value (e.g. "background-color:#fff;font-size:1.2rem;").
 	 */
@@ -741,11 +750,17 @@ class Utils {
 
 		if ( ! empty( $args['bg'] ) && $args['bg'] !== '' ) {
 			if ( $args['bg'] == 'custom-color' ) {
-				$styles['background-color'] = $args['bg_color'];
+				$bg_color = isset( $args['bg_color'] ) ? self::sanitize_css_color( $args['bg_color'] ) : '';
+				if ( '' !== $bg_color ) {
+					$styles['background-color'] = $bg_color;
+				}
 			} elseif ( $args['bg'] == 'custom-gradient' ) {
-				$styles['background-image'] = $args['bg_gradient'];
+				$bg_gradient = isset( $args['bg_gradient'] ) ? self::sanitize_css_gradient( $args['bg_gradient'] ) : '';
+				if ( '' !== $bg_gradient ) {
+					$styles['background-image'] = $bg_gradient;
+				}
 
-				if ( ! empty( $args['bg_on_text'] ) && $args['bg_on_text'] ) {
+				if ( '' !== $bg_gradient && ! empty( $args['bg_on_text'] ) && $args['bg_on_text'] ) {
 					$styles['background-clip']         = 'text';
 					$styles['-webkit-background-clip'] = 'text';
 					$styles['text-fill-color']         = 'transparent';
@@ -754,17 +769,19 @@ class Utils {
 			}
 		}
 
-		if ( ! empty( $args['bg_image'] ) && $args['bg_image'] !== '' ) {
+		$bg_image = ! empty( $args['bg_image'] ) ? self::sanitize_css_url( $args['bg_image'] ) : '';
+
+		if ( '' !== $bg_image ) {
 			$hasImage = true;
 			if ( ! empty( $styles['background-color'] ) && $args['bg'] == 'custom-color' ) {
-				$styles['background-image']      = 'url(' . $args['bg_image'] . ')';
+				$styles['background-image']      = 'url(' . $bg_image . ')';
 				$styles['background-blend-mode'] = 'overlay';
 			} elseif ( ! empty( $styles['background-image'] ) && $args['bg'] == 'custom-gradient' ) {
-				$styles['background-image'] .= ',url(' . $args['bg_image'] . ')';
+				$styles['background-image'] .= ',url(' . $bg_image . ')';
 			} elseif ( ! empty( $args['bg'] ) && $args['bg'] != '' && $args['bg'] != 'transparent' ) {
 				$hasImage = false;
 			} else {
-				$styles['background-image'] = 'url(' . $args['bg_image'] . ')';
+				$styles['background-image'] = 'url(' . $bg_image . ')';
 			}
 
 			if ( $hasImage ) {
@@ -776,7 +793,8 @@ class Utils {
 			}
 
 			if ( $hasImage && ! empty( $args['bg_image_xy'] ) && ! empty( $args['bg_image_xy']['x'] ) ) {
-				$styles['background-position'] = ( $args['bg_image_xy']['x'] * 100 ) . '% ' . ( $args['bg_image_xy']['y'] * 100 ) . '%';
+				$bg_y                          = isset( $args['bg_image_xy']['y'] ) ? $args['bg_image_xy']['y'] : 0;
+				$styles['background-position'] = ( (float) $args['bg_image_xy']['x'] * 100 ) . '% ' . ( (float) $bg_y * 100 ) . '%';
 			}
 		}
 
@@ -793,15 +811,24 @@ class Utils {
 		}
 
 		if ( ! empty( $args['text_color_custom'] ) && $args['text_color_custom'] !== '' ) {
-			$styles['color'] = esc_attr( $args['text_color_custom'] );
+			$color = self::sanitize_css_color( $args['text_color_custom'] );
+			if ( '' !== $color ) {
+				$styles['color'] = $color;
+			}
 		}
 
 		if ( ! empty( $args['font_line_height'] ) && $args['font_line_height'] !== '' ) {
-			$styles['line-height'] = esc_attr( $args['font_line_height'] );
+			$line_height = self::sanitize_css_length( $args['font_line_height'] );
+			if ( '' !== $line_height ) {
+				$styles['line-height'] = $line_height;
+			}
 		}
 
 		if ( ! empty( $args['max_height'] ) && $args['max_height'] !== '' ) {
-			$styles['max-height'] = esc_attr( $args['max_height'] );
+			$max_height = self::sanitize_css_length( $args['max_height'] );
+			if ( '' !== $max_height ) {
+				$styles['max-height'] = $max_height;
+			}
 		}
 
 		$style_string = '';
@@ -815,11 +842,220 @@ class Utils {
 	}
 
 	/**
-	 * Build hover CSS rules from args and enqueue them via wp_add_inline_style().
+	 * Build a finished, escaped class attribute from a widget/shortcode arguments array.
+	 *
+	 * Wraps build_aui_class() so a block never has to stitch the attribute together or
+	 * pick an escaper. Extra classes the block wants on the same element go in first.
+	 * Every token is run through sanitize_html_class().
+	 *
+	 * Follows the build_attributes_string_escaped() convention: no leading space, a
+	 * trailing space when there is output, so it drops straight into an opening tag:
+	 *
+	 *     '<div ' . Utils::build_aui_class_attr( $args, 'card' ) . '>'
+	 *
+	 * @param array  $args          Settings array from a widget/shortcode instance.
+	 * @param string $extra_classes Optional. Space-separated classes to add before the built ones.
+	 * @return string `class="..." ` or an empty string when there are no classes.
+	 */
+	public static function build_aui_class_attr( $args, $extra_classes = '' ) {
+		$classes = trim( (string) $extra_classes . ' ' . self::build_aui_class( (array) $args ) );
+		$classes = preg_split( '/\s+/', $classes, -1, PREG_SPLIT_NO_EMPTY );
+		$classes = $classes ? trim( self::sanitize_html_classes( $classes ) ) : '';
+
+		return '' !== $classes ? 'class="' . $classes . '" ' : '';
+	}
+
+	/**
+	 * Build a finished, escaped style attribute from a widget/shortcode arguments array.
+	 *
+	 * Wraps build_aui_styles(). The value is validated per property there and escaped
+	 * here for the attribute, so callers must not pass the result through any other
+	 * sanitizer. In particular the class sanitizer strips ":" and ";" and turns the
+	 * CSS into nonsense.
+	 *
+	 * Same spacing convention as build_aui_class_attr().
+	 *
+	 * @param array $args Settings array from a widget/shortcode instance.
+	 * @return string `style="..." ` or an empty string when there are no styles.
+	 */
+	public static function build_aui_style_attr( $args ) {
+		$styles = self::build_aui_styles( (array) $args );
+
+		return '' !== $styles ? 'style="' . esc_attr( $styles ) . '" ' : '';
+	}
+
+	/**
+	 * Build the class and style attributes for a block's wrapper element in one call.
+	 *
+	 * This is the usual case: the wrapper takes every class the settings produce plus
+	 * whatever the block adds, and every inline style. Either attribute is left out
+	 * when it would be empty, so an unstyled block does not print `style=""`.
+	 *
+	 *     '<figure ' . Utils::build_aui_wrapper_attrs( $args, 'overflow-hidden' ) . '>'
+	 *
+	 * @param array  $args          Settings array from a widget/shortcode instance.
+	 * @param string $extra_classes Optional. Space-separated classes to add before the built ones.
+	 * @return string The attributes with a trailing space, or an empty string.
+	 */
+	public static function build_aui_wrapper_attrs( $args, $extra_classes = '' ) {
+		return self::build_aui_class_attr( $args, $extra_classes ) . self::build_aui_style_attr( $args );
+	}
+
+	// -------------------------------------------------------------------------
+	// CSS value sanitizers
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Reject anything that could smuggle a declaration or a resource into a CSS value.
+	 *
+	 * The per-type sanitizers below are anchored patterns, so this is belt and braces,
+	 * but it keeps each of those patterns simple: none of them has to reason about
+	 * url(), expression() or a stray ";" on its own.
+	 *
+	 * @param string $value Raw value.
+	 * @return bool
+	 */
+	private static function is_unsafe_css_value( $value ) {
+		return (bool) preg_match( '/[;{}<>\\\\]|url\s*\(|expression|javascript|@import|behavior|-moz-binding/i', $value );
+	}
+
+	/**
+	 * Validate a CSS color value.
+	 *
+	 * Accepts hex (#rgb to #rrggbbaa), a keyword (named colors, transparent,
+	 * currentColor, inherit), a color function such as rgb(), rgba(), hsl(), hsla(),
+	 * hwb(), lab(), lch(), oklab(), oklch() or color() with simple arguments, and a
+	 * var(--name) reference with an optional hex, keyword or color-function fallback.
+	 *
+	 * @param string $value Raw value.
+	 * @return string The trimmed value, or an empty string when it is not a color.
+	 */
+	public static function sanitize_css_color( $value ) {
+		$value = trim( (string) $value );
+
+		if ( '' === $value || self::is_unsafe_css_value( $value ) ) {
+			return '';
+		}
+
+		$simple   = '(?:#[0-9a-f]{3,8}|[a-z]+|(?:rgb|rgba|hsl|hsla|hwb|lab|lch|oklab|oklch|color)\(\s*[0-9a-z%.,\s\/+-]*\))';
+		$patterns = [
+			'/^' . $simple . '$/i',
+			'/^var\(\s*--[a-z0-9_-]+\s*(?:,\s*' . $simple . '\s*)?\)$/i',
+		];
+
+		foreach ( $patterns as $pattern ) {
+			if ( preg_match( $pattern, $value ) ) {
+				return $value;
+			}
+		}
+
+		return '';
+	}
+
+	/**
+	 * Validate a CSS length-like value, as used for line-height and max-height.
+	 *
+	 * Accepts a number with an optional unit (unitless is legal for line-height),
+	 * the keywords auto, none, normal, inherit, initial, unset, fit-content,
+	 * max-content and min-content, a calc(), min(), max() or clamp() expression made
+	 * of numbers, units and operators, and a var(--name) reference with an optional
+	 * numeric fallback.
+	 *
+	 * @param string $value Raw value.
+	 * @return string The trimmed value, or an empty string when it is not a length.
+	 */
+	public static function sanitize_css_length( $value ) {
+		$value = trim( (string) $value );
+
+		if ( '' === $value || self::is_unsafe_css_value( $value ) ) {
+			return '';
+		}
+
+		$number   = '-?(?:\d+|\d*\.\d+)(?:px|em|rem|%|vh|vw|vmin|vmax|svh|dvh|lvh|svw|dvw|lvw|ch|ex|pt|pc|cm|mm|in|fr)?';
+		$patterns = [
+			'/^' . $number . '$/i',
+			'/^(?:auto|none|normal|inherit|initial|unset|fit-content|max-content|min-content)$/i',
+			'/^(?:calc|min|max|clamp)\((?:[0-9a-z%.,\s\/*+-]|\((?:[0-9a-z%.,\s\/*+-])*\))*\)$/i',
+			'/^var\(\s*--[a-z0-9_-]+\s*(?:,\s*' . $number . '\s*)?\)$/i',
+		];
+
+		foreach ( $patterns as $pattern ) {
+			if ( preg_match( $pattern, $value ) ) {
+				return $value;
+			}
+		}
+
+		return '';
+	}
+
+	/**
+	 * Validate a CSS gradient value for background-image.
+	 *
+	 * Accepts one or more comma-separated linear-gradient(), radial-gradient() or
+	 * conic-gradient() functions (including the repeating- forms) whose arguments may
+	 * contain one level of nested function such as rgba(), or a var(--name) reference
+	 * to a preset gradient.
+	 *
+	 * @param string $value Raw value.
+	 * @return string The trimmed value, or an empty string when it is not a gradient.
+	 */
+	public static function sanitize_css_gradient( $value ) {
+		$value = trim( (string) $value );
+
+		if ( '' === $value || self::is_unsafe_css_value( $value ) ) {
+			return '';
+		}
+
+		$gradient = '(?:repeating-)?(?:linear|radial|conic)-gradient\((?:[^()]|\([^()]*\))*\)';
+
+		if ( preg_match( '/^' . $gradient . '(?:\s*,\s*' . $gradient . ')*$/i', $value ) ) {
+			return $value;
+		}
+
+		if ( preg_match( '/^var\(\s*--[a-z0-9_-]+\s*\)$/i', $value ) ) {
+			return $value;
+		}
+
+		return '';
+	}
+
+	/**
+	 * Validate a URL for use inside an unquoted CSS url().
+	 *
+	 * esc_url_raw() handles the protocol and character set. On top of that the
+	 * characters that would close or confuse an unquoted url() token are
+	 * percent-encoded, so ")" in a value cannot end the function early. The raw
+	 * variant is used so ampersands stay as "&"; the attribute escape applied by the
+	 * caller takes care of them.
+	 *
+	 * @param string $url Raw URL.
+	 * @return string A URL safe to place inside url(), or an empty string.
+	 */
+	public static function sanitize_css_url( $url ) {
+		$url = esc_url_raw( trim( (string) $url ) );
+
+		if ( '' === $url ) {
+			return '';
+		}
+
+		return str_replace(
+			[ '(', ')', ';', '"', "'", ' ', '\\' ],
+			[ '%28', '%29', '%3B', '%22', '%27', '%20', '%5C' ],
+			$url
+		);
+	}
+
+	/**
+	 * Build the hover CSS rules for a block from its hover settings.
+	 *
+	 * Rules are scoped to the block's `styleid` class. Color values are validated with
+	 * sanitize_css_color() and the gradient with sanitize_css_gradient() before they are
+	 * written, because the result is printed inside a <style> element where a stored
+	 * value could otherwise close the tag.
 	 *
 	 * @param array $args       Widget arguments.
 	 * @param bool  $is_preview Whether rendering inside the block editor preview.
-	 * @return string Always returns an empty string (CSS is enqueued, not returned).
+	 * @return string A <style> element with the rules, or an empty string when there are none.
 	 */
 	public static function build_hover_styles( $args, $is_preview = false ) {
 		$rules = '';
@@ -828,21 +1064,27 @@ class Utils {
 			$styleid = $is_preview ? 'html .editor-styles-wrapper .' . esc_attr( $args['styleid'] ) : 'html .' . esc_attr( $args['styleid'] );
 
 			if ( ! empty( $args['text_color_hover'] ) ) {
-				$key    = 'custom' === $args['text_color_hover'] && ! empty( $args['text_color_hover_custom'] ) ? 'text_color_hover_custom' : 'text_color_hover';
-				$color  = self::get_color_from_var( $args[ $key ] );
-				$rules .= $styleid . ':hover {color: ' . $color . ' !important;} ';
+				$key   = 'custom' === $args['text_color_hover'] && ! empty( $args['text_color_hover_custom'] ) ? 'text_color_hover_custom' : 'text_color_hover';
+				$color = self::sanitize_css_color( self::get_color_from_var( $args[ $key ] ) );
+				if ( '' !== $color ) {
+					$rules .= $styleid . ':hover {color: ' . $color . ' !important;} ';
+				}
 			}
 
 			if ( ! empty( $args['bg_hover'] ) ) {
 				if ( 'custom-gradient' === $args['bg_hover'] ) {
-					$color  = $args['bg_hover_gradient'];
-					$rules .= $styleid . ':hover {background-image: ' . $color . ' !important;} ';
-					$rules .= $styleid . '.btn:hover {border-color: transparent !important;} ';
+					$color = isset( $args['bg_hover_gradient'] ) ? self::sanitize_css_gradient( $args['bg_hover_gradient'] ) : '';
+					if ( '' !== $color ) {
+						$rules .= $styleid . ':hover {background-image: ' . $color . ' !important;} ';
+						$rules .= $styleid . '.btn:hover {border-color: transparent !important;} ';
+					}
 				} else {
-					$key    = 'custom-color' === $args['bg_hover'] ? 'bg_hover_color' : 'bg_hover';
-					$color  = self::get_color_from_var( $args[ $key ] );
-					$rules .= $styleid . ':hover {background: ' . $color . ' !important;} ';
-					$rules .= $styleid . '.btn:hover {border-color: ' . $color . ' !important;} ';
+					$key   = 'custom-color' === $args['bg_hover'] ? 'bg_hover_color' : 'bg_hover';
+					$color = isset( $args[ $key ] ) ? self::sanitize_css_color( self::get_color_from_var( $args[ $key ] ) ) : '';
+					if ( '' !== $color ) {
+						$rules .= $styleid . ':hover {background: ' . $color . ' !important;} ';
+						$rules .= $styleid . '.btn:hover {border-color: ' . $color . ' !important;} ';
+					}
 				}
 			}
 		}

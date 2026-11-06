@@ -128,3 +128,173 @@ function ayecode_get_current_url( $with_query_string = true ) {
 	// without HTML-encoding ampersands — correct for non-display contexts.
 	return esc_url_raw( home_url( $request_uri ) );
 }
+
+// -----------------------------------------------------------------------------
+// Output attribute helpers
+//
+// Together with sd_build_aui_class() and sd_build_aui_styles() above these are
+// the public surface a block calls from output(). The *_attr helpers return a
+// finished attribute (or nothing); the two builders return the bare value.
+// All of them share one spacing convention: no leading space, a trailing space
+// when there is output, so they drop straight into an opening tag.
+// -----------------------------------------------------------------------------
+
+/**
+ * Build a finished, escaped class attribute from the block settings.
+ *
+ * @param array  $args          Settings array from a widget/shortcode instance.
+ * @param string $extra_classes Optional. Space-separated classes to add before the built ones.
+ * @return string `class="..." ` or an empty string.
+ */
+function sd_build_aui_class_attr( $args, $extra_classes = '' ) {
+	return \AyeCode\SuperDuper\Utils::build_aui_class_attr( $args, $extra_classes );
+}
+
+/**
+ * Build a finished, escaped style attribute from the block settings.
+ *
+ * Do not pass the result through any other sanitizer.
+ *
+ * @param array $args Settings array from a widget/shortcode instance.
+ * @return string `style="..." ` or an empty string.
+ */
+function sd_build_aui_style_attr( $args ) {
+	return \AyeCode\SuperDuper\Utils::build_aui_style_attr( $args );
+}
+
+/**
+ * Build the class and style attributes for a block's wrapper element.
+ *
+ *     '<div ' . sd_build_aui_wrapper_attrs( $args, 'card' ) . '>'
+ *
+ * @param array  $args          Settings array from a widget/shortcode instance.
+ * @param string $extra_classes Optional. Space-separated classes to add before the built ones.
+ * @return string The attributes with a trailing space, or an empty string.
+ */
+function sd_build_aui_wrapper_attrs( $args, $extra_classes = '' ) {
+	return \AyeCode\SuperDuper\Utils::build_aui_wrapper_attrs( $args, $extra_classes );
+}
+
+/**
+ * Build an escaped HTML attributes string from the 'custom', 'new_window' and 'nofollow' settings.
+ *
+ * Meant for the link or inner element, not the wrapper. Event handler attributes
+ * and href are dropped.
+ *
+ * @param array $args Settings array (typically from shortcode/widget output).
+ * @return string Space-separated, escaped `key="value" ` pairs.
+ */
+function sd_build_attributes_string_escaped( $args ) {
+	return \AyeCode\SuperDuper\Utils::build_attributes_string_escaped( $args );
+}
+
+/**
+ * Parse a custom attributes string (`key|value,key|value`) into an array.
+ *
+ * @param string $attributes_string
+ * @param string $delimiter
+ * @return array
+ */
+function sd_parse_custom_attributes( $attributes_string, $delimiter = ',' ) {
+	return \AyeCode\SuperDuper\Utils::parse_custom_attributes( $attributes_string, $delimiter );
+}
+
+/**
+ * Replace the dynamic data variables in a string.
+ *
+ * @param string|null $text The input string containing variables.
+ * @return string The text with variables replaced, which may include HTML.
+ */
+function sd_replace_variables( $text ) {
+	return \AyeCode\SuperDuper\Utils::replace_variables( (string) $text );
+}
+
+/**
+ * Build a shortcode string from a name, attributes and content.
+ *
+ * @param string $name    Name of the shortcode. Required.
+ * @param array  $args    Optional. Shortcode attributes.
+ * @param string $content Optional. Content to enclose.
+ * @return string Shortcode string, or an empty string.
+ */
+function sd_build_shortcode( $name, $args = [], $content = '' ) {
+	return \AyeCode\SuperDuper\Utils::build_shortcode( $name, $args, $content );
+}
+
+/**
+ * Get the shortcode slug from a string such as `[bs_alert type="info"]`.
+ *
+ * @param string $str
+ * @return string
+ */
+function sd_get_shortcode_slug( $str ) {
+	return \AyeCode\SuperDuper\Utils::get_shortcode_slug( $str );
+}
+
+/**
+ * Get the template page options for a select field.
+ *
+ * @param array $args
+ * @return array
+ */
+function sd_template_page_options( $args = [] ) {
+	return \AyeCode\SuperDuper\Utils::template_page_options( $args );
+}
+
+/**
+ * Get the template part options for a select field.
+ *
+ * @param array $args
+ * @return array
+ */
+function sd_template_part_options( $args = [] ) {
+	return \AyeCode\SuperDuper\Utils::template_part_options( $args );
+}
+
+/**
+ * Get a template part by slug.
+ *
+ * @param string $slug
+ * @return array
+ */
+function sd_get_template_part_by_slug( $slug ) {
+	return \AyeCode\SuperDuper\Utils::get_template_part_by_slug( $slug );
+}
+
+/**
+ * Get the rendered content of a page.
+ *
+ * @param int $page_id
+ * @return string
+ */
+function sd_get_page_content( $page_id ) {
+	return \AyeCode\SuperDuper\Utils::get_page_content( $page_id );
+}
+
+/**
+ * Get the rendered content of a template part.
+ *
+ * @param array $template_part
+ * @return string
+ */
+function sd_get_template_part_content( $template_part ) {
+	return \AyeCode\SuperDuper\Utils::get_template_part_content( $template_part );
+}
+
+/**
+ * Page names (global $pagenow) on which widget registration is skipped.
+ *
+ * @return array
+ */
+function sd_pagenow_exclude() {
+	return \AyeCode\SuperDuper\Utils::pagenow_exclude();
+}
+
+/**
+ * Widget class names that are never registered.
+ *
+ * @return array
+ */
+function sd_widget_exclude() {
+	return \AyeCode\SuperDuper\Utils::widget_exclude();
+}

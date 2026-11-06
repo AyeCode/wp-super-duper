@@ -7,6 +7,7 @@ A WordPress Class to build a widget, shortcode and Gutenberg block at once.
 - [Block Building Reference](block-building.md) — the complete reference: registration, the standard tab/field structure, fields, output modes, assets
 - [Builder Pattern (BlockArguments)](builder-pattern.md) — the fluent field builder API
 - [Fields](fields.md) — every `Fields\*` static class and field type
+- [Global Helper Functions](global-functions.md) — the `sd_*` and `ayecode_*` functions a block calls from `set_arguments()` and `output()`: registration, colors, output attributes, CSS value sanitizers, content and templates
 - [API Reference](api-reference.md) — constructor options and field arguments
 - [Examples](examples.md) — working block classes, start to finish
 - [REST API](rest-api.md) — block discovery endpoints

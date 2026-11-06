@@ -149,20 +149,29 @@ public function output( $args = array(), $widget_args = array(), $content = '' )
         'show_count' => '',
     ) );
 
-    $wrap_class = sd_build_aui_class( $args );
-
     // Return early if there's nothing to render.
     if ( empty( $args['title'] ) ) {
         return '';
     }
 
-    return sprintf(
-        '<div class="%s"><h2>%s</h2></div>',
-        esc_attr( $wrap_class ),
-        esc_html( $args['title'] )
-    );
+    return '<div ' . sd_build_aui_wrapper_attrs( $args ) . '><h2>' . esc_html( $args['title'] ) . '</h2></div>';
 }
 ```
+
+### PHP attribute helpers
+
+| Function | Returns |
+|---|---|
+| `sd_build_aui_wrapper_attrs( $args, $extra_classes = '' )` | `class="..." style="..." ` for the wrapper; either attribute omitted when empty |
+| `sd_build_aui_class_attr( $args, $extra_classes = '' )` | `class="..." ` or nothing |
+| `sd_build_aui_style_attr( $args )` | `style="..." ` or nothing |
+| `sd_build_attributes_string_escaped( $args )` | `key="value" ` pairs from `custom`, `new_window`, `nofollow` |
+| `sd_build_aui_class( $args )` | bare class string |
+| `sd_build_aui_styles( $args )` | bare style value, escaped for a double-quoted attribute |
+
+No leading space, trailing space when non-empty. Never pass a style string through
+`sd_sanitize_html_classes()`; it strips `:` and `;`. See the "Output attribute helpers"
+section of `block-building.md` for the full rules, and `global-functions.md` for every signature.
 
 ---
 

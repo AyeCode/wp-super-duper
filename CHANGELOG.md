@@ -1,6 +1,10 @@
 # Changelog
 
 ## [3.0.10-beta] — 2026-09-TBD
+- sd_build_aui_class_attr(), sd_build_aui_style_attr() and sd_build_aui_wrapper_attrs() (Utils statics with global wrappers) return finished, escaped class and style attributes, or nothing when empty, so blocks no longer stitch the attribute together or pick an escaper themselves - ADDED
+- Inline style values from the custom color, gradient, background image, line height and max height settings are validated as CSS values before output, so a stored value can no longer append its own declarations to the style attribute - FIXED
+- Hover color and hover gradient settings were written unvalidated into the <style> element the block prints, so a stored value could close the tag and inject markup; they now go through the same CSS value validation - FIXED
+- The sd_* global wrappers that block authors call from output() (sd_build_attributes_string_escaped, sd_parse_custom_attributes, sd_replace_variables, sd_build_shortcode, sd_get_shortcode_slug, the template page and part helpers, sd_pagenow_exclude, sd_widget_exclude) are supported public API again and have moved from functions-deprecated.php to functions.php - CHANGED
 - Utils::is_preview() is true while the dynamic data picker renders a preview, so tags can fall back to demo content as blocks do - ADDED
 - Values the block editor fills in by itself (shortcode tag, styleid, cached preview) no longer mark a post or template changed on open or add undo steps; they are still saved with the next real change - FIXED
 - Block settings whose field declared a widget 'value', such as BS Gallery's aspect ratio, stayed stuck on that value in the sidebar even though the change applied - FIXED

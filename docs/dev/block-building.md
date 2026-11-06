@@ -45,12 +45,7 @@ class My_Block extends WP_Super_Duper {
         $args = wp_parse_args( $args, array( 'title' => '' ) );
         if ( empty( $args['title'] ) && ! $this->is_preview() ) return '';
 
-        $wrap_class = sd_build_aui_class( $args );
-        return sprintf(
-            '<div class="%s">%s</div>',
-            esc_attr( $wrap_class ),
-            esc_html( $args['title'] )
-        );
+        return '<div ' . sd_build_aui_wrapper_attrs( $args ) . '>' . esc_html( $args['title'] ) . '</div>';
     }
 }
 ```
@@ -1246,13 +1241,7 @@ public function output( $args = array(), $widget_args = array(), $content = '' )
         return '';
     }
 
-    $wrap_class = sd_build_aui_class( $args );
-
-    return sprintf(
-        '<div class="%s"><h2>%s</h2></div>',
-        esc_attr( $wrap_class ),
-        esc_html( $args['title'] )
-    );
+    return '<div ' . sd_build_aui_wrapper_attrs( $args ) . '><h2>' . esc_html( $args['title'] ) . '</h2></div>';
 }
 ```
 
@@ -1260,7 +1249,7 @@ public function output( $args = array(), $widget_args = array(), $content = '' )
 - Always `wp_parse_args()` with full defaults
 - Use `$this->is_preview()` to detect block editor context
 - Never echo — always return a string
-- Use `sd_build_aui_class( $args )` for wrapper class
+- Use `sd_build_aui_wrapper_attrs( $args, $extra_classes )` for the wrapper's class and style attributes (see below)
 - Public-facing icons: `ayecode_get_icon( 'fa-name' )` — never raw `<i>` tags (raw `<i>` tags are fine in wp-admin only)
 - Escape all output: `esc_html()`, `esc_attr()`, `esc_url()`, `wp_kses_post()`
 - `$content` holds InnerBlocks content for nested blocks
@@ -1299,6 +1288,36 @@ public function enqueue_scripts() {
     wp_enqueue_script( 'my-plugin-frontend' );
 
     wp_add_inline_script(
+**Output attribute helpers**
+
+The settings a block inherits (margins, colors, display, border, typography, background and so on) are turned into HTML by one family of global functions. Use them instead of assembling the attribute yourself:
+
+| Function | Returns |
+|---|---|
+| `sd_build_aui_wrapper_attrs( $args, $extra_classes = '' )` | `class="..." style="..." ` for the wrapper element. Either attribute is left out when empty. |
+| `sd_build_aui_class_attr( $args, $extra_classes = '' )` | `class="..." ` or nothing. Every token is sanitized. |
+| `sd_build_aui_style_attr( $args )` | `style="..." ` or nothing. Validated and escaped. |
+| `sd_build_attributes_string_escaped( $args )` | `key="value" ` pairs from the `custom`, `new_window` and `nofollow` settings, for the link or inner element. |
+| `sd_build_aui_class( $args )` | The bare class string, when you need to merge it into something else. |
+| `sd_build_aui_styles( $args )` | The bare style value, already escaped for a double-quoted attribute. |
+
+All of them share one spacing convention: no leading space, a trailing space when there is output, so they drop straight into an opening tag:
+
+```php
+$html  = '<figure ' . sd_build_aui_wrapper_attrs( $args, 'overflow-hidden' ) . '>';
+$html .= '<a href="' . esc_url( $url ) . '" ' . sd_build_attributes_string_escaped( $args ) . '>';
+```
+
+Rules:
+
+- Never pass the output of `sd_build_aui_styles()` or `sd_build_aui_style_attr()` through `sd_sanitize_html_classes()` or any other sanitizer. The class sanitizer strips `:` and `;`, which turns `font-size:2rem;` into `font-size2rem` and silently kills every style setting on the block.
+- Test the style string, not the class string, when deciding whether to print a style attribute. Better still, let `sd_build_aui_style_attr()` decide.
+- Free-text style values (`bg_color`, `bg_gradient`, `bg_image`, `text_color_custom`, `font_line_height`, `max_height`) are validated as CSS inside the builder. A value that is not a color, gradient, URL or length is dropped. Do not read those args and print them yourself.
+- The PHP and JS builders (`sd_build_aui_class`, `sd_build_aui_styles`) are a matched pair. The `*_attr` helpers exist only in PHP, because the JS side returns props objects, not markup.
+
+Full signatures, the settings each builder reads and the validation rules are in [Global Helper Functions](global-functions.md#output-attributes).
+
+
         'my-plugin-frontend',
         'var myBlockL10n = ' . wp_json_encode( $this->l10n() ) . ';',
         'before'

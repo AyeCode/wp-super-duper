@@ -100,9 +100,9 @@ All traits live in `src/Traits/` and are PSR-4 autoloaded. There is no second co
 
 `includes/helpers.php` (top-level) provides standalone functions like `sd_is_preview()` that detect page-builder preview contexts.
 
-`includes/functions.php` — non-deprecated global helpers: `ayecode_sd_register()`, `ayecode_get_sd_colors()`, `sd_build_aui_class()`, `sd_build_aui_styles()`, `sd_build_hover_styles()`, `sd_get_color_from_var()`, `sd_sanitize_html_classes()`.
+`includes/functions.php` — supported global helpers. These are the public contract consuming plugins call; every one is a one-line wrapper over a `Utils::*` static, and a new dev-facing Utils helper gets a wrapper here too. Registration and colors: `ayecode_sd_register()`, `ayecode_get_sd_colors()`. Output attributes: `sd_build_aui_class()`, `sd_build_aui_styles()`, `sd_build_aui_class_attr()`, `sd_build_aui_style_attr()`, `sd_build_aui_wrapper_attrs()`, `sd_build_attributes_string_escaped()`, `sd_parse_custom_attributes()`, `sd_build_hover_styles()`, `sd_get_color_from_var()`, `sd_sanitize_html_classes()`. Content: `sd_replace_variables()`, `sd_build_shortcode()`, `sd_get_shortcode_slug()`, `sd_template_page_options()`, `sd_template_part_options()`, `sd_get_template_part_by_slug()`, `sd_get_page_content()`, `sd_get_template_part_content()`, `sd_pagenow_exclude()`, `sd_widget_exclude()`. Never run a style string through `sd_sanitize_html_classes()`; the `*_attr` helpers exist so blocks do not stitch attributes by hand.
 
-`includes/functions-deprecated.php` — all soft-deprecated `sd_get_*` field-input wrappers and `sd_*` Utils wrappers since 3.1.0. Implementations live in the `Fields\*` static classes and `Utils::*` methods. Use `ayecode_get_sd_colors()` instead of `sd_aui_colors()`.
+`includes/functions-deprecated.php` — soft-deprecated since 3.1.0: the `sd_get_*` field-input wrappers (use the `Fields\*` statics or the builder) and the `sd_*` wrappers over framework plumbing that only SD itself should call (visibility rule evaluation, `sd_render_block`, `sd_get_element_require_string`, `sd_get_class_build_keys`, `sd_user_roles_options`). Use `ayecode_get_sd_colors()` instead of `sd_aui_colors()`. Dev-facing wrappers do not belong here; see `includes/functions.php`.
 
 ### JavaScript (`assets/js/super-duper-block-editor.js`)
 
@@ -140,7 +140,7 @@ Every block must then be registered with `ayecode_sd_register( $base_id, $class_
 
 Frontend assets belong in an `enqueue_scripts()` override, which the framework calls only when the block has actually rendered. Never enqueue or hook `wp_enqueue_scripts` from `__construct()`.
 
-See `hello-world.php` for the canonical working example, `docs/dev/block-building.md` for the complete block-building reference (registration, fields, output modes, assets), and `docs/dev/builder-pattern.md` for the full `BlockArguments` API.
+See `hello-world.php` for the canonical working example, `docs/dev/block-building.md` for the complete block-building reference (registration, fields, output modes, assets), `docs/dev/builder-pattern.md` for the full `BlockArguments` API, and `docs/dev/global-functions.md` for every supported global helper.
 
 Developer and AI-facing documentation lives under `docs/dev/` — that is the only path the docs scanner reads.
 

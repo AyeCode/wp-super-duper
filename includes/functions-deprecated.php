@@ -10,28 +10,6 @@
  */
 
 /**
- * Return an array of global $pagenow page names that should be used to exclude register_widgets.
- *
- * @deprecated 3.1.0 Use AyeCode\SuperDuper\Utils::pagenow_exclude()
- * @return mixed|void
- */
-function sd_pagenow_exclude() {
-	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Utils::pagenow_exclude' );
-	return \AyeCode\SuperDuper\Utils::pagenow_exclude();
-}
-
-/**
- * Return an array of widget class names that should be excluded.
- *
- * @deprecated 3.1.0 Use AyeCode\SuperDuper\Utils::widget_exclude()
- * @return mixed|void
- */
-function sd_widget_exclude() {
-	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Utils::widget_exclude' );
-	return \AyeCode\SuperDuper\Utils::widget_exclude();
-}
-
-/**
  * A helper function for margin inputs.
  *
  * @deprecated 3.1.0 Use AyeCode\SuperDuper\Fields\SpacingFields::margin()
@@ -800,28 +778,6 @@ function sd_get_title_inputs(): array {
 }
 
 /**
- * @deprecated 3.1.0 Use AyeCode\SuperDuper\Utils::build_attributes_string_escaped()
- * @param $args
- * @return string
- */
-function sd_build_attributes_string_escaped( $args ) {
-	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Utils::build_attributes_string_escaped' );
-	return \AyeCode\SuperDuper\Utils::build_attributes_string_escaped( $args );
-}
-
-/**
- * @info borrowed from elementor
- * @deprecated 3.1.0 Use AyeCode\SuperDuper\Utils::parse_custom_attributes()
- * @param $attributes_string
- * @param $delimiter
- * @return array
- */
-function sd_parse_custom_attributes( $attributes_string, $delimiter = ',' ) {
-	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Utils::parse_custom_attributes' );
-	return \AyeCode\SuperDuper\Utils::parse_custom_attributes( $attributes_string, $delimiter );
-}
-
-/**
  * Keys that are used for the class builder.
  *
  * @deprecated 3.1.0 Use AyeCode\SuperDuper\Utils::get_class_build_keys()
@@ -923,42 +879,6 @@ function sd_visibility_output_options() {
 }
 
 /**
- * Get the template page options.
- *
- * @deprecated 3.1.0 Use AyeCode\SuperDuper\Utils::template_page_options()
- * @param array $args Array of arguments.
- * @return array Template page options.
- */
-function sd_template_page_options( $args = array() ) {
-	//_deprecated_function( 'sd_template_page_options', '3.1.0', 'AyeCode\\SuperDuper\\Utils::template_page_options' );
-	return \AyeCode\SuperDuper\Utils::template_page_options( $args );
-}
-
-/**
- * Get the template part options.
- *
- * @deprecated 3.1.0 Use AyeCode\SuperDuper\Utils::template_part_options()
- * @param array $args Array of arguments.
- * @return array Template part options.
- */
-function sd_template_part_options( $args = array() ) {
-	//_deprecated_function( 'sd_template_part_options', '3.1.0', 'AyeCode\\SuperDuper\\Utils::template_part_options' );
-	return \AyeCode\SuperDuper\Utils::template_part_options( $args );
-}
-
-/**
- * Get the template part by slug.
- *
- * @deprecated 3.1.0 Use AyeCode\SuperDuper\Utils::get_template_part_by_slug()
- * @param string $slug Template slug.
- * @return array Template part object.
- */
-function sd_get_template_part_by_slug( $slug ) {
-	//_deprecated_function( 'sd_get_template_part_by_slug', '3.1.0', 'AyeCode\\SuperDuper\\Utils::get_template_part_by_slug' );
-	return \AyeCode\SuperDuper\Utils::get_template_part_by_slug( $slug );
-}
-
-/**
  * Filters the content of a single block.
  *
  * @deprecated 3.1.0 Use AyeCode\SuperDuper\Utils::render_block()
@@ -971,22 +891,6 @@ function sd_render_block( $block_content, $block, $instance = '' ) {
 	return \AyeCode\SuperDuper\Utils::render_block( $block_content, $block, $instance );
 }
 add_filter( 'render_block', 'sd_render_block', 9, 3 );
-
-/**
- * @deprecated 3.1.0 Use AyeCode\SuperDuper\Utils::get_page_content()
- */
-function sd_get_page_content( $page_id ) {
-	//_deprecated_function( 'sd_get_page_content', '3.1.0', 'AyeCode\\SuperDuper\\Utils::get_page_content' );
-	return \AyeCode\SuperDuper\Utils::get_page_content( $page_id );
-}
-
-/**
- * @deprecated 3.1.0 Use AyeCode\SuperDuper\Utils::get_template_part_content()
- */
-function sd_get_template_part_content( $template_part ) {
-	//_deprecated_function( 'sd_get_template_part_content', '3.1.0', 'AyeCode\\SuperDuper\\Utils::get_template_part_content' );
-	return \AyeCode\SuperDuper\Utils::get_template_part_content( $template_part );
-}
 
 /**
  * @deprecated 3.1.0 Use AyeCode\SuperDuper\Utils::block_parse_rules()
@@ -1126,40 +1030,3 @@ if ( ! function_exists( 'sd_missing_shortcode_notice' ) ) {
 
 add_filter( 'render_block', 'sd_blocks_render_blocks', 10, 3 );
 
-/**
- * Retrieves the shortcode slug from a given string.
- *
- * @deprecated 3.1.0 Use AyeCode\SuperDuper\Utils::get_shortcode_slug()
- * @param string $str The input string from which to extract the shortcode slug.
- * @return string The extracted shortcode slug.
- */
-function sd_get_shortcode_slug( $str ) {
-	//_deprecated_function( 'sd_get_shortcode_slug', '3.1.0', 'AyeCode\\SuperDuper\\Utils::get_shortcode_slug' );
-	return \AyeCode\SuperDuper\Utils::get_shortcode_slug( $str );
-}
-
-/**
- * Builds a shortcode string based on provided name, attributes, and content.
- *
- * @deprecated 3.1.0 Use AyeCode\SuperDuper\Utils::build_shortcode()
- * @param string $name    Name of the shortcode. Required.
- * @param array  $args    Optional. Array of attributes for the shortcode. Default empty array.
- * @param string $content Optional. Content to be enclosed within the shortcode. Default empty string.
- * @return string Shortcode string if successful, otherwise an empty string.
- */
-function sd_build_shortcode( $name, $args = array(), $content = '' ) {
-	//_deprecated_function( 'sd_build_shortcode', '3.1.0', 'AyeCode\\SuperDuper\\Utils::build_shortcode' );
-	return \AyeCode\SuperDuper\Utils::build_shortcode( $name, $args, $content );
-}
-
-/**
- * Finds and replaces a comprehensive set of dynamic data variables.
- *
- * @deprecated 3.1.0 Use AyeCode\SuperDuper\Utils::replace_variables()
- * @param string|null $text The input string containing variables.
- * @return string The text with variables replaced, which may include HTML.
- */
-function sd_replace_variables( $text ) {
-	//_deprecated_function( __FUNCTION__, '3.1.0', 'AyeCode\\SuperDuper\\Utils::replace_variables' );
-	return \AyeCode\SuperDuper\Utils::replace_variables( (string) $text );
-}
