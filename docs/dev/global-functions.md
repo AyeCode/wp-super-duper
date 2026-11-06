@@ -195,9 +195,18 @@ attribute.
 Builds the `:hover` rules for the block from `text_color_hover`, `text_color_hover_custom`,
 `bg_hover`, `bg_hover_color` and `bg_hover_gradient`, scoped to the block's `styleid` class.
 Returns a complete `<style>` element, or an empty string when there are no hover settings or no
-`styleid`. With `$is_preview` true the selector is prefixed for the editor canvas. Colors and
-the gradient are validated before they are written, because a stored value that could close
-the `<style>` tag would otherwise be an injection point.
+`styleid`. With `$is_preview` true the selector is prefixed for the editor canvas. Everything
+written into the element is validated first, because a stored value that could close the
+`<style>` tag or end the selector would otherwise be an injection point: the style id goes
+through `Utils::sanitize_css_selector()`, colors through `Utils::sanitize_css_color()` and the
+gradient through `Utils::sanitize_css_gradient()`.
+
+A block that scopes the rules to an inner element appends a selector tail to the style id
+before calling, and the tail survives the sanitizer:
+
+```php
+$args['styleid'] .= ' .btn';
+```
 
 ```php
 $html .= sd_build_hover_styles( $args, $this->is_preview() );
@@ -244,14 +253,17 @@ under `sd_build_aui_styles()`.
 These are `Utils` statics with no global wrapper. They back the validation in
 `sd_build_aui_styles()` and `sd_build_hover_styles()`, and they are public so a block can apply
 the same rules to a CSS value it prints itself. Each returns the trimmed value when it passes
-and an empty string when it does not. All of them reject `;`, `{`, `}`, `<`, `>`, backslash,
-`url(`, `expression`, `javascript`, `@import`, `behavior` and `-moz-binding` outright.
+and an empty string when it does not. The value sanitizers reject `;`, `{`, `}`, `<`, `>`,
+backslash, `url(`, `expression`, `javascript`, `@import`, `behavior` and `-moz-binding`
+outright; the selector sanitizer strips rather than rejects, so a bad character never costs the
+block its hover rules, it just stops matching.
 
 | Method | Accepts |
 |---|---|
 | `Utils::sanitize_css_color( $value )` | Hex from `#rgb` to `#rrggbbaa`; a keyword (named colors, `transparent`, `currentColor`, `inherit`); `rgb()`, `rgba()`, `hsl()`, `hsla()`, `hwb()`, `lab()`, `lch()`, `oklab()`, `oklch()` or `color()` with simple arguments; `var(--name)` with an optional fallback of any of those. |
 | `Utils::sanitize_css_length( $value )` | A number with an optional unit (unitless is allowed, as `line-height` needs it); the keywords `auto`, `none`, `normal`, `inherit`, `initial`, `unset`, `fit-content`, `max-content`, `min-content`; `calc()`, `min()`, `max()` or `clamp()` built from numbers, units and operators; `var(--name)` with an optional numeric fallback. |
 | `Utils::sanitize_css_gradient( $value )` | One or more comma-separated `linear-gradient()`, `radial-gradient()` or `conic-gradient()` functions, including the `repeating-` forms, with one level of nested function such as `rgba()` inside; or a `var(--name)` reference to a preset gradient. |
+| `Utils::sanitize_css_selector( $value )` | A class name, optionally followed by a selector tail, for use where a stored id is written into a `<style>` element. Keeps letters, digits, `_`, `-`, `.`, `#`, `:`, `~`, `+`, `>` and single spaces; everything else is removed. |
 | `Utils::sanitize_css_url( $value )` | A URL that passes `esc_url_raw()`. The characters that would end or confuse an unquoted `url()` token (`(`, `)`, `;`, quotes, space, backslash) are percent-encoded. Ampersands are left as `&` for the attribute escape to handle. |
 
 ```php

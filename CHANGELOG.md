@@ -1,6 +1,7 @@
 # Changelog
 
 ## [3.0.10-beta] — 2026-09-TBD
+- The style id that scopes the hover <style> rules was written into the selector with only attribute escaping, so a stored value containing braces could end the selector and inject its own CSS rules; the id is now reduced to selector characters first (sanitize_css_selector()) - FIXED
 - Sticky offset top and bottom were output as unitless CSS (top:80;), which browsers discard, so the setting never moved the block; the value now renders in px on the frontend and in the editor - FIXED
 - sd_build_aui_class_attr(), sd_build_aui_style_attr() and sd_build_aui_wrapper_attrs() (Utils statics with global wrappers) return finished, escaped class and style attributes, or nothing when empty, so blocks no longer stitch the attribute together or pick an escaper themselves - ADDED
 - Inline style values from the custom color, gradient, background image, line height and max height settings are validated as CSS values before output, so a stored value can no longer append its own declarations to the style attribute - FIXED

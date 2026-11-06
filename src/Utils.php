@@ -1046,12 +1046,34 @@ class Utils {
 	}
 
 	/**
+	 * Reduce a value to the characters a simple CSS selector can contain.
+	 *
+	 * Used for the style id the hover rules are scoped to. Blocks may pass a class
+	 * followed by a selector tail (` .btn`, ` ~ .icon`), so this keeps letters, digits,
+	 * `_`, `-`, `.`, `#`, `:`, `~`, `+`, `>` and single spaces, and drops everything
+	 * else. Without braces, semicolons, brackets, quotes, commas or slashes, the value
+	 * can only change which elements the rule matches, never add a rule or close the
+	 * <style> element.
+	 *
+	 * @param string $value Stored style id, optionally with a selector tail.
+	 * @return string The cleaned selector, or an empty string when nothing is left.
+	 */
+	public static function sanitize_css_selector( $value ) {
+		$value = preg_replace( '/[^A-Za-z0-9_\-.#:~+>\s]/', '', (string) $value );
+		$value = preg_replace( '/\s+/', ' ', $value );
+
+		return trim( $value );
+	}
+
+	/**
 	 * Build the hover CSS rules for a block from its hover settings.
 	 *
-	 * Rules are scoped to the block's `styleid` class. Color values are validated with
-	 * sanitize_css_color() and the gradient with sanitize_css_gradient() before they are
-	 * written, because the result is printed inside a <style> element where a stored
-	 * value could otherwise close the tag.
+	 * Rules are scoped to the block's `styleid` class. The result is printed inside a
+	 * <style> element, so every stored value is validated before it is written: the style
+	 * id goes through sanitize_css_selector(), which leaves only selector characters (a
+	 * caller may append a tail such as ` .btn`, but a stored `{` or `}` would otherwise
+	 * close the selector and start a rule of its own), colors through sanitize_css_color()
+	 * and the gradient through sanitize_css_gradient().
 	 *
 	 * @param array $args       Widget arguments.
 	 * @param bool  $is_preview Whether rendering inside the block editor preview.
@@ -1060,8 +1082,10 @@ class Utils {
 	public static function build_hover_styles( $args, $is_preview = false ) {
 		$rules = '';
 
-		if ( ! empty( $args['styleid'] ) ) {
-			$styleid = $is_preview ? 'html .editor-styles-wrapper .' . esc_attr( $args['styleid'] ) : 'html .' . esc_attr( $args['styleid'] );
+		$selector = ! empty( $args['styleid'] ) ? self::sanitize_css_selector( $args['styleid'] ) : '';
+
+		if ( '' !== $selector ) {
+			$styleid = $is_preview ? 'html .editor-styles-wrapper .' . $selector : 'html .' . $selector;
 
 			if ( ! empty( $args['text_color_hover'] ) ) {
 				$key   = 'custom' === $args['text_color_hover'] && ! empty( $args['text_color_hover_custom'] ) ? 'text_color_hover_custom' : 'text_color_hover';
