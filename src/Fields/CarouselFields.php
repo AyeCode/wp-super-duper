@@ -49,10 +49,11 @@ final class CarouselFields {
 			'title'           => __( 'Arrows', 'ayecode-connect' ),
 			'desc'            => __( 'Where the previous and next buttons sit.', 'ayecode-connect' ),
 			'options'         => [
-				''      => __( 'None', 'ayecode-connect' ),
-				'edge'  => __( 'On the edges', 'ayecode-connect' ),
-				'hover' => __( 'On the edges when hovered', 'ayecode-connect' ),
-				'title' => __( 'Beside the title', 'ayecode-connect' ),
+				''       => __( 'None', 'ayecode-connect' ),
+				'edge'   => __( 'On the edges', 'ayecode-connect' ),
+				'hover'  => __( 'On the edges when hovered', 'ayecode-connect' ),
+				'title'  => __( 'Beside the title', 'ayecode-connect' ),
+				'bottom' => __( 'Below the slides', 'ayecode-connect' ),
 			],
 			'default'         => 'edge',
 			'element_require' => $stepping,
@@ -273,7 +274,7 @@ final class CarouselFields {
 		$arrows = (string) $v( 'arrows', 'edge' );
 
 		$args = [
-			'arrows'   => 'title' === $arrows ? 'external' : ( in_array( $arrows, [ 'edge', 'hover' ], true ) ? $arrows : false ),
+			'arrows'   => 'title' === $arrows ? 'external' : ( in_array( $arrows, [ 'edge', 'hover', 'bottom' ], true ) ? $arrows : false ),
 			'dots'     => ! empty( $instance[ $k . 'dots' ] ),
 			'autoplay' => false,
 			'loop'     => ! isset( $instance[ $k . 'loop' ] ) || ! empty( $instance[ $k . 'loop' ] ),
