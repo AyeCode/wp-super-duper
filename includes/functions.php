@@ -75,12 +75,13 @@ function sd_build_aui_styles( $args ) {
 /**
  * Build the hover styles from args.
  *
- * @param array $args
- * @param bool  $is_preview
+ * @param array  $args
+ * @param bool   $is_preview
+ * @param string $inner Optional selector for an element inside the block, such as ' .btn'.
  * @return string
  */
-function sd_build_hover_styles( $args, $is_preview = false ) {
-	return \AyeCode\SuperDuper\Utils::build_hover_styles( $args, $is_preview );
+function sd_build_hover_styles( $args, $is_preview = false, $inner = '' ) {
+	return \AyeCode\SuperDuper\Utils::build_hover_styles( $args, $is_preview, $inner );
 }
 
 /**

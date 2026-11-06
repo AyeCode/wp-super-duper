@@ -1,6 +1,7 @@
 # Changelog
 
 ## [3.0.10-beta] — 2026-09-TBD
+- sd_build_hover_styles() takes an optional inner selector (' .btn') for rules aimed at an element inside the block, and no longer prints an unparseable rule when a block appended that selector to an empty style id (typed shortcodes and widgets) - ADDED
 - The style id that scopes the hover <style> rules was written into the selector with only attribute escaping, so a stored value containing braces could end the selector and inject its own CSS rules; the id is now reduced to selector characters first (sanitize_css_selector()) - FIXED
 - Sticky offset top and bottom were output as unitless CSS (top:80;), which browsers discard, so the setting never moved the block; the value now renders in px on the frontend and in the editor - FIXED
 - sd_build_aui_class_attr(), sd_build_aui_style_attr() and sd_build_aui_wrapper_attrs() (Utils statics with global wrappers) return finished, escaped class and style attributes, or nothing when empty, so blocks no longer stitch the attribute together or pick an escaper themselves - ADDED

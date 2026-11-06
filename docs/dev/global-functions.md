@@ -190,22 +190,24 @@ which turns `font-size:2rem;` into `font-size2rem` and silently kills every styl
 the block. Test the style string, not the class string, when deciding whether to print a style
 attribute.
 
-### `sd_build_hover_styles( $args, $is_preview = false )`
+### `sd_build_hover_styles( $args, $is_preview = false, $inner = '' )`
 
 Builds the `:hover` rules for the block from `text_color_hover`, `text_color_hover_custom`,
 `bg_hover`, `bg_hover_color` and `bg_hover_gradient`, scoped to the block's `styleid` class.
 Returns a complete `<style>` element, or an empty string when there are no hover settings or no
-`styleid`. With `$is_preview` true the selector is prefixed for the editor canvas. Everything
+`styleid` (a typed shortcode or a widget has none, so it prints nothing rather than an unscoped
+rule). With `$is_preview` true the selector is prefixed for the editor canvas. Everything
 written into the element is validated first, because a stored value that could close the
 `<style>` tag or end the selector would otherwise be an injection point: the style id goes
 through `Utils::sanitize_css_selector()`, colors through `Utils::sanitize_css_color()` and the
 gradient through `Utils::sanitize_css_gradient()`.
 
-A block that scopes the rules to an inner element appends a selector tail to the style id
-before calling, and the tail survives the sanitizer:
+To aim the rules at an element inside the block, pass its selector as the third argument.
+Appending the tail to the style id still works, but when the id is empty that leaves a bare
+tail, which the function now drops, so prefer the parameter:
 
 ```php
-$args['styleid'] .= ' .btn';
+$html .= sd_build_hover_styles( $args, $this->is_preview(), '.btn' );
 ```
 
 ```php

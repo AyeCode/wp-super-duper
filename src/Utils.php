@@ -1068,24 +1068,37 @@ class Utils {
 	/**
 	 * Build the hover CSS rules for a block from its hover settings.
 	 *
-	 * Rules are scoped to the block's `styleid` class. The result is printed inside a
-	 * <style> element, so every stored value is validated before it is written: the style
-	 * id goes through sanitize_css_selector(), which leaves only selector characters (a
-	 * caller may append a tail such as ` .btn`, but a stored `{` or `}` would otherwise
-	 * close the selector and start a rule of its own), colors through sanitize_css_color()
-	 * and the gradient through sanitize_css_gradient().
+	 * Rules are scoped to the block's `styleid` class, so without a style id (a typed
+	 * shortcode, a widget) there is nothing to scope to and nothing is printed. To aim the
+	 * rules at an element inside the block, pass its selector as `$inner` (` .btn`,
+	 * ` ~ .icon`); appending it to the id still works but leaves the rules unscoped when
+	 * the id is empty, which is why the parameter exists.
 	 *
-	 * @param array $args       Widget arguments.
-	 * @param bool  $is_preview Whether rendering inside the block editor preview.
+	 * The result is printed inside a <style> element, so every stored value is validated
+	 * before it is written: the id and inner selector go through sanitize_css_selector(),
+	 * and the id must then start with a class name, because a stored `{` or `}` would
+	 * otherwise close the selector and start a rule of its own; colors go through
+	 * sanitize_css_color() and the gradient through sanitize_css_gradient().
+	 *
+	 * @param array  $args       Widget arguments.
+	 * @param bool   $is_preview Whether rendering inside the block editor preview.
+	 * @param string $inner      Optional selector for an element inside the block.
 	 * @return string A <style> element with the rules, or an empty string when there are none.
 	 */
-	public static function build_hover_styles( $args, $is_preview = false ) {
+	public static function build_hover_styles( $args, $is_preview = false, $inner = '' ) {
 		$rules = '';
 
 		$selector = ! empty( $args['styleid'] ) ? self::sanitize_css_selector( $args['styleid'] ) : '';
+		$inner    = '' !== $inner ? self::sanitize_css_selector( $inner ) : '';
 
-		if ( '' !== $selector ) {
+		// The first token has to be the block's own class; a bare tail would print a rule
+		// that no browser can parse, or with a leading combinator one that is not scoped.
+		if ( '' !== $selector && preg_match( '/^[A-Za-z_][A-Za-z0-9_-]*(\s|$|\.|:)/', $selector ) ) {
 			$styleid = $is_preview ? 'html .editor-styles-wrapper .' . $selector : 'html .' . $selector;
+
+			if ( '' !== $inner ) {
+				$styleid .= ' ' . $inner;
+			}
 
 			if ( ! empty( $args['text_color_hover'] ) ) {
 				$key   = 'custom' === $args['text_color_hover'] && ! empty( $args['text_color_hover_custom'] ) ? 'text_color_hover_custom' : 'text_color_hover';
