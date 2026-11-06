@@ -770,12 +770,12 @@ class BlockEditorAssets {
 
             // sticky offset top
             if ($args['sticky_offset_top'] !== undefined && $args['sticky_offset_top'] !== '') {
-                $styles['top'] = $args['sticky_offset_top'];
+                $styles['top'] = Math.abs(parseInt($args['sticky_offset_top'], 10) || 0) + 'px';
             }
 
             // sticky offset bottom
             if ($args['sticky_offset_bottom'] !== undefined && $args['sticky_offset_bottom'] !== '') {
-                $styles['bottom'] = $args['sticky_offset_bottom'];
+                $styles['bottom'] = Math.abs(parseInt($args['sticky_offset_bottom'], 10) || 0) + 'px';
             }
 
             // font size

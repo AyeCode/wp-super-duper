@@ -799,11 +799,11 @@ class Utils {
 		}
 
 		if ( ! empty( $args['sticky_offset_top'] ) && $args['sticky_offset_top'] !== '' ) {
-			$styles['top'] = absint( $args['sticky_offset_top'] );
+			$styles['top'] = absint( $args['sticky_offset_top'] ) . 'px';
 		}
 
 		if ( ! empty( $args['sticky_offset_bottom'] ) && $args['sticky_offset_bottom'] !== '' ) {
-			$styles['bottom'] = absint( $args['sticky_offset_bottom'] );
+			$styles['bottom'] = absint( $args['sticky_offset_bottom'] ) . 'px';
 		}
 
 		if ( ! empty( $args['font_size_custom'] ) && $args['font_size_custom'] !== '' ) {
