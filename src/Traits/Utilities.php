@@ -85,6 +85,7 @@ trait Utilities {
 				$builder_args    = $this->set_arguments();
 				$this->arguments = array_merge( $this->arguments, is_array( $builder_args ) ? $builder_args : [] );
 			}
+			$this->arguments = $this->resolve_argument_options( $this->arguments );
 		}
 
 		$this->arguments = apply_filters( 'wp_super_duper_arguments', $this->arguments, $this->options, $this->instance );
@@ -95,6 +96,49 @@ trait Utilities {
 		}
 
 		return $this->arguments;
+	}
+
+	/**
+	 * Resolve option lists given as callables.
+	 *
+	 * A field's `options` may be an array or a callable returning one. The lists
+	 * feed the settings form (editor, widget form, shortcode inserter, page
+	 * builders, REST config, AI schema), which all read the arguments after this,
+	 * so a callable is invoked here, once, and only when a form can be shown. On a
+	 * visitor's page the arguments are compiled only for the defaults, so the
+	 * callable is never run and the field gets an empty list. Everything
+	 * downstream always sees an array.
+	 *
+	 * Accepted: a closure (or any invokable object) or the name of a function that
+	 * exists. An array is always an option list, never a callable, so a method is
+	 * given as `fn() => $this->method()`. A plain string that is not a defined
+	 * function is left alone.
+	 *
+	 * @param array $arguments The compiled arguments.
+	 * @return array The arguments with every options list an array.
+	 */
+	protected function resolve_argument_options( array $arguments ) {
+		$editor = ! $this->is_front_end_render();
+
+		foreach ( $arguments as $key => $argument ) {
+			if ( ! is_array( $argument ) || ! isset( $argument['options'] ) || is_array( $argument['options'] ) ) {
+				continue;
+			}
+
+			$options = $argument['options'];
+
+			if ( is_string( $options ) ) {
+				if ( ! function_exists( $options ) ) {
+					continue;
+				}
+			} elseif ( ! is_object( $options ) || ! is_callable( $options ) ) {
+				continue;
+			}
+
+			$arguments[ $key ]['options'] = $editor ? (array) call_user_func( $options ) : [];
+		}
+
+		return $arguments;
 	}
 
 	/**
@@ -263,5 +307,27 @@ trait Utilities {
 		}
 		$js .= "},\n";
 		return $js;
+	}
+
+	/**
+	 * Whether this is a plain front end render, where only output() will run.
+	 *
+	 * The editor, the REST block renderer, AJAX and the page builder previews may
+	 * ask for the full argument definitions or the editor options after a render,
+	 * so they keep them. A visitor's page only ever calls output().
+	 *
+	 * @return bool
+	 */
+	protected function is_front_end_render() {
+		if ( is_admin() || wp_doing_ajax() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) || wp_is_json_request() ) {
+			return false;
+		}
+
+		// WP-CLI is tooling (the block audit reads the example attributes), not a visitor.
+		if ( defined( 'WP_CLI' ) && WP_CLI ) {
+			return false;
+		}
+
+		return ! \AyeCode\SuperDuper\Utils::is_preview();
 	}
 }

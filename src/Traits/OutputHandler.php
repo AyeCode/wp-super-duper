@@ -34,7 +34,13 @@ trait OutputHandler {
 	 */
 	public function register_shortcode() {
 		add_shortcode( $this->base_id, array( $this, 'shortcode_output' ) );
-		add_action( 'wp_ajax_super_duper_output_shortcode', array( $this, 'render_shortcode' ) );
+
+		// The block preview request is answered by Registry::handle_ajax_shortcode() at
+		// priority 1, which resolves the one class it needs; this per-instance handler
+		// is kept for AJAX requests only, where it can at least fire.
+		if ( wp_doing_ajax() ) {
+			add_action( 'wp_ajax_super_duper_output_shortcode', array( $this, 'render_shortcode' ) );
+		}
 	}
 
 	/**
@@ -376,27 +382,53 @@ trait OutputHandler {
 	}
 
 	/**
+	 * The default value of every argument, keyed by argument name.
+	 *
+	 * Filled on the first render and used for every render after it, so a
+	 * front end request never has to hold the full argument definitions.
+	 *
+	 * @var array|null
+	 */
+	private $argument_defaults = null;
+
+	/**
 	 * Get the argument values for an instance, applying defaults.
+	 *
+	 * Rendering needs one thing from the argument definitions: the default of
+	 * each argument. The definitions themselves (titles, descriptions, option
+	 * lists, editor wiring) are what the block editor needs, and on a front end
+	 * request nothing asks for them after this point. Keeping them for the rest
+	 * of the request cost 50 to 100 KB per rendered block type, a few MB on a
+	 * page built from blocks, so the full set is released once the defaults have
+	 * been read. Anything that asks for it later gets it rebuilt by
+	 * get_arguments().
 	 *
 	 * @param array $instance The instance settings.
 	 * @return array The processed argument values.
 	 */
 	public function argument_values( $instance ) {
 		$argument_values = array();
-		$this->instance = $instance;
-		if ( empty( $this->arguments ) ) {
-			$this->arguments = $this->get_arguments();
-		}
+		$this->instance  = $instance;
 
-		if ( ! empty( $this->arguments ) ) {
-			foreach ( $this->arguments as $key => $args ) {
-				$argument_values[ $key ] = isset( $instance[ $key ] ) ? $instance[ $key ] : (isset( $args['default'] ) ? $args['default'] : '');
-				if ( $args['type'] == 'checkbox' && ! isset( $instance[ $key ] ) ) {
-					// Don't set default for a checkbox that was never saved.
-					// The update method handles setting it to '0' on save.
-				}
+		if ( null === $this->argument_defaults ) {
+			$arguments = ! empty( $this->arguments ) ? $this->arguments : $this->get_arguments();
+
+			$this->argument_defaults = array();
+			foreach ( $arguments as $key => $args ) {
+				$this->argument_defaults[ $key ] = isset( $args['default'] ) ? $args['default'] : '';
+			}
+
+			if ( $this->is_front_end_render() ) {
+				// Back to the constructor state, so a later get_arguments() rebuilds the full set.
+				$this->arguments              = isset( $this->options['arguments'] ) ? $this->options['arguments'] : array();
+				$this->_arguments_initialized = false;
 			}
 		}
+
+		foreach ( $this->argument_defaults as $key => $default ) {
+			$argument_values[ $key ] = isset( $instance[ $key ] ) ? $instance[ $key ] : $default;
+		}
+
 		return $argument_values;
 	}
 

@@ -72,7 +72,9 @@ class Renderer {
 		$value     = null;
 
 		if ( ! self::missing_required( $def, $args ) ) {
-			$value = call_user_func( $def['callback'], $args, $context );
+			// The definition is the third argument, so one method can serve several tags
+			// by name. Callbacks that take two parameters are unaffected.
+			$value = call_user_func( $def['callback'], $args, $context, $def );
 		}
 
 		$fallback = isset( $modifiers['fallback'] ) ? (string) $modifiers['fallback'] : '';
@@ -95,7 +97,7 @@ class Renderer {
 		}
 
 		if ( ! empty( $modifiers['link'] ) && $def['link'] ) {
-			$url = (string) call_user_func( $def['link'], $args, $context );
+			$url = (string) call_user_func( $def['link'], $args, $context, $def );
 
 			if ( '' !== $url ) {
 				$output = sprintf(

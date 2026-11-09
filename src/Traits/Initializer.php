@@ -91,20 +91,27 @@ trait Initializer {
 //				$oooonce = true;
 //			}
 
-			add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_block_assets' ] );
-
-
+			// The editor only loads in wp-admin, so the hook can only fire there. On a
+			// visitor's page it would be one dead hook entry per rendered block type.
+			if ( is_admin() ) {
+				add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_block_assets' ] );
+			}
 		}
 
 		// Add the shared admin scripts and styles only once per request.
 		if ( ! \AyeCode\SuperDuper\State::$widget_scripts_done ) {
 			\AyeCode\SuperDuper\State::$widget_scripts_done = true;
 
-			// Same script on both handles — build the buffer once, not twice.
-			$widget_js = $this->widget_js();
-			wp_add_inline_script( 'admin-widgets', $widget_js );
-			wp_add_inline_script( 'customize-controls', $widget_js );
-			wp_add_inline_style( 'widgets', $this->widget_css() );
+			// The widget form script and style are printed on the widgets screen and in
+			// the Customizer, both wp-admin. On a visitor's page the handles exist but never
+			// print, so the strings would sit in $wp_scripts and $wp_styles for nothing.
+			if ( is_admin() ) {
+				// Same script on both handles: build the buffer once, not twice.
+				$widget_js = $this->widget_js();
+				wp_add_inline_script( 'admin-widgets', $widget_js );
+				wp_add_inline_script( 'customize-controls', $widget_js );
+				wp_add_inline_style( 'widgets', $this->widget_css() );
+			}
 
 			add_action( 'elementor/editor/after_enqueue_styles', array( $this, 'elementor_editor_styles' ) );
 
@@ -132,5 +139,34 @@ trait Initializer {
 		}
 
 		do_action( 'wp_super_duper_widget_init', $options, $this );
+
+		// On a visitor's page only output() will run, and it reads a handful of these
+		// keys. The rest (edit and save components, output template, tabs, icon,
+		// keywords, supports, transforms, example, AI hints) is for the editor, the
+		// widget form, the REST API and the page builders, which never run in this
+		// request. A fresh array, not unset(): unset leaves the hash capacity allocated.
+		if ( $this->is_front_end_render() ) {
+			$this->options = array_intersect_key( $this->options, self::$front_end_option_keys );
+		}
 	}
+
+	/**
+	 * The option keys the front-end output path reads, as array keys.
+	 *
+	 * Checked against the framework and every GeoDirectory and BlockStrap block:
+	 * nothing in an output() reads $this->options at all.
+	 *
+	 * @var array<string, true>
+	 */
+	private static $front_end_option_keys = array(
+		'base_id'      => true,
+		'name'         => true,
+		'class_name'   => true,
+		'textdomain'   => true,
+		'output_types' => true,
+		'widget_ops'   => true,
+		'no_wrap'      => true,
+		'nested-block' => true,
+		'arguments'    => true,
+	);
 }

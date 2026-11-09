@@ -62,8 +62,8 @@ class Registry {
 	 * Eager (admin screens, REST): instantiates every registered class so block editor
 	 * configuration, widget admin forms and page-builder elements are all available.
 	 *
-	 * Lazy (frontend, admin-ajax): registers lightweight shortcode closures for
-	 * non-widget classes. Widget-type classes go to register_widget(), which builds
+	 * Lazy (frontend, admin-ajax): registers one static shortcode handler for every
+	 * non-widget class. Widget-type classes go to register_widget(), which builds
 	 * them immediately — that is WordPress's behaviour, not a lazy path.
 	 */
 	public static function boot(): void {
@@ -100,15 +100,36 @@ class Registry {
 				// WordPress instantiates widget classes at widgets_init priority 100.
 				register_widget( $class_name );
 			} else {
-				add_shortcode( $base_id, static function ( $attrs, $content = '' ) use ( $base_id ) {
-					return self::get_instance( $base_id )->shortcode_output( $attrs, $content );
-				} );
+				// One static handler for every tag: WordPress passes the tag name as the
+				// third argument, so no closure per entry is needed. A closure costs about
+				// 1 KB of request memory each, times every registered block on every page.
+				add_shortcode( $base_id, [ self::class, 'render_tag' ] );
 			}
 		}
 
 		// Single AJAX proxy so block preview requests work on any context without
 		// needing all classes pre-instantiated.
 		add_action( 'wp_ajax_super_duper_output_shortcode', [ self::class, 'handle_ajax_shortcode' ], 1 );
+	}
+
+	/**
+	 * Shortcode handler for every lazily registered tag.
+	 *
+	 * Instantiates the class on first use, after which the constructor replaces this
+	 * registration with the instance's own shortcode_output().
+	 *
+	 * @param array|string $attrs   Shortcode attributes.
+	 * @param string       $content Enclosed content.
+	 * @param string       $tag     The shortcode tag, supplied by do_shortcode_tag().
+	 * @return string
+	 */
+	public static function render_tag( $attrs, $content = '', $tag = '' ): string {
+		if ( '' === $tag || ! isset( self::$entries[ $tag ] ) ) {
+			// Called by hand with two arguments: nothing to resolve.
+			return '';
+		}
+
+		return (string) self::get_instance( $tag )->shortcode_output( $attrs, $content );
 	}
 
 	/**
@@ -124,7 +145,7 @@ class Registry {
 	 * every AJAX request on the site — WooCommerce cart fragments, Heartbeat, any other
 	 * plugin's — build all registered blocks for nothing. Our own three AJAX actions now
 	 * resolve the single block they need through this Registry, and third-party handlers
-	 * that render a shortcode are served by the lazy closures registered in boot().
+	 * that render a shortcode are served by the lazy handler registered in boot().
 	 *
 	 * @return bool
 	 */

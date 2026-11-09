@@ -6,3 +6,5 @@ vendor/
 # Composer
 composer.phar
 composer.lock
+# Local working files: reports, plans and snapshots written by the standards commands.
+/.build/

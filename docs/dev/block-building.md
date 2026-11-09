@@ -850,7 +850,7 @@ Every field passed to `add_field()` supports these properties:
 | `desc` | string | No | Help text / description |
 | `desc_tip` | bool | No | Show description as tooltip (`true`) or inline (`false`) |
 | `placeholder` | string | No | Input placeholder text |
-| `options` | array | No | For `select`/`checkbox`: `value => label` pairs. Supports optgroups (nested arrays) |
+| `options` | array or callable | No | For `select`/`checkbox`: `value => label` pairs. Supports optgroups (nested arrays). A callable returning the array is called once, only when a settings form can be shown; see **Option lists that cost something** below |
 | `rows` | int | No | For `textarea`: number of rows |
 | `value` | string | No | For `checkbox`: the checked-value (e.g., `'1'`) |
 | `multiple` | bool | No | For `select`: allow multiple selections |
@@ -916,6 +916,25 @@ Populate field options via REST API when a parent field changes:
 ```
 
 ---
+
+
+### Option lists that cost something
+
+A visitor's page compiles every rendered block's arguments once to read the defaults. It never shows a select, so an option list built from a query (every page on the site, every template part, the terms of a post type, the custom field keys) is wasted work on every page. Give the field a callable instead of the array:
+
+```php
+->add_field( 'tmpl_part', [
+	'type'    => 'select',
+	'title'   => __( 'Template part', 'my-plugin' ),
+	'options' => 'my_plugin_template_part_options',          // a function name
+	// or a closure, for a method or a bound value:
+	// 'options' => fn() => $this->template_part_options(),
+	// 'options' => static fn() => my_plugin_category_options( $post_type ),
+	'group'   => 'content',
+] )
+```
+
+The framework calls it once in `get_arguments()`, after `set_arguments()` returns, and only when the request can show a form (wp-admin, AJAX, REST, JSON, a builder preview, WP-CLI). On a visitor's page the field gets an empty array and the callable never runs. Everything that reads the arguments, including the `wp_super_duper_arguments` filter, always sees an array. A plain array keeps working as before and is never treated as a callable, so give a method as a closure, not as a `[ $this, 'method' ]` array. A string is treated as a callable only when a function of that name exists.
 
 ## Complete Field Types Reference
 

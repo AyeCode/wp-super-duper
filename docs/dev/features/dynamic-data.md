@@ -102,9 +102,9 @@ Registering an existing name replaces it, so an addon can override a core tag. `
 | `description` | string | Optional help text |
 | `returns` | string | `text` (default), `html`, `url` or `number`. Decides the escaping. |
 | `args` | array | See below |
-| `link` | callable | `fn( array $args, Context $c ): string`. Enables `@link` and `@new_tab`. |
+| `link` | callable | `fn( array $args, Context $c, array $def ): string`. Enables `@link` and `@new_tab`. |
 | `modifiers` | string[] | Optional. Narrows the modifiers that would otherwise apply. |
-| `callback` | callable | `fn( array $args, Context $c )`. Return null or `''` for empty. Non-scalar values render as empty. |
+| `callback` | callable | `fn( array $args, Context $c, array $def )`. Return null or `''` for empty. Non-scalar values render as empty. `$def` is the normalized definition with its `name`, so one static method can serve several tags; a callback that takes two parameters works unchanged. Prefer `[ self::class, 'method' ]` over a closure: the registry loads on every page that renders a tag, and each closure costs about 1 KB of request memory. |
 
 ### Arg definition
 
