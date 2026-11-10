@@ -1275,21 +1275,30 @@ window.sdDependentFieldCache = window.sdDependentFieldCache || {};
 						// The transform function receives the attributes of the source block.
 						transform: (sourceAttributes) => {
 							const newAttributes = {};
-							// The 'args' object maps destination attributes to source attribute keys.
-							for (const destAttr in rule.args) {
-								const sourceAttrKey = rule.args[destAttr];
-								let sourceValue;
+							// 'args' maps a source block attribute to the attribute of this block that
+							// receives it: [ 'content' => 'text' ] puts a paragraph's content in our text.
+							// The target may also be { attribute, values } when the value itself needs
+							// translating, such as a heading's level 2 becoming our html_tag 'h2'.
+							for (const sourceAttr in rule.args) {
+								let sourceValue = sourceAttributes[sourceAttr];
+								if (sourceValue === undefined || sourceValue === null) continue;
 
-								// A common case: 'text' is used as a generic key for the main content
-								// of a block like core/paragraph, which is stored in the 'content' attribute.
-								if (sourceAttrKey === 'text') {
-									sourceValue = sourceAttributes.content;
-								} else {
-									sourceValue = sourceAttributes[sourceAttrKey];
+								// Core rich text attributes arrive as RichTextData, ours are plain strings.
+								if (typeof sourceValue.toHTMLString === 'function') {
+									sourceValue = sourceValue.toHTMLString();
 								}
 
-								if (sourceValue !== undefined) {
-									newAttributes[destAttr] = sourceValue;
+								const target = rule.args[sourceAttr];
+								if (target && typeof target === 'object') {
+									if (!target.attribute) continue;
+									if (target.values) {
+										// A value the map does not know is dropped, leaving our default.
+										if (target.values[sourceValue] === undefined) continue;
+										sourceValue = target.values[sourceValue];
+									}
+									newAttributes[target.attribute] = sourceValue;
+								} else {
+									newAttributes[target] = sourceValue;
 								}
 							}
 							// The transform must return a new block object.
@@ -1857,6 +1866,15 @@ window.sdDependentFieldCache = window.sdDependentFieldCache || {};
 										}
 
 										if (!groupedArgs[groupId]) return null;
+
+										// A group whose every field is hidden by its requirement or the device switcher
+										// has nothing to show, so its panel goes too: the carousel settings of a gallery
+										// shown as a grid, for one.
+										const hasVisibleField = groupedArgs[groupId].some(arg =>
+											(!arg.device_type || arg.device_type === deviceType)
+											&& (!arg.element_require || evaluateRequirement(arg.element_require, attributes))
+										);
+										if (!hasVisibleField) return null;
 
 										return el(PanelBody, {
 											title: groupTitle,

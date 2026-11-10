@@ -865,8 +865,10 @@ JS;
                             $new_args = str_replace( '[%WrapClass%]', '+ sd_build_aui_class(props.attributes)', $new_args );
                         }
                         // Keys such as data-bs-theme are not valid bare JS identifiers, so quote them.
-                        $prop_key = substr( $element, 3 );
-                        if ( ! preg_match( '/^[A-Za-z_$][A-Za-z0-9_$]*$/', $prop_key ) ) {
+                        // A key that already carries its own quotes (if_"data-bs-target") has them removed first,
+                        // otherwise they are encoded into the property name and React drops it as an invalid attribute.
+                        $prop_key = trim( substr( $element, 3 ), '"\'' );
+                        if (! preg_match( '/^[A-Za-z_$][A-Za-z0-9_$]*$/', $prop_key ) ) {
                             $prop_key = wp_json_encode( $prop_key );
                         }
                         echo $prop_key . ": " . $this->block_props_replace( $new_args, true ) . ",";
