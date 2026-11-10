@@ -468,12 +468,14 @@ final class StyleFields {
 		$defaults = [
 			'type'     => 'select',
 			'title'    => __( 'Z-index', 'ayecode-connect' ),
+			// Bootstrap's z-index utilities (z-n1 to z-3), the stacking steps inside a section.
 			'options'  => [
-				''          => __( 'Default', 'ayecode-connect' ),
-				'zindex-0'  => '0',
-				'zindex-1'  => '1',
-				'zindex-5'  => '5',
-				'zindex-10' => '10',
+				''     => __( 'Default', 'ayecode-connect' ),
+				'z-n1' => '-1',
+				'z-0'  => '0',
+				'z-1'  => '1',
+				'z-2'  => '2',
+				'z-3'  => '3',
 			],
 			'default'  => '',
 			'desc_tip' => true,

@@ -376,7 +376,6 @@ final class TypographyFields {
 			'fs-lg'     => 'fs-lg',
 			'fs-sm'     => 'fs-sm',
 			'fs-xs'     => 'fs-xs',
-			'fs-xxs'    => 'fs-xxs',
 			'h6'        => 'h6',
 			'h5'        => 'h5',
 			'h4'        => 'h4',

@@ -19,7 +19,8 @@ final class ColorOptions {
 	/**
 	 * Return AUI color options, filtered by type slugs.
 	 *
-	 * @param array $types   Slugs to include: 'core', 'subtle', 'emphasis', 'outline', 'outline_btn_text', 'branding'.
+	 * @param array $types   Slugs to include: 'core', 'subtle', 'emphasis', 'outline', 'outline_btn_text'.
+	 *                       'branding' is still accepted and adds nothing, see branding().
 	 *                       Prepend options: 'none', 'transparent'. Defaults to ['core'] when empty.
 	 * @param bool  $flatten When true returns a flat key => label array; otherwise returns optgroups.
 	 * @return array
@@ -110,11 +111,6 @@ final class ColorOptions {
 			];
 		}
 
-		// 5. Branding / social colors.
-		if ( in_array( 'branding', $types, true ) ) {
-			$grouped[ __( 'Branding Colors', 'ayecode-connect' ) ] = self::branding();
-		}
-
 		if ( $flatten ) {
 			$flat = [];
 			foreach ( $grouped as $group ) {
@@ -129,23 +125,14 @@ final class ColorOptions {
 	}
 
 	/**
-	 * Return the AUI branding / social color options.
+	 * The social brand colors (facebook, twitter and the like) are no longer offered:
+	 * AyeCode UI has no brand color classes, and a custom color does the same job.
+	 * Kept, returning nothing, so callers that still ask for 'branding' keep working.
 	 *
+	 * @deprecated 3.0.10-beta
 	 * @return array
 	 */
 	public static function branding(): array {
-		return [
-			'facebook'  => __( 'Facebook', 'ayecode-connect' ),
-			'twitter'   => __( 'Twitter', 'ayecode-connect' ),
-			'instagram' => __( 'Instagram', 'ayecode-connect' ),
-			'linkedin'  => __( 'Linkedin', 'ayecode-connect' ),
-			'flickr'    => __( 'Flickr', 'ayecode-connect' ),
-			'github'    => __( 'GitHub', 'ayecode-connect' ),
-			'youtube'   => __( 'YouTube', 'ayecode-connect' ),
-			'wordpress' => __( 'WordPress', 'ayecode-connect' ),
-			'google'    => __( 'Google', 'ayecode-connect' ),
-			'yahoo'     => __( 'Yahoo', 'ayecode-connect' ),
-			'vkontakte' => __( 'Vkontakte', 'ayecode-connect' ),
-		];
+		return [];
 	}
 }
