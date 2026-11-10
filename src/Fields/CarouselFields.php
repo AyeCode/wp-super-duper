@@ -59,7 +59,7 @@ final class CarouselFields {
 			'element_require' => $stepping,
 		];
 
-		// The standard margin steps, minus auto: 0 to 12 in from the slide edges, or -1 to -12 to push
+		// The standard margin steps, minus auto: 0 to 12 in from the slide edges, or -1 to -5 to push
 		// the arrows out past the edges, over the page.
 		$offsets = SpacingFields::margin( 'left' )['options'];
 		unset( $offsets['auto'] );

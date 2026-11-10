@@ -1,6 +1,7 @@
 # Changelog
 
 ## [3.0.10-beta] — 2026-09-TBD
+- Margin pickers (and the carousel arrow offset, which uses them) offer negative steps -1 to -5 instead of -1 to -12, as AyeCode UI no longer ships negative margin classes past -5 - REMOVED
 - Block editor: an `if_` output key written with its own quotes, such as `if_"data-bs-target"`, was quoted a second time and saved no attribute at all, so the BlockStrap modal and offcanvas buttons had no target and the accordion items no parent - FIXED
 - Block `transforms` rules: an `args` target may be an array of `attribute` and `values` to translate the source value on the way in, so a core heading's numeric level can become an `html_tag` of h1 to h6 - ADDED
 - Block editor: a block converted from another through a `transforms` rule lost its content, as the `args` map was read as target => source instead of source => target, so a paragraph turned into a BlockStrap text block came out empty - FIXED

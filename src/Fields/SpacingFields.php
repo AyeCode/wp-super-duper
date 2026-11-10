@@ -47,19 +47,14 @@ final class SpacingFields {
 			'12'   => '12',
 		];
 
+		// Negative steps stop at -5: AyeCode UI only has the negative margin classes for
+		// Bootstrap's own 0 to 5 scale, steps 6 to 12 exist as positive margins only.
 		if ( $include_negatives ) {
-			$options['n1']  = '-1';
-			$options['n2']  = '-2';
-			$options['n3']  = '-3';
-			$options['n4']  = '-4';
-			$options['n5']  = '-5';
-			$options['n6']  = '-6';
-			$options['n7']  = '-7';
-			$options['n8']  = '-8';
-			$options['n9']  = '-9';
-			$options['n10'] = '-10';
-			$options['n11'] = '-11';
-			$options['n12'] = '-12';
+			$options['n1'] = '-1';
+			$options['n2'] = '-2';
+			$options['n3'] = '-3';
+			$options['n4'] = '-4';
+			$options['n5'] = '-5';
 		}
 
 		$side_map = [
