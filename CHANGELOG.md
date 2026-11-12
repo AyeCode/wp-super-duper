@@ -136,6 +136,7 @@
 - AI convert consumes background declarations from inline style (gradient, custom color, image, and the gradient-text combo) into the bg attribute family instead of dropping them, mapping only where the block declares the field and rejecting unsafe values - ADDED
 - AI convert consumes a non-transparent inline color into the text_color custom pair, ordered after the gradient-text combo so a combo's transparent color stays a companion - ADDED
 - AI convert repairs invalid flex gap utilities on a row by rewriting them to the gutter family (gap to g, row-gap to gy, column-gap to gx), reported under a repairs key instead of as loss - ADDED
+- CarouselFields::args() shows no arrows when the arrows setting is saved as None; an empty value was read as not set and gave edge arrows - FIXED
 
 ## [3.0.9-beta] — 2026-09-14
 - enqueue_scripts() method added so a block loads its assets only when it actually renders - ADDED

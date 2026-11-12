@@ -271,7 +271,8 @@ final class CarouselFields {
 			return isset( $instance[ $k . $key ] ) && '' !== $instance[ $k . $key ] ? $instance[ $k . $key ] : $fallback;
 		};
 
-		$arrows = (string) $v( 'arrows', 'edge' );
+		// An empty value is the None choice, so only a missing setting takes the default.
+		$arrows = isset( $instance[ $k . 'arrows' ] ) ? (string) $instance[ $k . 'arrows' ] : 'edge';
 
 		$args = [
 			'arrows'   => 'title' === $arrows ? 'external' : ( in_array( $arrows, [ 'edge', 'hover', 'bottom' ], true ) ? $arrows : false ),
