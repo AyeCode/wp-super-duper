@@ -33,6 +33,8 @@ class SchemaTransformer {
 		'anchor',
 		'visibility_conditions',
 		'hover_animations',
+		'entrance_animation',
+		'entrance_delay',
 		'bg_image',
 		'bg_image_id',
 		'bg_image_xy',

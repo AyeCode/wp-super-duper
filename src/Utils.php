@@ -645,6 +645,14 @@ class Utils {
 			$classes[] = sanitize_html_class( $args['hover_icon_animation'] );
 		}
 
+		// Entrance animation, played by the AyeCode UI script.
+		if ( ! empty( $args['entrance_animation'] ) ) {
+			$classes[] = 'aui-reveal aui-reveal-' . sanitize_html_class( $args['entrance_animation'] );
+			if ( ! empty( $args['entrance_delay'] ) ) {
+				$classes[] = 'aui-reveal-delay-' . absint( $args['entrance_delay'] );
+			}
+		}
+
 		// absolute_position
 		if ( ! empty( $args['absolute_position'] ) ) {
 			if ( 'top-left' === $args['absolute_position'] ) {
@@ -1223,6 +1231,8 @@ class Utils {
 			'border_width',
 			'border_type',
 			'opacity',
+			'bg_opacity',
+			'bg_blur',
 			'zindex',
 			'flex_wrap-MTD',
 			'h100',

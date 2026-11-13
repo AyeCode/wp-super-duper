@@ -1165,12 +1165,20 @@ class BlockEditorAssets {
 
             // hover animations
             if ($args['hover_animations'] !== undefined && $args['hover_animations']) {
-                $classes.push($args['hover_animations'].toString().replace(',', ' '));
+                $classes.push($args['hover_animations'].toString().replace(/,/g, ' '));
             }
 
             // hover icon animations
             if ($args['hover_icon_animation'] !== undefined && $args['hover_icon_animation'] !== '') {
                 $classes.push($args['hover_icon_animation']);
+            }
+
+            // entrance animation (AyeCode UI keeps it visible in the editor)
+            if ($args['entrance_animation'] !== undefined && $args['entrance_animation'] !== '') {
+                $classes.push('aui-reveal aui-reveal-' + $args['entrance_animation']);
+                if ($args['entrance_delay'] !== undefined && $args['entrance_delay'] !== '') {
+                    $classes.push('aui-reveal-delay-' + parseInt($args['entrance_delay'], 10));
+                }
             }
 
             // absolute_position

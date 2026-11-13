@@ -177,7 +177,6 @@ final class StyleFields {
 			'default'         => '',
 			'desc_tip'        => true,
 			'group'           => 'wrapper-styles',
-			'element_require' => '([%border%]&&[%border%]!="0")',
 		];
 
 		$input = wp_parse_args( $overwrite, $defaults );
@@ -194,27 +193,41 @@ final class StyleFields {
 	/**
 	 * Border radius size select field.
 	 *
+	 * Pass 'device_type' => 'Tablet' or 'Desktop' in $overwrite for the responsive
+	 * variants (keys rounded_size_md / rounded_size_lg, output as rounded-md-* / rounded-lg-*).
+	 *
 	 * @param array $overwrite Field config overrides.
 	 * @return array
 	 */
 	public static function border_radius_size( array $overwrite = [] ): array {
+		$device_size = '';
+		if ( ! empty( $overwrite['device_type'] ) ) {
+			if ( 'Tablet' === $overwrite['device_type'] ) {
+				$device_size = '_md';
+			} elseif ( 'Desktop' === $overwrite['device_type'] ) {
+				$device_size = '_lg';
+			}
+		}
+
 		$defaults = [
-			'type'            => 'select',
-			'title'           => __( 'Border radius size', 'ayecode-connect' ),
-			'options'         => [
+			'type'     => 'select',
+			'title'    => __( 'Border radius size', 'ayecode-connect' ),
+			'options'  => [
 				''       => __( 'Default', 'ayecode-connect' ),
 				'0'      => '0',
 				'1'      => '1',
 				'2'      => '2',
 				'3'      => '3',
 				'4'      => '4',
+				'5'      => '5',
+				'6'      => '6',
+				'7'      => '7',
 				'circle' => 'circle',
 				'pill'   => 'pill',
 			],
-			'default'         => '',
-			'desc_tip'        => true,
-			'group'           => 'wrapper-styles',
-			'element_require' => '([%border%]&&[%border%]!="0")',
+			'default'  => '',
+			'desc_tip' => true,
+			'group'    => 'wrapper-styles',
 		];
 
 		$input = wp_parse_args( $overwrite, $defaults );
@@ -222,7 +235,7 @@ final class StyleFields {
 		$clean = $overwrite;
 		unset( $clean['device_type'], $clean['element_require'] );
 		if ( empty( $clean ) ) {
-			$input['block_component'] = 'sd_get_border_input_rounded_size';
+			$input['block_component'] = 'sd_get_border_input_rounded_size' . $device_size;
 		}
 
 		return $input;
@@ -394,7 +407,7 @@ final class StyleFields {
 		$defaults = [
 			'type'     => 'select',
 			'multiple' => true,
-			'title'    => 'hover-animations',
+			'title'    => __( 'Hover animations', 'ayecode-connect' ),
 			'options'  => [
 				''                 => __( 'none', 'ayecode-connect' ),
 				'hover-zoom'       => __( 'Zoom', 'ayecode-connect' ),
@@ -406,7 +419,7 @@ final class StyleFields {
 			],
 			'default'  => '',
 			'desc_tip' => true,
-			'group'    => 'hover-animations',
+			'group'    => 'animations',
 		];
 
 		$input = wp_parse_args( $overwrite, $defaults );
@@ -444,7 +457,7 @@ final class StyleFields {
 			],
 			'default'  => '',
 			'desc_tip' => true,
-			'group'    => 'hover-animations',
+			'group'    => 'animations',
 		];
 
 		$input = wp_parse_args( $overwrite, $defaults );
@@ -456,6 +469,63 @@ final class StyleFields {
 		}
 
 		return $input;
+	}
+
+	/**
+	 * Entrance animation select field: the block plays in once when it first scrolls
+	 * into view (AyeCode UI's aui-reveal classes).
+	 *
+	 * @param array $overwrite Field config overrides.
+	 * @return array
+	 */
+	public static function entrance_animation( array $overwrite = [] ): array {
+		$defaults = [
+			'type'     => 'select',
+			'title'    => __( 'Entrance animation', 'ayecode-connect' ),
+			'options'  => [
+				''           => __( 'None', 'ayecode-connect' ),
+				'fade'       => __( 'Fade in', 'ayecode-connect' ),
+				'fade-up'    => __( 'Fade up', 'ayecode-connect' ),
+				'fade-down'  => __( 'Fade down', 'ayecode-connect' ),
+				'fade-start' => __( 'Fade in from start', 'ayecode-connect' ),
+				'fade-end'   => __( 'Fade in from end', 'ayecode-connect' ),
+				'zoom-in'    => __( 'Zoom in', 'ayecode-connect' ),
+			],
+			'default'  => '',
+			'desc'     => __( 'Plays once as the block scrolls into view. Best kept off the first screen, as it delays the page looking loaded.', 'ayecode-connect' ),
+			'desc_tip' => true,
+			'group'    => 'animations',
+		];
+
+		return wp_parse_args( $overwrite, $defaults );
+	}
+
+	/**
+	 * Entrance animation delay select field, to stagger blocks that come into view together.
+	 *
+	 * @param array $overwrite Field config overrides.
+	 * @return array
+	 */
+	public static function entrance_delay( array $overwrite = [] ): array {
+		$defaults = [
+			'type'            => 'select',
+			'title'           => __( 'Entrance delay', 'ayecode-connect' ),
+			'options'         => [
+				''     => __( 'None', 'ayecode-connect' ),
+				'100'  => '0.1s',
+				'200'  => '0.2s',
+				'300'  => '0.3s',
+				'500'  => '0.5s',
+				'750'  => '0.75s',
+				'1000' => '1s',
+			],
+			'default'         => '',
+			'desc_tip'        => true,
+			'group'           => 'animations',
+			'element_require' => '[%entrance_animation%]!=""',
+		];
+
+		return wp_parse_args( $overwrite, $defaults );
 	}
 
 	/**
@@ -604,10 +674,15 @@ final class StyleFields {
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Return all six border field definitions keyed by argument name.
+	 * Return the border and border radius field definitions keyed by argument name.
 	 *
-	 * When $prefix is set, dependent fields' element_require conditions are updated
-	 * to reference the prefixed border key.
+	 * The border style fields only show once a border is set; when $prefix is set their
+	 * element_require conditions reference the prefixed border key. The radius fields
+	 * always show, as a rounded background or image needs no border.
+	 *
+	 * The unprefixed group also gets Tablet and Desktop radius sizes (rounded_size_md,
+	 * rounded_size_lg), which the shared class builder outputs. A prefixed group is
+	 * mapped by its block, so it only gets the base size.
 	 *
 	 * @param string $prefix   Optional prefix for all field keys (e.g. 'card_' → 'card_border', …).
 	 * @param array  $overwrite Per-field overwrite config applied to every field.
@@ -620,14 +695,23 @@ final class StyleFields {
 		// Dependent fields need to reference the (possibly prefixed) border key.
 		$dep_overwrite = array_merge( $overwrite, [ 'element_require' => $er ] );
 
-		return [
+		$fields = [
 			$prefix . 'border'         => self::border_show( $overwrite ),
 			$prefix . 'border_type'    => self::border_style( $dep_overwrite ),
 			$prefix . 'border_width'   => self::border_width( $dep_overwrite ),
 			$prefix . 'border_opacity' => self::border_opacity( $dep_overwrite ),
-			$prefix . 'rounded'        => self::border_radius( $dep_overwrite ),
-			$prefix . 'rounded_size'   => self::border_radius_size( $dep_overwrite ),
+			$prefix . 'rounded'        => self::border_radius( $overwrite ),
 		];
+
+		if ( '' === $prefix ) {
+			$fields['rounded_size']    = self::border_radius_size( array_merge( $overwrite, [ 'device_type' => 'Mobile' ] ) );
+			$fields['rounded_size_md'] = self::border_radius_size( array_merge( $overwrite, [ 'device_type' => 'Tablet' ] ) );
+			$fields['rounded_size_lg'] = self::border_radius_size( array_merge( $overwrite, [ 'device_type' => 'Desktop' ] ) );
+		} else {
+			$fields[ $prefix . 'rounded_size' ] = self::border_radius_size( $overwrite );
+		}
+
+		return $fields;
 	}
 
 	/**
@@ -636,7 +720,9 @@ final class StyleFields {
 	 * @param string $prefix               Key prefix / base key (default 'bg' → keys: bg, bg_color, bg_gradient, …).
 	 * @param array  $overwrite             Global overwrite applied to every sub-field.
 	 * @param array  $field_overwrites      Per-field overwrite map merged on top of $overwrite.
-	 *                                      Valid keys: 'color', 'gradient', 'image'.
+	 *                                      Valid keys: 'color', 'gradient', 'on_text', 'image', 'opacity', 'blur'.
+	 *                                      'opacity' and 'blur' are on by default only for the 'bg' prefix
+	 *                                      without button colors; pass [] to add them to another prefix.
 	 *                                      Pass false as a key value to omit that sub-field entirely.
 	 *                                      Example: [ 'color' => [ 'default' => '#ff0000' ], 'image' => false ]
 	 * @param bool   $include_button_colors Whether to include button-specific colors in the palette.
@@ -658,6 +744,15 @@ final class StyleFields {
 		$ow_image    = array_key_exists( 'image', $field_overwrites )
 			? ( false === $field_overwrites['image']    ? false : array_merge( $overwrite, (array) $field_overwrites['image'] ) )
 			: $overwrite;
+		// Opacity and blur are output by the shared class builder, which only reads the
+		// unprefixed bg keys, so other prefixes (and button colors) opt in explicitly.
+		$extras_default = ( 'bg' === $prefix && ! $include_button_colors ) ? $overwrite : false;
+		$ow_opacity     = array_key_exists( 'opacity', $field_overwrites )
+			? ( false === $field_overwrites['opacity'] ? false : array_merge( $overwrite, (array) $field_overwrites['opacity'] ) )
+			: $extras_default;
+		$ow_blur        = array_key_exists( 'blur', $field_overwrites )
+			? ( false === $field_overwrites['blur']    ? false : array_merge( $overwrite, (array) $field_overwrites['blur'] ) )
+			: $extras_default;
 
 		$color_types = $include_button_colors
 			? [ 'none', 'transparent', 'core', 'outline', 'outline_btn_text' ]
@@ -691,6 +786,56 @@ final class StyleFields {
 
 		if ( false !== $overwrite ) {
 			$fields[ $prefix ] = wp_parse_args( $overwrite, $main_defaults );
+		}
+
+		if ( false !== $ow_opacity ) {
+			$fields[ $prefix . '_opacity' ] = wp_parse_args(
+				$ow_opacity,
+				[
+					'type'            => 'select',
+					'title'           => __( 'Background opacity', 'ayecode-connect' ),
+					'options'         => [
+						''              => __( 'Default (100%)', 'ayecode-connect' ),
+						'bg-opacity-90' => '90%',
+						'bg-opacity-80' => '80%',
+						'bg-opacity-75' => '75%',
+						'bg-opacity-70' => '70%',
+						'bg-opacity-60' => '60%',
+						'bg-opacity-50' => '50%',
+						'bg-opacity-40' => '40%',
+						'bg-opacity-30' => '30%',
+						'bg-opacity-25' => '25%',
+						'bg-opacity-20' => '20%',
+						'bg-opacity-10' => '10%',
+					],
+					'default'         => '',
+					'desc_tip'        => true,
+					'desc'            => __( 'Makes the background color see-through. Unlike a custom color, it follows light and dark mode.', 'ayecode-connect' ),
+					'group'           => 'wrapper-styles',
+					'element_require' => '[%' . $prefix . '%]!="" && [%' . $prefix . '%]!="transparent" && [%' . $prefix . '%]!="custom-color" && [%' . $prefix . '%]!="custom-gradient"',
+				]
+			);
+		}
+
+		if ( false !== $ow_blur ) {
+			$fields[ $prefix . '_blur' ] = wp_parse_args(
+				$ow_blur,
+				[
+					'type'            => 'select',
+					'title'           => __( 'Backdrop blur', 'ayecode-connect' ),
+					'options'         => [
+						''                 => __( 'None', 'ayecode-connect' ),
+						'backdrop-blur-sm' => __( 'Small', 'ayecode-connect' ),
+						'backdrop-blur-md' => __( 'Medium', 'ayecode-connect' ),
+						'backdrop-blur-lg' => __( 'Large', 'ayecode-connect' ),
+					],
+					'default'         => '',
+					'desc_tip'        => true,
+					'desc'            => __( 'Blurs what shows through a see-through background, such as page content scrolling under a sticky navbar.', 'ayecode-connect' ),
+					'group'           => 'wrapper-styles',
+					'element_require' => '[%' . $prefix . '%]!=""',
+				]
+			);
 		}
 
 		if ( false !== $ow_color ) {

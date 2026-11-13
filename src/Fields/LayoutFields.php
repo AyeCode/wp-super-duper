@@ -412,4 +412,86 @@ final class LayoutFields {
 
 		return wp_parse_args( $overwrite, $defaults );
 	}
+
+	/**
+	 * Return the collapse fields keyed by argument name: the collapse mode, the screens
+	 * it applies on, and for read more the collapsed height and the link texts. The block
+	 * does the output; these are only the settings.
+	 *
+	 * @param string $prefix          Optional prefix for the field keys.
+	 * @param array  $overwrite       Overwrite applied to every field.
+	 * @param array  $field_overwrites Per-field overwrite keyed by field name without the prefix
+	 *                                ('collapse', 'collapse_bp', 'collapse_height', 'collapse_more',
+	 *                                'collapse_less'); false leaves that field out.
+	 * @return array<string, array>
+	 */
+	public static function collapse_group( string $prefix = '', array $overwrite = [], array $field_overwrites = [] ): array {
+		$require_any       = '[%' . $prefix . 'collapse%]!=""';
+		$require_read_more = '[%' . $prefix . 'collapse%]=="read-more"';
+
+		$fields = [
+			'collapse'        => [
+				'type'     => 'select',
+				'title'    => __( 'Collapse', 'ayecode-connect' ),
+				'desc'     => __( 'Collapsed until toggled: hidden until a button or link toggles it by the HTML anchor. Read more: cut to a height with its own link to show the rest. The editor always shows the full content.', 'ayecode-connect' ),
+				'options'  => [
+					''          => __( 'None', 'ayecode-connect' ),
+					'collapse'  => __( 'Collapsed until toggled', 'ayecode-connect' ),
+					'read-more' => __( 'Read more', 'ayecode-connect' ),
+				],
+				'default'  => '',
+				'desc_tip' => true,
+				'group'    => 'collapse',
+			],
+			'collapse_bp'     => [
+				'type'            => 'select',
+				'title'           => __( 'Collapse on', 'ayecode-connect' ),
+				'desc'            => __( 'On larger screens the content is shown in full.', 'ayecode-connect' ),
+				'options'         => [
+					''   => __( 'All screens', 'ayecode-connect' ),
+					'md' => __( 'Mobile only', 'ayecode-connect' ),
+					'lg' => __( 'Mobile and tablet', 'ayecode-connect' ),
+				],
+				'default'         => '',
+				'desc_tip'        => true,
+				'group'           => 'collapse',
+				'element_require' => $require_any,
+			],
+			'collapse_height' => [
+				'type'            => 'number',
+				'title'           => __( 'Collapsed height (px)', 'ayecode-connect' ),
+				'placeholder'     => '200',
+				'desc_tip'        => true,
+				'group'           => 'collapse',
+				'element_require' => $require_read_more,
+			],
+			'collapse_more'   => [
+				'type'            => 'text',
+				'title'           => __( 'Read more text', 'ayecode-connect' ),
+				'placeholder'     => __( 'Read more', 'ayecode-connect' ),
+				'desc_tip'        => true,
+				'group'           => 'collapse',
+				'element_require' => $require_read_more,
+			],
+			'collapse_less'   => [
+				'type'            => 'text',
+				'title'           => __( 'Read less text', 'ayecode-connect' ),
+				'placeholder'     => __( 'Read less', 'ayecode-connect' ),
+				'desc_tip'        => true,
+				'group'           => 'collapse',
+				'element_require' => $require_read_more,
+			],
+		];
+
+		$group = [];
+		foreach ( $fields as $name => $field ) {
+			$field_overwrite = $field_overwrites[ $name ] ?? [];
+			if ( false === $field_overwrite ) {
+				continue;
+			}
+			$group[ $prefix . $name ] = array_merge( $field, $overwrite, is_array( $field_overwrite ) ? $field_overwrite : [] );
+		}
+
+		return $group;
+	}
 }

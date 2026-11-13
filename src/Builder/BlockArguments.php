@@ -474,6 +474,34 @@ class BlockArguments {
 	}
 
 	/**
+	 * Add the collapse fields (collapsed until toggled, or read more), in the Collapse group.
+	 * The block applies the collapse to its own output.
+	 *
+	 * @param string $prefix          Optional prefix for field keys.
+	 * @param array  $overwrite       Overwrite applied to every field.
+	 * @param array  $field_overwrites Per-field overwrite keyed by field name without the prefix; false omits a field.
+	 * @return static
+	 */
+	public function add_collapse_group( string $prefix = '', array $overwrite = [], array $field_overwrites = [] ): self {
+		return $this->add_fields( LayoutFields::collapse_group( $prefix, $overwrite, $field_overwrites ) );
+	}
+
+	/**
+	 * Add the entrance animation fields (animation and delay), in the Animations group.
+	 *
+	 * @param string $prefix   Optional prefix for field keys.
+	 * @param array  $overwrite Per-field overwrite config.
+	 * @return static
+	 */
+	public function add_entrance_animation_group( string $prefix = '', array $overwrite = [] ): self {
+		$delay_overwrite = $prefix ? array_merge( [ 'element_require' => '[%' . $prefix . 'entrance_animation%]!=""' ], $overwrite ) : $overwrite;
+
+		$this->fields[ $prefix . 'entrance_animation' ] = StyleFields::entrance_animation( $overwrite );
+		$this->fields[ $prefix . 'entrance_delay' ]     = StyleFields::entrance_delay( $delay_overwrite );
+		return $this;
+	}
+
+	/**
 	 * Add a hidden field that stores a value in block attributes with no UI control.
 	 *
 	 * @param string $name     The argument name (array key).

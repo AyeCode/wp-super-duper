@@ -230,8 +230,9 @@ insert an extra group before `visibility-conditions`).
 | `visibility-conditions` | Visibility Conditions | `add_visibility_conditions()` | Always, unless the block is a structural child that cannot be conditionally hidden on its own |
 | `advanced` | Advanced | `add_advanced_group()` | Always — CSS class, block name, custom CSS |
 
-Optional extras that belong in this tab when the block needs them: `hover-animations`,
-`image-mask`.
+Optional extras that belong in this tab when the block needs them: `animations` (Animations:
+`add_entrance_animation_group()` and the hover animation fields, listed after `wrapper-styles`),
+`collapse` (Collapse: `add_collapse_group()`), `image-mask`.
 
 ### Styles tab
 
@@ -398,7 +399,15 @@ When building `set_arguments()`, follow this strict priority:
 
 // Per-field default (new) — set a default color without touching other fields
 ->add_background_group( '', [], true, [ 'color' => [ 'default' => '#ff0000' ] ] )
+
+// Leave out the background opacity and backdrop blur selects
+->add_background_group( '', [], true, [ 'opacity' => false, 'blur' => false ] )
+
+// Add opacity and blur to a prefixed instance (the block must output card_bg_opacity / card_bg_blur itself)
+->add_background_group( 'card_', [], true, [ 'opacity' => [], 'blur' => [] ] )
 ```
+
+The unprefixed group includes **Background opacity** (`bg_opacity`, a `bg-opacity-*` class that works on the core and subtle colors and follows light and dark mode) and **Backdrop blur** (`bg_blur`, a `backdrop-blur-sm|md|lg` class). Both are output by the shared class builder. The blur is switched off while a navbar with Transparent until scroll is at the top of the page.
 
 **For `add_typography_group()`, the same rule applies:**
 ```php
@@ -594,6 +603,8 @@ Standard three-tab layout (Content / Styles / Advanced):
 |--------|-----------|-------------|
 | `add_border_group()` | `add_border_group( string $prefix = '', array $overwrite = [] ): self` | Border color, show/type, width, opacity, radius type, radius size |
 | `add_shadow_group()` | `add_shadow_group( string $prefix = '', array $overwrite = [] ): self` | Box shadow select |
+| `add_entrance_animation_group()` | `add_entrance_animation_group( string $prefix = '', array $overwrite = [] ): self` | Entrance animation and delay selects, played once as the block scrolls into view (Animations group) |
+| `add_collapse_group()` | `add_collapse_group( string $prefix = '', array $overwrite = [], array $field_overwrites = [] ): self` | Collapse fields: collapsed until toggled, or read more with height and link texts (Collapse group) |
 | `add_background_group()` | `add_background_group( string $prefix = '', array $overwrite = [], bool $include_image = true, array $field_overwrites = [] ): self` | Background color, custom color, gradient, and image fields. `$field_overwrites` keys: `'color'`, `'gradient'`, `'image'` (pass `false` as value to omit that sub-field) |
 | `add_display_group()` | `add_display_group( string $prefix = '', array $overwrite = [] ): self` | Display select (mobile only: none/flex/block/inline-flex/etc.) |
 | `add_responsive_display_group()` | `add_responsive_display_group( string $prefix = '', array $overwrite = [] ): self` | Display selects for mobile/tablet/desktop |
@@ -1013,6 +1024,8 @@ return ( new BlockArguments() )
 | `display()` | `display( array $overwrite = [] )` | Display select (pass `'device_type'` for responsive) |
 | `opacity()` | `opacity( array $overwrite = [] )` | Opacity select |
 | `hover_animation()` | `hover_animation( array $overwrite = [] )` | Hover animation multi-select |
+| `entrance_animation()` | `entrance_animation( array $overwrite = [] )` | Entrance animation select (fade, fade up/down/start/end, zoom in) |
+| `entrance_delay()` | `entrance_delay( array $overwrite = [] )` | Entrance delay select, shown once an animation is chosen |
 | `hover_icon_animation()` | `hover_icon_animation( array $overwrite = [] )` | Hover icon animation select |
 | `zindex()` | `zindex( array $overwrite = [] )` | Z-index select |
 | `overflow()` | `overflow( array $overwrite = [] )` | Overflow select |

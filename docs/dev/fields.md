@@ -48,7 +48,7 @@ When using `border_group()` with a prefix, the condition is updated automaticall
 | `border_width( array $overwrite = [] )` | Border width select |
 | `border_opacity( array $overwrite = [] )` | Border opacity select |
 | `border_radius( array $overwrite = [] )` | Border radius type select |
-| `border_radius_size( array $overwrite = [] )` | Border radius size select |
+| `border_radius_size( array $overwrite = [] )` | Border radius size select (0-7, circle, pill). Pass `'device_type' => 'Tablet'` or `'Desktop'` for the md / lg variants |
 
 ### Other single-field methods
 
@@ -59,6 +59,8 @@ When using `border_group()` with a prefix, the condition is updated automaticall
 | `background( array $overwrite = [] )` | Single background color select |
 | `opacity( array $overwrite = [] )` | Opacity select |
 | `hover_animation( array $overwrite = [] )` | Hover animation multi-select |
+| `entrance_animation( array $overwrite = [] )` | Entrance animation select (fade, fade up/down/start/end, zoom in) |
+| `entrance_delay( array $overwrite = [] )` | Entrance delay select, shown once an animation is chosen |
 | `hover_icon_animation( array $overwrite = [] )` | Hover icon animation select |
 | `zindex( array $overwrite = [] )` | Z-index select |
 | `overflow( array $overwrite = [] )` | Overflow select |
@@ -69,8 +71,8 @@ When using `border_group()` with a prefix, the condition is updated automaticall
 
 | Method | Returns | Notes |
 |---|---|---|
-| `border_group( string $prefix = '', array $overwrite = [] )` | `['border'=>..., 'border_type'=>..., 'border_width'=>..., 'border_opacity'=>..., 'rounded'=>..., 'rounded_size'=>...]` | Prefix is prepended to all keys; `element_require` references updated automatically |
-| `background_group( string $prefix = 'bg', array $overwrite = [], array $field_overwrites = [], bool $include_button_colors = false )` | Color select + custom color picker + gradient + image fields | `$overwrite` applies to all fields; `$field_overwrites` keys: `'color'`, `'gradient'`, `'image'`. Pass `false` as a key value to omit that sub-field |
+| `border_group( string $prefix = '', array $overwrite = [] )` | `['border'=>..., 'border_type'=>..., 'border_width'=>..., 'border_opacity'=>..., 'rounded'=>..., 'rounded_size'=>..., 'rounded_size_md'=>..., 'rounded_size_lg'=>...]` | Prefix is prepended to all keys; the border style fields' `element_require` references the prefixed border key. The radius fields always show. `rounded_size_md` / `rounded_size_lg` (Tablet / Desktop) are only added without a prefix, as a prefixed group is mapped by its block |
+| `background_group( string $prefix = 'bg', array $overwrite = [], array $field_overwrites = [], bool $include_button_colors = false )` | Color select + custom color picker + gradient + image fields | `$overwrite` applies to all fields; `$field_overwrites` keys: `'opacity'`, `'blur'`, `'color'`, `'gradient'`, `'image'`. Pass `false` as a key value to omit that sub-field |
 
 ---
 

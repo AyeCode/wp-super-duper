@@ -96,7 +96,9 @@ class My_Widget extends WP_Super_Duper {
 |---|---|
 | `add_border_group( string $prefix = '', array $overwrite = [] ): self` | Border color, border show/type, border width, border opacity, radius type, and radius size selects |
 | `add_shadow_group( string $prefix = '', array $overwrite = [] ): self` | Shadow select |
-| `add_background_group( string $prefix = '', array $overwrite = [], bool $include_image = true ): self` | Background color, custom color, gradient, and image fields. Pass `false` for `$include_image` to omit the image picker fields |
+| `add_entrance_animation_group( string $prefix = '', array $overwrite = [] ): self` | Entrance animation and delay selects (AyeCode UI aui-reveal classes), in the Animations group |
+| `add_collapse_group( string $prefix = '', array $overwrite = [], array $field_overwrites = [] ): self` | Collapse fields (collapsed until toggled, or read more with height and link texts); the block applies it to its output |
+| `add_background_group( string $prefix = '', array $overwrite = [], bool $include_image = true, array $field_overwrites = [] ): self` | Background color, custom color, gradient, opacity, backdrop blur, and image fields. Pass `false` for `$include_image` to omit the image picker fields. Opacity and blur are on for the unprefixed group only; pass `[ 'opacity' => false, 'blur' => false ]` as `$field_overwrites` to leave them out |
 | `add_display_group( string $prefix = '', array $overwrite = [] ): self` | Display select (mobile only — none, flex, block, inline-flex, etc.) |
 | `add_responsive_display_group( string $prefix = '', array $overwrite = [] ): self` | Display selects for mobile, tablet (`_md`), and desktop (`_lg`) |
 

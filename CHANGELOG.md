@@ -1,6 +1,13 @@
 # Changelog
 
 ## [3.0.10-beta] — 2026-09-TBD
+- Entrance animation and Entrance delay settings (StyleFields::entrance_animation(), entrance_delay() and BlockArguments::add_entrance_animation_group()), output as the AyeCode UI aui-reveal classes - ADDED
+- Animation settings share one Animations group: the hover animation fields move from hover-animations, and the hover animations field gets a real label - CHANGED
+- Collapse settings as a group (LayoutFields::collapse_group() and BlockArguments::add_collapse_group()): collapsed until toggled, or read more with its height and link texts - ADDED
+- Background opacity and Backdrop blur in the background group (bg_opacity, bg_blur), on by default for the unprefixed group, so a background color can be see-through and frosted while still following light and dark mode - ADDED
+- Border radius size for Tablet and Desktop (rounded_size_md, rounded_size_lg) in the border group, and sizes 5 to 7 - ADDED
+- Border radius type and size always show, as a rounded background or image needs no border - CHANGED
+- Hover animations with three or more choices gave a broken class in the editor preview, as only the first comma was replaced - FIXED
 - Z-index setting offers Bootstrap's z-n1 to z-3 instead of zindex-0, 1, 5 and 10, which AyeCode UI no longer has - CHANGED
 - Font size setting no longer offers fs-xxs, which has no styling; fs-xs is the smallest - REMOVED
 - Social brand colors (Facebook, Twitter and the like) are no longer offered in the color settings, as AyeCode UI has no brand color classes; ColorOptions::branding() returns nothing and asking for 'branding' still works - REMOVED
