@@ -141,6 +141,32 @@ function ayecode_get_current_url( $with_query_string = true ) {
 // -----------------------------------------------------------------------------
 
 /**
+ * Read the icon settings a block saved from add_icon_group().
+ *
+ * Returns the arguments aui()->icon_text() takes, so a block prints its icon with
+ * `aui()->icon_text( sd_get_icon_args( $args ) + [ 'text' => $label ] )`.
+ *
+ * @param array  $args   Settings array from a widget/shortcode instance.
+ * @param string $prefix Optional. The prefix the group was added with.
+ * @return array Keys: icon, position, size, gap, color.
+ */
+function sd_get_icon_args( $args, $prefix = '' ) {
+	$args = is_array( $args ) ? $args : [];
+	$get  = static function ( $key ) use ( $args, $prefix ) {
+		return isset( $args[ $prefix . $key ] ) && is_scalar( $args[ $prefix . $key ] ) ? (string) $args[ $prefix . $key ] : '';
+	};
+
+	return [
+		'icon'     => $get( 'icon_class' ),
+		// Blocks older than the group saved left and right.
+		'position' => in_array( $get( 'icon_position' ), [ 'end', 'right' ], true ) ? 'end' : 'start',
+		'size'     => $get( 'icon_size' ),
+		'gap'      => $get( 'icon_gap' ),
+		'color'    => $get( 'icon_color' ),
+	];
+}
+
+/**
  * Build a finished, escaped class attribute from the block settings.
  *
  * @param array  $args          Settings array from a widget/shortcode instance.

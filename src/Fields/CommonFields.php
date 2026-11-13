@@ -215,6 +215,87 @@ final class CommonFields {
 	}
 
 	/**
+	 * Icon size select field.
+	 *
+	 * Offers the text font sizes, so an icon is sized the same way text is. The
+	 * heading and display sizes are left out: they are the same sizes again with
+	 * heading weight and line height, which mean nothing on an icon.
+	 *
+	 * @param array $overwrite Field config overrides.
+	 * @return array
+	 */
+	public static function icon_size( array $overwrite = [] ): array {
+		$options = [ '' => __( 'Same as text', 'ayecode-connect' ) ];
+
+		foreach ( TypographyFields::font_size()['options'] as $value => $label ) {
+			if ( 0 === strpos( (string) $value, 'fs-' ) ) {
+				$options[ $value ] = $label;
+			}
+		}
+
+		$defaults = [
+			'type'            => 'select',
+			'title'           => __( 'Icon size', 'ayecode-connect' ),
+			'options'         => $options,
+			'default'         => '',
+			'desc_tip'        => true,
+			'group'           => 'icon',
+			'element_require' => '[%icon_class%]!=""',
+		];
+
+		return wp_parse_args( $overwrite, $defaults );
+	}
+
+	/**
+	 * Icon gap select field: the space between the icon and the text beside it.
+	 *
+	 * @param array $overwrite Field config overrides.
+	 * @return array
+	 */
+	public static function icon_gap( array $overwrite = [] ): array {
+		$defaults = [
+			'type'            => 'select',
+			'title'           => __( 'Icon gap', 'ayecode-connect' ),
+			'desc'            => __( 'The space between the icon and the text.', 'ayecode-connect' ),
+			'options'         => [
+				''  => __( 'Default', 'ayecode-connect' ),
+				'0' => __( 'None', 'ayecode-connect' ),
+				'1' => '1',
+				'2' => '2',
+				'3' => '3',
+				'4' => '4',
+				'5' => '5',
+			],
+			'default'         => '',
+			'desc_tip'        => true,
+			'group'           => 'icon',
+			'element_require' => '[%icon_class%]!=""',
+		];
+
+		return wp_parse_args( $overwrite, $defaults );
+	}
+
+	/**
+	 * Icon color select field.
+	 *
+	 * @param array $overwrite Field config overrides.
+	 * @return array
+	 */
+	public static function icon_color( array $overwrite = [] ): array {
+		$defaults = [
+			'type'            => 'select',
+			'title'           => __( 'Icon color', 'ayecode-connect' ),
+			'options'         => [ '' => __( 'Same as text', 'ayecode-connect' ) ] + \AyeCode\SuperDuper\Helpers\ColorOptions::aui( [ 'core', 'emphasis' ] ),
+			'default'         => '',
+			'desc_tip'        => true,
+			'group'           => 'icon',
+			'element_require' => '[%icon_class%]!=""',
+		];
+
+		return wp_parse_args( $overwrite, $defaults );
+	}
+
+	/**
 	 * Icon position select field.
 	 *
 	 * @param array $overwrite Field config overrides.

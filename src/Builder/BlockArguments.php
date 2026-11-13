@@ -547,14 +547,45 @@ class BlockArguments {
 	}
 
 	/**
-	 * Add icon class and icon position fields together.
+	 * Add the icon settings: icon, position, size, gap and color.
 	 *
-	 * @param array $overwrite Field config overrides applied to both fields.
+	 * Adds {prefix}icon_class, {prefix}icon_position, {prefix}icon_size,
+	 * {prefix}icon_gap and {prefix}icon_color. sd_get_icon_args() turns the
+	 * saved values into the arguments aui()->icon_text() prints an icon from.
+	 *
+	 * @param string $prefix           Optional prefix for all field keys (e.g. 'btn_' → btn_icon_class, …).
+	 * @param array  $overwrite        Global overwrite applied to every field in the group.
+	 * @param array  $field_overwrites Per-field overwrite map merged on top of $overwrite.
+	 *                                 Valid keys: 'icon', 'position', 'size', 'gap', 'color'.
+	 *                                 Pass false as a value to omit that sub-field entirely.
 	 * @return static
 	 */
-	public function add_icon_group( array $overwrite = [] ): self {
-		$this->fields['icon_class']    = CommonFields::icon_class( $overwrite );
-		$this->fields['icon_position'] = CommonFields::icon_position( $overwrite );
+	public function add_icon_group( string $prefix = '', array $overwrite = [], array $field_overwrites = [] ): self {
+		$fields = [
+			'icon'     => [ 'icon_class', 'icon_class' ],
+			'position' => [ 'icon_position', 'icon_position' ],
+			'size'     => [ 'icon_size', 'icon_size' ],
+			'gap'      => [ 'icon_gap', 'icon_gap' ],
+			'color'    => [ 'icon_color', 'icon_color' ],
+		];
+
+		// The settings beside the icon only show once an icon is chosen.
+		$require = '[%' . $prefix . 'icon_class%]!=""';
+
+		foreach ( $fields as $name => $field ) {
+			if ( array_key_exists( $name, $field_overwrites ) && false === $field_overwrites[ $name ] ) {
+				continue;
+			}
+
+			$config = array_merge( $overwrite, (array) ( $field_overwrites[ $name ] ?? [] ) );
+
+			if ( 'icon' !== $name && ! isset( $config['element_require'] ) ) {
+				$config['element_require'] = $require;
+			}
+
+			$this->fields[ $prefix . $field[0] ] = CommonFields::{$field[1]}( $config );
+		}
+
 		return $this;
 	}
 

@@ -314,6 +314,15 @@ That last row is the one that catches people: `add_margins()`, `add_padding()` a
 `add_border_group()` inherit whatever group was last set, so call them after the design
 methods that set it — which the canonical order above already does.
 
+### Markup rules
+
+- **A row of items is a flex container with a gap.** Use `d-flex` and `gap-*` on the row. The items
+  inside do not carry their own outer margin, so a row reads the same whatever is in it.
+- **A wrapper needs a job.** Print a `div` or `span` only when it has a layout role, a hook other code
+  relies on, or a meaning (a list, a link, a heading). An element whose only content is one other
+  element is the first thing to remove.
+- **An icon beside text is `aui()->icon_text()`.** See `add_icon_group()` below.
+
 ### When to deviate
 
 Drop a group when the block genuinely cannot use it, not to save effort:
@@ -630,7 +639,7 @@ Standard three-tab layout (Content / Styles / Advanced):
 |--------|-----------|-------------|
 | `add_icon_class()` | `add_icon_class( array $overwrite = [] ): self` | Icon class text input with icon picker (key: `icon_class`, group: `icon`) |
 | `add_icon_position()` | `add_icon_position( array $overwrite = [] ): self` | Icon position select: Start/End/Remove (key: `icon_position`, group: `icon`) |
-| `add_icon_group()` | `add_icon_group( array $overwrite = [] ): self` | Icon class + icon position together |
+| `add_icon_group()` | `add_icon_group( string $prefix = '', array $overwrite = [], array $field_overwrites = [] ): self` | Icon, position, size, gap and color. `$field_overwrites` keys: `'icon'`, `'position'`, `'size'`, `'gap'`, `'color'` (pass `false` as value to omit that sub-field) |
 
 ### Utility Methods
 
@@ -822,11 +831,40 @@ Creates 2 fields with default `group: 'wrapper-styles'`:
 
 Works with both the standard `add_position()` value (`position-sticky` renders as `sticky`) and blocks that store `sticky-top` directly (e.g. navbars). No element_require override is needed for either case.
 
-### `add_icon_group( $overwrite = [] )`
+### `add_icon_group( $prefix = '', $overwrite = [], $field_overwrites = [] )`
 
-Creates 2 fields with default `group: 'icon'`:
-- `icon_class` — Icon class text input with icon picker
-- `icon_position` — Icon position select (Start/End/Remove)
+Creates 5 fields with default `group: 'icon'`. Use it for any icon a block prints beside text:
+- `{$prefix}icon_class` - Icon class text input with icon picker
+- `{$prefix}icon_position` - Start or End of the text
+- `{$prefix}icon_size` - "Same as text" or one of the text font sizes (`fs-xs` to `fs-1`)
+- `{$prefix}icon_gap` - Space between the icon and the text: Default, None, 1 to 5
+- `{$prefix}icon_color` - "Same as text" or a theme color
+
+The four settings beside the icon only show once an icon is chosen. Size, gap and color have no
+custom value on purpose: an icon is sized and colored the way text is.
+
+```php
+// Every setting
+->add_icon_group()
+
+// A second icon on the block, in its own panel, with a wider default gap and no color
+->add_icon_group( 'btn_', [ 'group' => 'button' ], [ 'gap' => [ 'default' => '2' ], 'color' => false ] )
+```
+
+Print it with the AyeCode UI component, never by hand:
+
+```php
+$html = aui()->icon_text( sd_get_icon_args( $args ) + [ 'text' => $label ] );
+// prefixed copy
+$html = aui()->icon_text( sd_get_icon_args( $args, 'btn_' ) + [ 'text' => $label ] );
+```
+
+`aui()->icon_text()` returns the icon and the text with one margin class on the icon for the gap
+(`me-1` by default, `ms-*` when the icon is at the end) and no wrapper. Do not add `fa-fw`, `fa-lg`,
+`me-*` or a color class to the icon name yourself, and do not put the icon in a flex container to
+center it: an inline icon sits on the text by its own vertical alignment, a flex item is centered on
+the line box and sits low. `text` is escaped for you; pass markup as `content` and escape it yourself.
+A size typed into the icon name (`fas fa-heart fa-lg`) still works for content saved that way.
 
 ### `add_visibility_conditions( $prefix = '', $overwrite = [] )`
 

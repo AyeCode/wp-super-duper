@@ -317,6 +317,18 @@ under `sd_build_aui_styles()`.
 
 ---
 
+
+### `sd_get_icon_args( $args, $prefix = '' )`
+
+Reads the settings `add_icon_group()` saved and returns the arguments `aui()->icon_text()` takes:
+`icon`, `position` (`start` or `end`), `size`, `gap` and `color`. Add the text and print it:
+
+```php
+echo aui()->icon_text( sd_get_icon_args( $args ) + [ 'text' => __( 'Favorite', 'my-textdomain' ) ] );
+```
+
+Pass the prefix the group was added with for a second icon: `sd_get_icon_args( $args, 'btn_' )`.
+
 ## CSS value sanitizers
 
 These are `Utils` statics with no global wrapper. They back the validation in
