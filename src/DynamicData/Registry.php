@@ -139,28 +139,44 @@ class Registry {
 	 */
 	public static function modifiers(): array {
 		return array(
-			'words'    => self::normalize_arg(
+			'words'     => self::normalize_arg(
 				array(
 					'key'   => 'words',
 					'label' => __( 'Limit words', 'ayecode-connect' ),
 					'type'  => 'number',
 				)
 			),
-			'link'     => self::normalize_arg(
+			'round'     => self::normalize_arg(
+				[
+					'key'         => 'round',
+					'label'       => __( 'Round down to the nearest', 'ayecode-connect' ),
+					'type'        => 'number',
+					'placeholder' => '100',
+					'help'        => __( 'Rounds 12,345 down to 12,300 with 100, for text such as "12,300+ listings".', 'ayecode-connect' ),
+				]
+			),
+			'thousands' => self::normalize_arg(
+				[
+					'key'   => 'thousands',
+					'label' => __( 'Thousands separator', 'ayecode-connect' ),
+					'type'  => 'toggle',
+				]
+			),
+			'link'      => self::normalize_arg(
 				array(
 					'key'   => 'link',
 					'label' => __( 'Link it', 'ayecode-connect' ),
 					'type'  => 'toggle',
 				)
 			),
-			'new_tab'  => self::normalize_arg(
+			'new_tab'   => self::normalize_arg(
 				array(
 					'key'   => 'new_tab',
 					'label' => __( 'Open link in a new tab', 'ayecode-connect' ),
 					'type'  => 'toggle',
 				)
 			),
-			'fallback' => self::normalize_arg(
+			'fallback'  => self::normalize_arg(
 				array(
 					'key'   => 'fallback',
 					'label' => __( 'Fallback text', 'ayecode-connect' ),
@@ -306,6 +322,10 @@ class Registry {
 		if ( in_array( $returns, array( 'text', 'html' ), true ) ) {
 			$suitable[] = 'words';
 		}
+		if ( 'number' === $returns ) {
+			$suitable[] = 'round';
+			$suitable[] = 'thousands';
+		}
 		if ( $link && 'url' !== $returns ) {
 			$suitable[] = 'link';
 			$suitable[] = 'new_tab';
@@ -330,6 +350,8 @@ class Registry {
 			'modifiers'   => $modifiers,
 			'link'        => $link,
 			'callback'    => $def['callback'],
+			'cache'       => isset( $def['cache'] ) ? max( 0, (int) $def['cache'] ) : null,
+			'vary'        => isset( $def['vary'] ) && ( is_array( $def['vary'] ) || is_callable( $def['vary'] ) ) ? $def['vary'] : [],
 		);
 	}
 

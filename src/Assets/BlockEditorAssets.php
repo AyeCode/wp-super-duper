@@ -806,6 +806,104 @@ class BlockEditorAssets {
 
         }
 
+        /**
+         * What a background video URL points at. Kept in sync with BackgroundVideo::parse().
+         *
+         * @param {string} url
+         * @returns {Object|null} type (youtube, vimeo or file) with id and hash, or url.
+         */
+        function sd_parse_background_video(url) {
+            url = String(url || '').trim();
+            let match = url.match(/(?:youtube(?:-nocookie)?\.com\/(?:watch\?(?:[^#]*&)?v=|embed\/|shorts\/|live\/|v\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/i);
+            if (match) {
+                return {type: 'youtube', id: match[1]};
+            }
+            match = url.match(/vimeo\.com\/(?:video\/|channels\/[^\/]+\/|groups\/[^\/]+\/videos\/)?(\d+)(?:\/([a-f0-9]+))?(?:[^#]*[?&]h=([a-f0-9]+))?/i);
+            if (match) {
+                return {type: 'vimeo', id: match[1], hash: match[2] || match[3] || ''};
+            }
+            if (/^(https?:)?\/\/[^\s]+\.(mp4|m4v|webm|ogv|mov)(\?[^\s]*)?$/i.test(url)) {
+                return {type: 'file', url: url};
+            }
+            return null;
+        }
+
+        /**
+         * The background video of a block as editor elements: the video and, over it, the
+         * color or gradient. The image under it stays the wrapper's CSS background.
+         * Kept in sync with BackgroundMedia::layer().
+         *
+         * @param {Object} $args The block's attributes.
+         * @returns {Object|null} An element, or null when the block shows no video.
+         */
+        function sd_background_media_layer($args) {
+            const el = wp.element.createElement;
+            const video = sd_parse_background_video($args['bg_video']);
+            const bg = $args['bg'] || '';
+
+            if (!video || !['', 'transparent', 'custom-color', 'custom-gradient'].includes(bg)) {
+                return null;
+            }
+
+            const hasImage = !!$args['bg_image'] || !!$args['bg_image_use_featured'];
+            const xy = $args['bg_image_xy'];
+            const x = xy && xy.x !== undefined ? xy.x * 100 : (hasImage ? 0 : 50);
+            const y = xy && xy.y !== undefined ? xy.y * 100 : (hasImage ? 0 : 50);
+            const fill = {position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: -1, pointerEvents: 'none', borderRadius: 'inherit'};
+            const parts = [];
+
+            if (video.type === 'file') {
+                parts.push(el('video', {key: 'video', src: video.url, autoPlay: true, muted: true, loop: true, playsInline: true, style: {...fill, objectFit: 'cover', objectPosition: x + '% ' + y + '%'}}));
+            } else if (video.type === 'youtube') {
+                // YouTube's player refuses to run inside the editor's canvas, which has no
+                // address to give it, so the editor shows the video's preview image. The
+                // large one is missing for some videos, which answer with a tiny placeholder.
+                const base = 'https://i.ytimg.com/vi/' + video.id + '/';
+                parts.push(el('img', {key: 'video', src: base + 'maxresdefault.jpg', alt: '', style: {...fill, objectFit: 'cover', objectPosition: x + '% ' + y + '%'}, onLoad: (event) => {
+                    if (event.target.naturalWidth < 200 && !event.target.src.includes('mqdefault')) {
+                        event.target.src = base + 'mqdefault.jpg';
+                    }
+                }}));
+            } else {
+                const src = 'https://player.vimeo.com/video/' + video.id + '?background=1&autoplay=1&muted=1&loop=1&autopause=0&dnt=1' + (video.hash ? '&h=' + video.hash : '');
+
+                // The player is sized, in the box's own units, to cover it for a 16:9 video.
+                parts.push(el('div', {key: 'video', style: {...fill, overflow: 'hidden', containerType: 'size'}},
+                    el('iframe', {src: src, allow: 'autoplay; encrypted-media', tabIndex: -1, title: '', style: {position: 'absolute', border: 0, width: '100cqw', height: '100cqh', minWidth: '177.78cqh', minHeight: '56.25cqw', left: x + '%', top: y + '%', transform: 'translate(-' + x + '%,-' + y + '%)'}})
+                ));
+            }
+
+            if (bg === 'custom-gradient' && $args['bg_gradient']) {
+                parts.push(el('div', {key: 'overlay', style: {...fill, backgroundImage: $args['bg_gradient']}}));
+            } else if (bg === 'custom-color' && $args['bg_color']) {
+                parts.push(el('div', {key: 'overlay', style: {...fill, backgroundColor: $args['bg_color'], mixBlendMode: hasImage ? 'hard-light' : 'normal'}}));
+            }
+
+            return el(wp.element.Fragment, {key: 'sd-background-media'}, parts);
+        }
+
+        /**
+         * Put a block's background video into its inner blocks wrapper, under the blocks.
+         *
+         * @param {Object} innerProps What useInnerBlocksProps() returned.
+         * @param {Object} props      The block's props.
+         * @returns {Object} The props to spread on the wrapper.
+         */
+        function sd_background_media_props(innerProps, props) {
+            const layer = props && props.attributes && props.attributes['bg_video'] ? sd_background_media_layer(props.attributes) : null;
+
+            if (!layer) {
+                return innerProps;
+            }
+
+            return {
+                ...innerProps,
+                // A stacking context, so the layer sits over the wrapper's own background.
+                style: {...innerProps.style, isolation: 'isolate'},
+                children: wp.element.createElement(wp.element.Fragment, {}, layer, innerProps.children),
+            };
+        }
+
 		/**
 		 * This needs to be kept in sync with the PHP version in includes/functions.php
 		 *

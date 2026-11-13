@@ -338,6 +338,7 @@ The `type` key in a field definition controls how the field renders.
 | `gradient` | — | Gradient picker | |
 | `image` | — | Image picker | Returns attachment URL |
 | `image_xy` | — | Position picker | Used alongside an `image` field for background-position |
+| `video` | `focal_point_attribute`, `focal_point_unless`, `poster_attribute`, `poster_id_attribute` | URL box with a Media Library button | A YouTube or Vimeo link or a video file URL; optional focal point picker, and an "Import preview image" button that fills the image argument named by `poster_attribute` while it is empty |
 | `hidden` | Hidden input | — | |
 | `notice` | — | Info panel | Informational text only, no saved value |
 | `visibility_conditions` | — | Custom UI | Powers the block visibility conditions feature |

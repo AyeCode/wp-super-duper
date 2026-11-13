@@ -59,6 +59,25 @@ class RestApi {
 				),
 			)
 		);
+
+		// Copies a background video's preview image into the media library.
+		register_rest_route(
+			self::NAMESPACE,
+			'/background-video/poster',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ BackgroundVideo::class, 'rest_import_poster' ],
+				'permission_callback' => [ BackgroundVideo::class, 'rest_permission_check' ],
+				'args'                => [
+					'url' => [
+						'required'          => true,
+						'type'              => 'string',
+						'sanitize_callback' => 'esc_url_raw',
+						'description'       => __( 'The YouTube or Vimeo address of the video.', 'ayecode-connect' ),
+					],
+				],
+			]
+		);
 	}
 
 	/**

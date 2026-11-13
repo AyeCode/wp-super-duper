@@ -46,6 +46,7 @@ class CoreTags {
 		self::register_archive_tags();
 		self::register_site_tags();
 		self::register_meta_tags();
+		self::register_count_tags();
 
 		Registry::register(
 			'request_parameter',
@@ -70,6 +71,8 @@ class CoreTags {
 		Registry::register_source( 'image_sizes', [ static::class, 'source_image_sizes' ] );
 		Registry::register_source( 'user_meta_keys', [ static::class, 'source_user_meta_keys' ] );
 		Registry::register_source( 'term_meta_keys', [ static::class, 'source_term_meta_keys' ] );
+		Registry::register_source( 'post_types', [ static::class, 'source_post_types' ] );
+		Registry::register_source( 'user_roles', [ static::class, 'source_user_roles' ] );
 	}
 
 	// -------------------------------------------------------------------------
@@ -927,6 +930,240 @@ class CoreTags {
 	}
 
 	// -------------------------------------------------------------------------
+	// Counts
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Counts sit in the group of the thing they count. The ones WordPress keeps a
+	 * running total for are read as they are; the ones that need a query set
+	 * `cache`, so the renderer runs them once and keeps the number.
+	 */
+	private static function register_count_tags(): void {
+		Registry::register(
+			'post_count',
+			[
+				'label'       => __( 'Post Count', 'ayecode-connect' ),
+				'group'       => 'site',
+				'description' => __( 'Published posts of a post type.', 'ayecode-connect' ),
+				'returns'     => 'number',
+				'args'        => [ self::post_type_arg( true ) ],
+				'callback'    => [ static::class, 'post_count' ],
+			]
+		);
+
+		Registry::register(
+			'term_count',
+			[
+				'label'       => __( 'Term Count', 'ayecode-connect' ),
+				'group'       => 'site',
+				'description' => __( 'Terms in a taxonomy, such as the number of categories.', 'ayecode-connect' ),
+				'returns'     => 'number',
+				'args'        => [
+					[
+						'key'     => 'taxonomy',
+						'label'   => __( 'Taxonomy', 'ayecode-connect' ),
+						'type'    => 'select',
+						'source'  => 'taxonomies',
+						'default' => 'category',
+						'primary' => true,
+					],
+					[
+						'key'   => 'hide_empty',
+						'label' => __( 'Only terms with posts', 'ayecode-connect' ),
+						'type'  => 'toggle',
+					],
+				],
+				'cache'       => 10 * MINUTE_IN_SECONDS,
+				'callback'    => [ static::class, 'term_count' ],
+			]
+		);
+
+		Registry::register(
+			'user_count',
+			[
+				'label'       => __( 'User Count', 'ayecode-connect' ),
+				'group'       => 'site',
+				'description' => __( 'Registered users, optionally of one role.', 'ayecode-connect' ),
+				'returns'     => 'number',
+				'args'        => [
+					[
+						'key'         => 'role',
+						'label'       => __( 'Role', 'ayecode-connect' ),
+						'type'        => 'select',
+						'source'      => 'user_roles',
+						'primary'     => true,
+						'placeholder' => __( 'All users', 'ayecode-connect' ),
+					],
+				],
+				// Counting by role reads every user's capabilities.
+				'cache'       => HOUR_IN_SECONDS,
+				'callback'    => [ static::class, 'user_count' ],
+			]
+		);
+
+		Registry::register(
+			'site_comment_count',
+			[
+				'label'       => __( 'Site Comment Count', 'ayecode-connect' ),
+				'group'       => 'site',
+				'description' => __( 'Approved comments across the site.', 'ayecode-connect' ),
+				'returns'     => 'number',
+				'callback'    => [ static::class, 'site_comment_count' ],
+			]
+		);
+
+		Registry::register(
+			'author_post_count',
+			[
+				'label'    => __( 'Author Post Count', 'ayecode-connect' ),
+				'group'    => 'author',
+				'returns'  => 'number',
+				'args'     => [ self::post_type_arg() ],
+				'link'     => [ static::class, 'author_link' ],
+				'cache'    => 0,
+				'vary'     => [ static::class, 'vary_author' ],
+				'callback' => [ static::class, 'author_post_count' ],
+			]
+		);
+
+		Registry::register(
+			'user_post_count',
+			[
+				'label'    => __( 'User Post Count', 'ayecode-connect' ),
+				'group'    => 'user',
+				'returns'  => 'number',
+				'args'     => [ self::post_type_arg() ],
+				'cache'    => 0,
+				'vary'     => [ 'user' ],
+				'callback' => [ static::class, 'user_post_count' ],
+			]
+		);
+	}
+
+	private static function post_type_arg( bool $primary = false ): array {
+		return [
+			'key'     => 'post_type',
+			'label'   => __( 'Post Type', 'ayecode-connect' ),
+			'type'    => 'select',
+			'source'  => 'post_types',
+			'default' => 'post',
+			'primary' => $primary,
+		];
+	}
+
+	/**
+	 * Whether a post type's numbers may be printed: only one visitors can view.
+	 */
+	private static function is_countable_post_type( string $post_type ): bool {
+		$object = get_post_type_object( $post_type );
+
+		return $object && is_post_type_viewable( $object );
+	}
+
+	/**
+	 * {post_count:post_type}
+	 *
+	 * @return int|null
+	 */
+	public static function post_count( array $args ) {
+		if ( ! self::is_countable_post_type( (string) $args['post_type'] ) ) {
+			return null;
+		}
+
+		$counts = wp_count_posts( $args['post_type'] );
+		$status = 'attachment' === $args['post_type'] ? 'inherit' : 'publish';
+
+		return (int) ( $counts->$status ?? 0 );
+	}
+
+	/**
+	 * {term_count:taxonomy @hide_empty}
+	 *
+	 * @return int|null
+	 */
+	public static function term_count( array $args ) {
+		$taxonomy = get_taxonomy( (string) $args['taxonomy'] );
+		if ( ! $taxonomy || ! is_taxonomy_viewable( $taxonomy ) ) {
+			return null;
+		}
+
+		$count = wp_count_terms(
+			[
+				'taxonomy'   => $taxonomy->name,
+				'hide_empty' => ! empty( $args['hide_empty'] ),
+			]
+		);
+
+		return is_wp_error( $count ) ? null : (int) $count;
+	}
+
+	/**
+	 * {user_count:role}
+	 *
+	 * @return int|null
+	 */
+	public static function user_count( array $args ) {
+		$role = (string) $args['role'];
+
+		if ( '' === $role ) {
+			return (int) get_user_count();
+		}
+
+		if ( ! wp_roles()->is_role( $role ) ) {
+			return null;
+		}
+
+		$counts = count_users();
+
+		return (int) ( $counts['avail_roles'][ $role ] ?? 0 );
+	}
+
+	/**
+	 * {site_comment_count}
+	 *
+	 * @return int
+	 */
+	public static function site_comment_count() {
+		return (int) wp_count_comments()->approved;
+	}
+
+	/**
+	 * Cache key part for a tag about the post author, so every post by one
+	 * author shares a value.
+	 */
+	public static function vary_author( array $args, Context $context ): string {
+		return 'a' . self::author_id( $context );
+	}
+
+	/**
+	 * {author_post_count @post_type}
+	 *
+	 * @return int|null
+	 */
+	public static function author_post_count( array $args, Context $context ) {
+		$author_id = self::author_id( $context );
+
+		if ( ! $author_id || ! self::is_countable_post_type( (string) $args['post_type'] ) ) {
+			return null;
+		}
+
+		return (int) count_user_posts( $author_id, $args['post_type'], true );
+	}
+
+	/**
+	 * {user_post_count @post_type}
+	 *
+	 * @return int|null
+	 */
+	public static function user_post_count( array $args, Context $context ) {
+		if ( ! $context->user() || ! self::is_countable_post_type( (string) $args['post_type'] ) ) {
+			return null;
+		}
+
+		return (int) count_user_posts( $context->user()->ID, $args['post_type'], true );
+	}
+
+	// -------------------------------------------------------------------------
 	// Shared args
 	// -------------------------------------------------------------------------
 
@@ -1089,6 +1326,42 @@ class CoreTags {
 					'label' => $taxonomy->labels->singular_name,
 				];
 			}
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Post types visitors can view.
+	 *
+	 * @return array<int, array{value: string, label: string}>
+	 */
+	public static function source_post_types(): array {
+		$out = [];
+		foreach ( get_post_types( [], 'objects' ) as $post_type ) {
+			if ( is_post_type_viewable( $post_type ) ) {
+				$out[] = [
+					'value' => $post_type->name,
+					'label' => $post_type->labels->name,
+				];
+			}
+		}
+
+		return $out;
+	}
+
+	/**
+	 * User roles.
+	 *
+	 * @return array<int, array{value: string, label: string}>
+	 */
+	public static function source_user_roles(): array {
+		$out = [];
+		foreach ( wp_roles()->get_names() as $role => $name ) {
+			$out[] = [
+				'value' => $role,
+				'label' => translate_user_role( $name ),
+			];
 		}
 
 		return $out;

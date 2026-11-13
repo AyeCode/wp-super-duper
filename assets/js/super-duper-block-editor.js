@@ -70,6 +70,134 @@ window.sdDependentFieldCache = window.sdDependentFieldCache || {};
 	const { InspectorControls, BlockControls, RichText, useBlockProps, MediaUpload, MediaUploadCheck, InnerBlocks } = blockEditor;
 	const { PanelBody, TabPanel, TextControl, InputControl, TextareaControl, SelectControl, RangeControl, CheckboxControl, ToggleControl, Button, ColorPicker, Notice, BaseControl, ResponsiveWrapper, ToolbarGroup, ToolbarButton, FocalPointPicker, GradientPicker } = components;
 
+	/**
+	 * What a field's dynamic_data setting limits the picker to: the kinds of value a tag
+	 * may give. A number field only takes number tags; any other field may name the kinds
+	 * itself, as 'url' or ['text', 'url'], and with a plain true takes every tag.
+	 */
+	const dynamicDataReturns = (config) => {
+		const setting = config.dynamic_data;
+		if (Array.isArray(setting)) {
+			return setting;
+		}
+		if (typeof setting === 'string' && ['text', 'html', 'url', 'number'].includes(setting)) {
+			return [setting];
+		}
+		return config.type === 'number' ? ['number'] : null;
+	};
+
+	/**
+	 * A number field holding a dynamic data tag. The tag stands in for the input, so the
+	 * field is only ever a number or a tag: click it to change the tag, clear it to get
+	 * the number input back.
+	 */
+	/**
+	 * The focal point picker of a background video. A video file is shown as it is; for
+	 * YouTube and Vimeo the picker shows the provider's preview image, which for Vimeo
+	 * has to be looked up.
+	 */
+	/**
+	 * Offers to copy a YouTube or Vimeo video's preview image into the media library
+	 * and use it as the block's image, which loads faster than the provider's copy.
+	 */
+	const VideoPosterImport = ({ url, onImport }) => {
+		const video = typeof sd_parse_background_video === 'function' ? sd_parse_background_video(url) : null;
+		const [busy, setBusy] = useState(false);
+		const [error, setError] = useState('');
+
+		if (!video || video.type === 'file') {
+			return null;
+		}
+
+		const run = () => {
+			setBusy(true);
+			setError('');
+			wp.apiFetch({ path: '/ayecode/v3/background-video/poster', method: 'POST', data: { url: url } })
+				.then((image) => onImport(image))
+				.catch((failure) => {
+					setError((failure && failure.message) || __('The preview image could not be imported.', 'ayecode-connect'));
+					setBusy(false);
+				});
+		};
+
+		return el('div', { style: { marginBottom: '16px' } },
+			el(Notice, { status: error ? 'error' : 'info', isDismissible: false },
+				error || (video.type === 'youtube'
+					? __('The image shown before the video plays is loaded from YouTube. Import it to your media library for a faster page.', 'ayecode-connect')
+					: __('The image shown before the video plays is loaded from Vimeo. Import it to your media library for a faster page.', 'ayecode-connect'))
+			),
+			el(Button, { variant: 'secondary', isBusy: busy, disabled: busy, onClick: run, style: { marginTop: '8px' } }, __('Import preview image', 'ayecode-connect'))
+		);
+	};
+
+	const VideoFocalPoint = ({ url, value, onChange }) => {
+		const video = typeof sd_parse_background_video === 'function' ? sd_parse_background_video(url) : null;
+		const key = video ? video.type + ':' + (video.id || video.url) : '';
+		const [preview, setPreview] = useState('');
+
+		useEffect(() => {
+			let current = true;
+			setPreview('');
+
+			if (!video) {
+				return;
+			}
+
+			if (video.type === 'file') {
+				setPreview(video.url);
+			} else if (video.type === 'youtube') {
+				// The one size every video has without black bars.
+				setPreview('https://i.ytimg.com/vi/' + video.id + '/mqdefault.jpg');
+			} else {
+				const page = 'https://vimeo.com/' + video.id + (video.hash ? '/' + video.hash : '');
+				window.fetch('https://vimeo.com/api/oembed.json?width=640&url=' + encodeURIComponent(page))
+					.then((response) => (response.ok ? response.json() : null))
+					.then((data) => {
+						if (current && data && data.thumbnail_url) {
+							setPreview(data.thumbnail_url);
+						}
+					})
+					.catch(() => {});
+			}
+
+			return () => {
+				current = false;
+			};
+		}, [key]);
+
+		// The space keeps the field's help text, which pulls itself up, off the picker's inputs.
+		return preview ? el('div', { style: { marginBottom: '16px' } }, el(FocalPointPicker, { url: preview, value: value, onChange: onChange })) : null;
+	};
+
+	const DynamicNumberTag = ({ tag, returns, onChange, onClear }) => {
+		const [isOpen, setOpen] = useState(false);
+		const Modal = window.sdBlockTools?.DynamicDataModal;
+
+		return el(Fragment, null,
+			el('div', { style: { display: 'flex' } },
+				el(Button, {
+					variant: 'secondary',
+					__next40pxDefaultSize: true,
+					onClick: () => setOpen(true),
+					title: __('Change dynamic data', 'ayecode-connect'),
+					style: { flex: 1, minWidth: 0, justifyContent: 'flex-start', borderTopRightRadius: 0, borderBottomRightRadius: 0 }
+				},
+					el('i', { className: 'fas fa-database', 'aria-hidden': 'true', style: { marginRight: '8px' } }),
+					el('code', { style: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', background: 'none', padding: 0 } }, tag)
+				),
+				el(Button, {
+					variant: 'secondary',
+					__next40pxDefaultSize: true,
+					icon: 'no-alt',
+					label: __('Remove dynamic data', 'ayecode-connect'),
+					onClick: onClear,
+					style: { marginLeft: '-1px', borderTopLeftRadius: 0, borderBottomLeftRadius: 0 }
+				})
+			),
+			isOpen && Modal ? el(Modal, { isOpen: true, initialTag: tag, returns, onSelect: onChange, onClose: () => setOpen(false) }) : null
+		);
+	};
+
 	// ++ START: Placeholder for blocks whose AyeCode plugin is not active
 	// WordPress swaps such a block for core/missing, whose edit view offers "Keep as HTML".
 	// That turns the block into static markup for good, so for blocks we can name we show
@@ -689,6 +817,7 @@ window.sdDependentFieldCache = window.sdDependentFieldCache || {};
 
 					dynamicDataButton = el(window.sdBlockTools.DynamicDataButton, {
 						style: buttonStyle,
+						returns: dynamicDataReturns(config),
 						getInitialTag: () => dynamicTagAtCaret(name)?.raw,
 						onSelect: (dataTag) => insertDynamicTag(name, dataTag, attributes, setAttributes)
 					});
@@ -731,6 +860,19 @@ window.sdDependentFieldCache = window.sdDependentFieldCache || {};
 			case 'password':
 			{
 				const actionButtons = [];
+				const isDynamicNumber = type === 'number' && !!config.dynamic_data;
+
+				if (isDynamicNumber && typeof value === 'string' && value.includes('{')) {
+					return el(BaseControl, { label: labelWithIcon, id: name, key: name },
+						el(DynamicNumberTag, {
+							tag: value,
+							returns: dynamicDataReturns(config),
+							onChange: (dataTag) => setAttributes({ [name]: dataTag }),
+							onClear: () => setAttributes({ [name]: defaultValue !== undefined && defaultValue !== null ? String(defaultValue) : '' })
+						}),
+						controlHelp && el('p', { className: HELP_CLASS + ' mt-1', dangerouslySetInnerHTML: { __html: controlHelp } })
+					);
+				}
 
 				if (config.icon_picker && window.sdBlockTools?.IconPickerButton) {
 					actionButtons.push(
@@ -751,8 +893,10 @@ window.sdDependentFieldCache = window.sdDependentFieldCache || {};
 							key: 'dynamic-data',
 							variant: 'tertiary',
 							isSmall: true,
-							getInitialTag: () => dynamicTagAtCaret(name)?.raw,
-							onSelect: (dataTag) => insertDynamicTag(name, dataTag, attributes, setAttributes)
+							returns: dynamicDataReturns(config),
+							// A number input cannot hold a tag beside a number, so the tag takes its place.
+							getInitialTag: () => (isDynamicNumber ? null : dynamicTagAtCaret(name)?.raw),
+							onSelect: (dataTag) => (isDynamicNumber ? setAttributes({ [name]: dataTag }) : insertDynamicTag(name, dataTag, attributes, setAttributes))
 						})
 					);
 				}
@@ -827,6 +971,32 @@ window.sdDependentFieldCache = window.sdDependentFieldCache || {};
 					el(RangeControl, { value: value !== undefined ? Number(value) : undefined, onChange: (val) => setAttributes({ [name]: String(val) }), min: rest.custom_attributes?.min, max: rest.custom_attributes?.max, ...rest }),
 					controlHelp && el('p', { className: HELP_CLASS, dangerouslySetInnerHTML: { __html: controlHelp } })
 				);
+			case 'video': {
+				// A link (YouTube, Vimeo) or a file, typed or picked from the media library.
+				const focalName = rest.focal_point_attribute;
+				// Left to the image's own picker when the block has an image.
+				const showFocal = focalName && value && !(rest.focal_point_unless && attributes[rest.focal_point_unless]);
+				// The image field the video's preview can be imported into, while it is empty.
+				const posterName = rest.poster_attribute;
+				const showImport = posterName && value && !attributes[posterName];
+
+				return el(BaseControl, { key: name, label: labelWithIcon, id: name },
+					el(TextControl, { id: name, type: 'url', value: value || '', placeholder: rest.placeholder || '', onChange: (val) => setAttributes({ [name]: val }), __nextHasNoMarginBottom: true }),
+					el('div', { style: { display: 'flex', gap: '8px', margin: '8px 0' } },
+						el(MediaUploadCheck, {},
+							el(MediaUpload, { onSelect: (media) => setAttributes({ [name]: media.url }), allowedTypes: ['video'],
+								render: ({ open }) => el(Button, { variant: 'secondary', onClick: open }, __('Media Library', 'ayecode-connect'))
+							})
+						),
+						value && el(Button, { variant: 'tertiary', onClick: () => setAttributes({ [name]: '' }) }, __('Clear', 'ayecode-connect'))
+					),
+					showFocal && el(VideoFocalPoint, { url: value, value: attributes[focalName] || { x: 0.5, y: 0.5 }, onChange: (point) => setAttributes({ [focalName]: point }) }),
+					showImport && el(MediaUploadCheck, {},
+						el(VideoPosterImport, { url: value, onImport: (image) => setAttributes({ [posterName]: image.url, [rest.poster_id_attribute || posterName + '_id']: image.id }) })
+					),
+					controlHelp && el('p', { className: HELP_CLASS, dangerouslySetInnerHTML: { __html: controlHelp } })
+				);
+			}
 			case 'image':
 				const idName = rest.id_attribute || `${name}_id`;
 				const imageId = attributes[idName];

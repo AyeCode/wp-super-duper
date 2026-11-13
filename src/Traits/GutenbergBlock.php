@@ -765,7 +765,8 @@ JS;
                             }
                             //  echo "\n el( 'section', wp.blockEditor.useInnerBlocksProps( blockProps, {";
 //                                echo $save ? "\n el( '$element', wp.blockEditor.useInnerBlocksProps.save( " : "\n el( '$element', wp.blockEditor.useInnerBlocksProps( ";
-                            echo $save ? "\n el( $element, wp.blockEditor.useInnerBlocksProps.save( " : "\n el( $element, wp.blockEditor.useInnerBlocksProps( ";
+                            // In the editor the wrapper also takes the block's background video, when it has one.
+                            echo $save ? "\n el( $element, wp.blockEditor.useInnerBlocksProps.save( " : "\n el( $element, sd_background_media_props( wp.blockEditor.useInnerBlocksProps( ";
                             echo $save ? "wp.blockEditor.useBlockProps.save( {" : "wp.blockEditor.useBlockProps( {";
                             echo ! empty( $new_args['blockProps'] ) ? $this->block_element( $new_args['blockProps'], $save ) : '';
 
@@ -846,7 +847,9 @@ JS;
                             }
                         }
 
-                        if ( $new_args['element'] == 'innerBlocksProps' || $new_args['element'] == 'xBlocksProps' ) {
+                        if ( $new_args['element'] == 'innerBlocksProps' && ! $save ) {
+                            echo "), props ))";// end content
+                        } elseif ( $new_args['element'] == 'innerBlocksProps' || $new_args['element'] == 'xBlocksProps' ) {
                             echo "))";// end content
                         } else {
                             echo ")";// end content

@@ -126,6 +126,73 @@ public function output( $args = [], $widget_args = [], $content = '' ): string {
 Renders as `<figure class="overflow-hidden mb-3 text-primary" style="font-size:2rem;" >`, and
 as `<figure >` when the block has no settings that produce output.
 
+### `sd_background_media( $html, $args, $image = [] )`
+
+Outputs a block's background image as a real `<img>` behind its content, in place of
+the CSS background. Pass the block's finished markup, whose first tag is the wrapper:
+
+```php
+return sd_background_media(
+    '<div ' . sd_build_aui_wrapper_attrs( $args ) . '>' . $content . '</div>',
+    $args
+);
+```
+
+It reads the background group's arguments (`bg`, `bg_color`, `bg_gradient`, `bg_image`,
+`bg_image_id`, `bg_image_xy`, `bg_image_fixed`) plus the optional `bg_image_priority`
+(`''` for core's automatic choice, `high` or `lazy`), `bg_video` and
+`bg_video_hide_mobile`. The image declarations are
+removed from the wrapper's inline style, the wrapper takes the `bg-media-wrap` class,
+and the image goes in as its first child:
+
+- **With `bg_image_id`** the image comes from `wp_get_attachment_image()`, so it has a
+  `srcset`, `sizes`, and core's `loading` and `fetchpriority`. Without an ID (an
+  external URL) it is a plain `<img src>`.
+- **A gradient, or a custom color that blended with the image,** becomes an overlay
+  element over the image.
+- **A fixed image** is pinned to the viewport and clipped to the wrapper, which also
+  works on iOS.
+- **No focal point** leaves the image at the top left, as a CSS background is. A
+  position the editor wrote into the saved style is used when the arguments have none,
+  and a video with no image under it is centered.
+- **With `bg_video`** (a YouTube or Vimeo link, or the URL of a video file) the video
+  goes over the image. Nothing of it is requested while the page loads:
+  `assets/js/background-media.js`, enqueued only on a page that shows one, attaches it
+  once the page has loaded and the block is in view, fades it in when it is playing and
+  pauses it while the block is off screen. Visitors who asked for reduced motion or to
+  save data keep the image, as do small screens when `bg_video_hide_mobile` is set.
+  With no image, a YouTube or Vimeo video shows the provider's preview image until it
+  plays, as WebP with a srcset of the widths the provider has (YouTube: 320 and 1280;
+  Vimeo: 640 to 1920). It loads from the provider, so an image in the media library is
+  faster: the editor's "Import preview image" button copies it there, through
+  `POST /ayecode/v3/background-video/poster` (`url`, needs `upload_files`), or call
+  `BackgroundVideo::import_poster( BackgroundVideo::parse( $url ) )`. The image is not fixed when there is a video. For markup added after the page
+  loaded, call `sdBackgroundMedia.init( root )`.
+  In the editor a block with a `bg_video` argument and an `innerBlocksProps` wrapper
+  shows the video under its blocks with no setup: Vimeo and video files play, and
+  YouTube shows its preview image, as its player will not run inside the editor's
+  canvas. Give the argument the `video` field type for a URL box with a Media Library
+  button; `focal_point_attribute` adds a focal point picker and `focal_point_unless`
+  names the argument (the image) whose own picker takes over when it is set.
+  `poster_attribute` names the image argument the provider's preview can be imported
+  into: while that is empty the field shows a notice and an "Import preview image"
+  button, which sets it and its `_id` argument (`poster_id_attribute` to name another).
+
+`$image` overrides which image shows, as `[ 'id' => 123 ]` or `[ 'url' => '...' ]`, for a
+block that resolves its own (a featured image). The markup comes back unchanged when
+the settings show no image or video.
+
+It works on finished markup, so it suits blocks whose saved HTML is their output: the
+editor and the saved block keep the CSS background and only the front end changes. The
+layer is the wrapper's first child, so CSS that targets the wrapper's `:first-child`
+will match the image.
+
+| Filter | Use |
+|---|---|
+| `sd_background_media` | Return false to keep the CSS background, per block arguments. |
+| `sd_background_media_sizes` | The `sizes` attribute. Empty by default (the full viewport width), `1320px` at most for a boxed `container`. |
+| `sd_background_video_poster` | The provider preview image shown behind a YouTube or Vimeo video that has no image. It loads from the provider's servers; return an empty string to show none. |
+
 ### `sd_build_aui_wrapper_attrs( $args, $extra_classes = '' )`
 
 The class and style attributes for the wrapper element in one call. Equivalent to

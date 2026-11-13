@@ -8,6 +8,17 @@
 - Border radius size for Tablet and Desktop (rounded_size_md, rounded_size_lg) in the border group, and sizes 5 to 7 - ADDED
 - Border radius type and size always show, as a rounded background or image needs no border - CHANGED
 - Hover animations with three or more choices gave a broken class in the editor preview, as only the first comma was replaced - FIXED
+- sd_background_media() and BackgroundMedia: output a block's background image as a real image with a srcset behind its content, in place of the CSS background, with the sd_background_media and sd_background_media_sizes filters - ADDED
+- Background video: sd_background_media() reads a `bg_video` argument (YouTube, Vimeo or a video file) and plays it muted and looped over the image, loaded only after the page has and while the block is in view, with the provider's preview image as the fallback and the sd_background_video_poster filter - ADDED
+- Background video preview: the provider's preview image is output as WebP with a srcset, and BackgroundVideo::import_poster() with the `ayecode/v3/background-video/poster` endpoint copies it into the media library; a `video` field with `poster_attribute` shows an "Import preview image" button and notice while that image is empty - ADDED
+- `video` field type: a URL box with a Media Library button and, with `focal_point_attribute`, a focal point picker over the video or its provider preview image - ADDED
+- Block editor: a block with a `bg_video` argument and an inner blocks wrapper shows the video under its blocks (Vimeo and video files play, YouTube shows its preview image) - ADDED
+- A background image whose focal point was never moved kept the editor's centered position only in the saved style, so the image layer put it top left; the saved position is now used - FIXED
+- Number fields with `dynamic_data` take a number or a dynamic data tag: the picker lists number tags only, the chosen tag replaces the input, and the block receives a numeric value or the field default - ADDED
+- `dynamic_data` on a field can name the kinds of tag to offer, such as 'url' or [ 'text', 'url' ] - ADDED
+- Dynamic data count tags: {post_count}, {term_count}, {user_count}, {site_comment_count}, {author_post_count} and {user_post_count} - ADDED
+- Dynamic data number tags take @round to round down to a step and @thousands for a thousands separator - ADDED
+- Dynamic data tags can set `cache` and `vary` so a costly value is resolved once per request and optionally kept between requests, with Renderer::forget() and the sd_dynamic_data_cache_ttl filter - ADDED
 - Z-index setting offers Bootstrap's z-n1 to z-3 instead of zindex-0, 1, 5 and 10, which AyeCode UI no longer has - CHANGED
 - Font size setting no longer offers fs-xxs, which has no styling; fs-xs is the smallest - REMOVED
 - Social brand colors (Facebook, Twitter and the like) are no longer offered in the color settings, as AyeCode UI has no brand color classes; ColorOptions::branding() returns nothing and asking for 'branding' still works - REMOVED

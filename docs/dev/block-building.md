@@ -869,7 +869,7 @@ Every field passed to `add_field()` supports these properties:
 | `element_require` | string | No | Conditional display expression (see below) |
 | `depends_on` | array | No | Dependent field configuration for REST API population (see Dependent Fields) |
 | `device_type` | string | No | Responsive breakpoint label: `'Mobile'`, `'Tablet'`, `'Desktop'` |
-| `dynamic_data` | bool | No | Allow dynamic data / variable substitution (`true` / `false`) |
+| `dynamic_data` | bool, string or array | No | Allow dynamic data tags. `true` offers every tag; `'url'` or `[ 'text', 'url' ]` limits the picker to tags that give those kinds of value (`text`, `html`, `url`, `number`). On a `number` field the picker only offers number tags and the tag replaces the input. See `docs/dev/features/dynamic-data.md` |
 | `status` | string | No | For `notice` type only: alert colour — `'info'`, `'warning'`, `'error'`, `'success'` |
 | `tab` | array | No | Embed a tab pane boundary within a field's config. Open: `['title' => ..., 'key' => ..., 'tabs_open' => true, 'open' => true, 'class' => ...]`. Close pane: `['close' => true]`. Close pane + container: `['close' => true, 'tabs_close' => true]` |
 | `advanced` | bool | No | Mark as advanced option (legacy, prefer `group` instead) |

@@ -164,6 +164,24 @@ function sd_build_aui_style_attr( $args ) {
 }
 
 /**
+ * Output a block's background image as a real image behind its content.
+ *
+ * Takes the block's finished markup, whose first tag is the wrapper, and moves the
+ * background image off the wrapper's inline style into an <img> with a srcset,
+ * which loads sooner and smaller than a CSS background.
+ *
+ *     return sd_background_media( '<div ' . sd_build_aui_wrapper_attrs( $args ) . '>' . $content . '</div>', $args );
+ *
+ * @param string $html  The block markup.
+ * @param array  $args  Settings array from a widget/shortcode instance.
+ * @param array  $image Optional. `id` and/or `url` of an image to show in place of the one in $args.
+ * @return string The markup, unchanged when the settings show no image.
+ */
+function sd_background_media( $html, $args, $image = array() ) {
+	return \AyeCode\SuperDuper\BackgroundMedia::apply( (string) $html, (array) $args, (array) $image );
+}
+
+/**
  * Build the class and style attributes for a block's wrapper element.
  *
  *     '<div ' . sd_build_aui_wrapper_attrs( $args, 'card' ) . '>'

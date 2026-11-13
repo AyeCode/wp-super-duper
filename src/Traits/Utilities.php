@@ -37,14 +37,14 @@ trait Utilities {
 			foreach ( $options['arguments'] as $key => $val ) {
 				$options['arguments'][ $key ]['name'] = $key;
 				if ( ! empty( $val['dynamic_data'] ) ) {
-					$this->dynamic_fields[ $key ] = true;
+					$this->dynamic_fields[ $key ] = 'number' === ( $val['type'] ?? '' ) ? 'number' : true;
 				}
 			}
 		} elseif ( $arguments_only && is_array( $options ) && ! empty( $options ) ) {
 			foreach ( $options as $key => $val ) {
 				$options[ $key ]['name'] = $key;
 				if ( ! empty( $val['dynamic_data'] ) ) {
-					$this->dynamic_fields[ $key ] = true;
+					$this->dynamic_fields[ $key ] = 'number' === ( $val['type'] ?? '' ) ? 'number' : true;
 				}
 			}
 		}
@@ -58,13 +58,30 @@ trait Utilities {
 	 * @return array The arguments with dynamic data replaced.
 	 */
 	public function render_dynamic_fields( $args ) {
-		if ( ! \AyeCode\SuperDuper\Utils::is_preview() && ! empty( $this->dynamic_fields ) ) {
-			foreach ( $this->dynamic_fields as $key => $val ) {
-				if ( isset( $args[ $key ] ) ) {
-					$args[ $key ] = \AyeCode\SuperDuper\Utils::replace_variables( $args[ $key ] );
+		if ( empty( $this->dynamic_fields ) ) {
+			return $args;
+		}
+
+		$is_preview = \AyeCode\SuperDuper\Utils::is_preview();
+
+		foreach ( $this->dynamic_fields as $key => $val ) {
+			if ( ! isset( $args[ $key ] ) ) {
+				continue;
+			}
+
+			if ( 'number' === $val ) {
+				// A number field holds a number or a tag that gives one. The tag is resolved
+				// in a preview too, as the block can do nothing with the tag itself, and a
+				// value that does not come out numeric falls back to the field's default.
+				if ( is_string( $args[ $key ] ) && false !== strpos( $args[ $key ], '{' ) ) {
+					$number       = trim( \AyeCode\SuperDuper\Utils::replace_variables( $args[ $key ] ) );
+					$args[ $key ] = is_numeric( $number ) ? $number : ( $this->argument_defaults[ $key ] ?? '' );
 				}
+			} elseif ( ! $is_preview ) {
+				$args[ $key ] = \AyeCode\SuperDuper\Utils::replace_variables( $args[ $key ] );
 			}
 		}
+
 		return $args;
 	}
 
