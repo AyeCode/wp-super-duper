@@ -851,6 +851,19 @@ custom value on purpose: an icon is sized and colored the way text is.
 ->add_icon_group( 'btn_', [ 'group' => 'button' ], [ 'gap' => [ 'default' => '2' ], 'color' => false ] )
 ```
 
+A block whose icon comes from somewhere else (a custom field's own icon) can drop the icon field or
+keep it as an override, and pass `'element_require' => ''` on size, gap and color so they show
+without it:
+
+```php
+->add_icon_group( '', [], [
+    'position' => false,
+    'size'     => [ 'element_require' => '' ],
+    'gap'      => [ 'element_require' => '' ],
+    'color'    => [ 'element_require' => '' ],
+] )
+```
+
 Print it with the AyeCode UI component, never by hand:
 
 ```php

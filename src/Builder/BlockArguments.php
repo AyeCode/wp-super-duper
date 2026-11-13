@@ -583,7 +583,14 @@ class BlockArguments {
 				$config['element_require'] = $require;
 			}
 
-			$this->fields[ $prefix . $field[0] ] = CommonFields::{$field[1]}( $config );
+			$definition = CommonFields::{$field[1]}( $config );
+
+			// An empty require is how a block says the setting does not depend on the icon field.
+			if ( isset( $definition['element_require'] ) && '' === $definition['element_require'] ) {
+				unset( $definition['element_require'] );
+			}
+
+			$this->fields[ $prefix . $field[0] ] = $definition;
 		}
 
 		return $this;

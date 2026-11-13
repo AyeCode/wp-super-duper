@@ -1,6 +1,7 @@
 # Changelog
 
 ## [3.0.10-beta] — 2026-09-TBD
+- add_icon_group(): an empty `element_require` on the size, gap or color sub-field shows it without an icon chosen, for blocks whose icon comes from elsewhere - ADDED
 - add_icon_group() adds the full icon settings (icon, position, size from the text font sizes, gap and color), takes a prefix like the other groups, and sd_get_icon_args() reads them back for aui()->icon_text() - CHANGED
 - Entrance animation and Entrance delay settings (StyleFields::entrance_animation(), entrance_delay() and BlockArguments::add_entrance_animation_group()), output as the AyeCode UI aui-reveal classes - ADDED
 - Animation settings share one Animations group: the hover animation fields move from hover-animations, and the hover animations field gets a real label - CHANGED
